@@ -48,12 +48,12 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.weakref.jmx.guice.MBeanModule;
+import org.weakref.jmx.testing.TestingMBeanServer;
 
 import javax.management.MBeanServer;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
-import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +101,7 @@ public class TestDiscoveryServer
                     public void configure(Binder binder)
                     {
                         // TODO: use testing mbean server
-                        binder.bind(MBeanServer.class).toInstance(ManagementFactory.getPlatformMBeanServer());
+                        binder.bind(MBeanServer.class).toInstance(new TestingMBeanServer());
                     }
                 });
 
