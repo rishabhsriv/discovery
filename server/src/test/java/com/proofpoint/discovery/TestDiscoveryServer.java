@@ -22,8 +22,6 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.Response;
 import com.proofpoint.configuration.ConfigurationFactory;
 import com.proofpoint.configuration.ConfigurationModule;
 import com.proofpoint.discovery.client.DiscoveryAnnouncementClient;
@@ -34,11 +32,14 @@ import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.client.ServiceSelectorConfig;
 import com.proofpoint.discovery.client.testing.SimpleServiceSelector;
-import com.proofpoint.discovery.store.ReplicatedStoreModule;
+import com.proofpoint.http.client.ApacheHttpClient;
+import com.proofpoint.http.client.FullJsonResponseHandler.JsonResponse;
+import com.proofpoint.http.client.HttpClient;
+import com.proofpoint.http.client.Request;
+import com.proofpoint.http.client.StatusResponseHandler.StatusResponse;
 import com.proofpoint.http.server.testing.TestingHttpServer;
 import com.proofpoint.http.server.testing.TestingHttpServerModule;
 import com.proofpoint.jaxrs.JaxrsModule;
-import com.proofpoint.json.JsonCodec;
 import com.proofpoint.json.JsonModule;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.node.NodeModule;
@@ -49,11 +50,20 @@ import org.testng.annotations.Test;
 import org.weakref.jmx.guice.MBeanModule;
 
 import javax.management.MBeanServer;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+import static com.proofpoint.http.client.FullJsonResponseHandler.createFullJsonResponseHandler;
+import static com.proofpoint.http.client.JsonBodyGenerator.jsonBodyGenerator;
+import static com.proofpoint.http.client.Request.Builder.prepareDelete;
+import static com.proofpoint.http.client.Request.Builder.preparePost;
+import static com.proofpoint.http.client.StatusResponseHandler.createStatusResponseHandler;
+import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static com.proofpoint.json.JsonCodec.mapJsonCodec;
 import static javax.ws.rs.core.Response.Status;
 import static org.testng.Assert.assertEquals;
@@ -165,18 +175,17 @@ public class TestDiscoveryServer
                 .put("properties", ImmutableMap.of("http", "http://host"))
                 .build();
 
-        AsyncHttpClient httpClient = new AsyncHttpClient();
-        Response response = httpClient.preparePost(server.getBaseUrl().resolve("/v1/announcement/static").toString())
-                .addHeader("Content-Type", "application/json")
-                .setBody(JsonCodec.jsonCodec(Object.class).toJson(announcement))
-                .execute()
-                .get();
+        HttpClient client = new ApacheHttpClient();
 
-        assertEquals(response.getStatusCode(), Status.CREATED.getStatusCode());
-        String id = mapJsonCodec(String.class, Object.class)
-                .fromJson(response.getResponseBody())
-                .get("id")
-                .toString();
+        Request request = preparePost()
+                .setUri(uriFor("/v1/announcement/static"))
+                .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                .setBodyGenerator(jsonBodyGenerator(jsonCodec(Object.class), announcement))
+                .build();
+        JsonResponse<Map<String, Object>> createResponse = client.execute(request, createFullJsonResponseHandler(mapJsonCodec(String.class, Object.class)));
+
+        assertEquals(createResponse.getStatusCode(), Status.CREATED.getStatusCode());
+        String id = createResponse.getValue().get("id").toString();
 
         List<ServiceDescriptor> services = selectorFor("apple", "red").selectAllServices();
         assertEquals(services.size(), 1);
@@ -189,11 +198,10 @@ public class TestDiscoveryServer
         assertEquals(service.getProperties(), announcement.get("properties"));
 
         // remove announcement
-        response = httpClient.prepareDelete(server.getBaseUrl().resolve("/v1/announcement/static/" + id).toString())
-                .execute()
-                .get();
+        request = prepareDelete().setUri(uriFor("/v1/announcement/static/" + id)).build();
+        StatusResponse deleteResponse = client.execute(request, createStatusResponseHandler());
 
-        assertEquals(response.getStatusCode(), Status.NO_CONTENT.getStatusCode());
+        assertEquals(deleteResponse.getStatusCode(), Status.NO_CONTENT.getStatusCode());
 
         // ensure announcement is gone
         assertTrue(selectorFor("apple", "red").selectAllServices().isEmpty());
@@ -216,5 +224,10 @@ public class TestDiscoveryServer
 
         DiscoveryLookupClient client = clientInjector.getInstance(DiscoveryLookupClient.class);
         return new SimpleServiceSelector(type, new ServiceSelectorConfig().setPool(pool), client);
+    }
+
+    private URI uriFor(String path)
+    {
+        return server.getBaseUrl().resolve(path);
     }
 }
