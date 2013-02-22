@@ -26,8 +26,8 @@ import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.Collections;
 
-import static com.proofpoint.experimental.testing.ValidationAssertions.assertFailsValidation;
-import static com.proofpoint.experimental.testing.ValidationAssertions.assertValidates;
+import static com.proofpoint.testing.ValidationAssertions.assertFailsValidation;
+import static com.proofpoint.testing.ValidationAssertions.assertValidates;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 

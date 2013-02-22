@@ -26,7 +26,6 @@ import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.BodyGenerator;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
-import com.proofpoint.http.client.RequestBuilder;
 import com.proofpoint.http.client.Response;
 import com.proofpoint.http.client.ResponseHandler;
 import com.proofpoint.log.Logger;
@@ -249,7 +248,7 @@ public class HttpRemoteStore
         @Override
         public void processBatch(final Collection<Entry> entries)
         {
-            final Request request = RequestBuilder.preparePost()
+            final Request request = Request.Builder.preparePost()
                     .setUri(uri)
                     .setHeader("Content-Type", "application/x-jackson-smile")
                     .setBodyGenerator(new BodyGenerator() {

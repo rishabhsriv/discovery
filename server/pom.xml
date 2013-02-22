@@ -11,7 +11,7 @@
     <parent>
         <groupId>com.proofpoint.platform</groupId>
         <artifactId>rest-server-base</artifactId>
-        <version>0.57</version>
+        <version>0.64</version>
     </parent>
 
     <properties>
@@ -69,11 +69,6 @@
     </distributionManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>com.proofpoint.platform</groupId>
-            <artifactId>experimental</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>com.proofpoint.platform</groupId>
             <artifactId>jmx-http-rpc-experimental</artifactId>

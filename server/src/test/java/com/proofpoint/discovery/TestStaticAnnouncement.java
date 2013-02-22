@@ -27,9 +27,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-import static com.proofpoint.experimental.testing.ValidationAssertions.assertFailsValidation;
 import static com.proofpoint.testing.Assertions.assertNotEquals;
 import static com.proofpoint.testing.EquivalenceTester.equivalenceTester;
+import static com.proofpoint.testing.ValidationAssertions.assertFailsValidation;
 import static org.testng.Assert.assertEquals;
 
 public class TestStaticAnnouncement

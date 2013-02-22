@@ -20,7 +20,6 @@ import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
-import com.proofpoint.http.client.RequestBuilder;
 import com.proofpoint.http.client.Response;
 import com.proofpoint.http.client.ResponseHandler;
 import com.proofpoint.log.Logger;
@@ -135,7 +134,7 @@ public class Replicator
             }
 
             // TODO: build URI from resource class
-            Request request = RequestBuilder.prepareGet()
+            Request request = Request.Builder.prepareGet()
                     .setUri(URI.create(uri + "/v1/store/" + name))
                     .build();
 

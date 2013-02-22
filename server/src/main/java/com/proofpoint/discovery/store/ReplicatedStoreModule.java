@@ -20,24 +20,21 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
-import com.proofpoint.http.client.HttpClientModule;
 import com.proofpoint.node.NodeInfo;
 import org.joda.time.DateTime;
 import org.weakref.jmx.MBeanExporter;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.management.MBeanServer;
 import java.lang.annotation.Annotation;
 
 import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.name.Names.named;
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
+import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
 import static org.weakref.jmx.ObjectNames.generatedNameOf;
 import static org.weakref.jmx.guice.MBeanModule.newExporter;
 
@@ -67,7 +64,7 @@ public class ReplicatedStoreModule
 
         // global
         binder.bind(StoreResource.class).in(Scopes.SINGLETON);
-        binder.bind(DateTime.class).toProvider(RealTimeProvider.class).in(Scopes.NO_SCOPE);;
+        binder.bind(DateTime.class).toProvider(RealTimeProvider.class).in(Scopes.NO_SCOPE);
         binder.bind(SmileMapper.class).in(Scopes.SINGLETON);
         binder.bind(ConflictResolver.class).in(Scopes.SINGLETON);
 
@@ -78,7 +75,7 @@ public class ReplicatedStoreModule
         Key<RemoteStore> remoteStoreKey = Key.get(RemoteStore.class, annotation);
 
         bindConfig(binder).annotatedWith(annotation).prefixedWith(name).to(StoreConfig.class);
-        binder.install(new HttpClientModule(name, annotation));
+        httpClientBinder(binder).bindHttpClient(name, annotation);
         binder.bind(DistributedStore.class).annotatedWith(annotation).toProvider(new DistributedStoreProvider(name, localStoreKey, storeConfigKey, remoteStoreKey)).in(Scopes.SINGLETON);
         binder.bind(Replicator.class).annotatedWith(annotation).toProvider(new ReplicatorProvider(name, localStoreKey, httpClientKey, storeConfigKey)).in(Scopes.SINGLETON);
         binder.bind(HttpRemoteStore.class).annotatedWith(annotation).toProvider(new RemoteHttpStoreProvider(name, httpClientKey, storeConfigKey)).in(Scopes.SINGLETON);
