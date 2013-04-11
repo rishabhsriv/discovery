@@ -16,11 +16,9 @@
 package com.proofpoint.discovery;
 
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.proofpoint.bootstrap.Bootstrap;
 import com.proofpoint.discovery.client.Announcer;
 import com.proofpoint.discovery.client.DiscoveryModule;
-import com.proofpoint.discovery.store.ReplicatedStoreModule;
 import com.proofpoint.event.client.HttpEventModule;
 import com.proofpoint.http.server.HttpServerModule;
 import com.proofpoint.jaxrs.JaxrsModule;
@@ -59,7 +57,6 @@ public class Main
         }
         catch (Exception e) {
             log.error(e);
-            // Cassandra prevents the vm from shutting down on its own
             System.exit(1);
         }
     }
