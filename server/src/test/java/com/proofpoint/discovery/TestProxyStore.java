@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.collect.ListMultimap;
-import com.google.common.util.concurrent.CheckedFuture;
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.proofpoint.discovery.DiscoveryConfig.StringSet;
@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -115,8 +117,7 @@ public class TestProxyStore
         }
 
         @Override
-        public <T, E extends Exception> CheckedFuture<T, E> executeAsync(Request request, ResponseHandler<T, E> responseHandler)
-                throws E
+        public <T, E extends Exception> AsyncHttpResponseFuture<T, E> executeAsync(Request request, ResponseHandler<T, E> responseHandler)
         {
             assertEquals(request.getMethod(), "GET");
             URI uri = request.getUri();
@@ -135,45 +136,7 @@ public class TestProxyStore
             }
             final Services filteredServices = new Services(config.getProxyEnvironment(), builder.build());
 
-            return immediateCheckedFuture(responseHandler.handle(request, new Response()
-            {
-                @Override
-                public int getStatusCode()
-                {
-                    return 200;
-                }
-
-                @Override
-                public String getStatusMessage()
-                {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public String getHeader(String name)
-                {
-                    return null;
-                }
-
-                @Override
-                public ListMultimap<String, String> getHeaders()
-                {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public long getBytesRead()
-                {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public InputStream getInputStream()
-                        throws IOException
-                {
-                    return new ByteArrayInputStream(jsonCodec(Services.class).toJson(filteredServices).getBytes("UTF-8"));
-                }
-            }));
+            return new TestingResponseFuture(request, responseHandler, filteredServices);
         }
 
         @Override
@@ -192,6 +155,89 @@ public class TestProxyStore
         @Override
         public void close()
         {
+        }
+
+        private static class TestingResponseFuture<T, E extends Exception>
+                extends AbstractFuture<T>
+                implements AsyncHttpResponseFuture<T, E>
+        {
+            public TestingResponseFuture(Request request, ResponseHandler<T, E> responseHandler, final Services filteredServices)
+            {
+                try {
+                    T result = responseHandler.handle(request, new Response()
+                    {
+                        @Override
+                        public int getStatusCode()
+                        {
+                            return 200;
+                        }
+
+                        @Override
+                        public String getStatusMessage()
+                        {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public String getHeader(String name)
+                        {
+                            return null;
+                        }
+
+                        @Override
+                        public ListMultimap<String, String> getHeaders()
+                        {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public long getBytesRead()
+                        {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public InputStream getInputStream()
+                                throws IOException
+                        {
+                            return new ByteArrayInputStream(jsonCodec(Services.class).toJson(filteredServices).getBytes("UTF-8"));
+                        }
+                    });
+                    set(result);
+                }
+                catch (Exception e) {
+                    setException(e);
+                }
+            }
+
+            @Override
+            public String getState()
+            {
+                return "done";
+            }
+
+            @Override
+            public T checkedGet()
+                    throws E
+            {
+                try {
+                    return get();
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+                catch (ExecutionException e) {
+                    throw (E) e.getCause();
+                }
+            }
+
+            @Override
+            public T checkedGet(long l, TimeUnit timeUnit)
+                    throws TimeoutException, E
+            {
+                return checkedGet();
+            }
         }
     }
 }
