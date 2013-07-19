@@ -141,7 +141,7 @@ public class HttpRemoteStore
                         log.warn(e, "Error refreshing batch processors");
                     }
                 }
-            }, 0, (long) updateInterval.toMillis(), TimeUnit.MILLISECONDS);
+            }, 0, updateInterval.toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 

@@ -98,7 +98,7 @@ public class Replicator
                         log.warn(t, "Error replicating state");
                     }
                 }
-            }, 0, (long) replicationInterval.toMillis(), TimeUnit.MILLISECONDS);
+            }, 0, replicationInterval.toMillis(), TimeUnit.MILLISECONDS);
         }
 
         // TODO: need fail-safe recurrent scheduler with variable delay

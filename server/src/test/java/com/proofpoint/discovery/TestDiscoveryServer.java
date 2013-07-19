@@ -20,16 +20,14 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.proofpoint.bootstrap.LifeCycleManager;
-import com.proofpoint.discovery.client.DiscoveryLookupClient;
 import com.proofpoint.discovery.client.DiscoveryModule;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
-import com.proofpoint.discovery.client.ServiceSelectorConfig;
 import com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient;
 import com.proofpoint.discovery.client.announce.ServiceAnnouncement;
-import com.proofpoint.discovery.client.testing.SimpleServiceSelector;
 import com.proofpoint.event.client.InMemoryEventModule;
 import com.proofpoint.http.client.ApacheHttpClient;
 import com.proofpoint.http.client.FullJsonResponseHandler.JsonResponse;
@@ -41,7 +39,7 @@ import com.proofpoint.http.server.testing.TestingHttpServerModule;
 import com.proofpoint.jaxrs.JaxrsModule;
 import com.proofpoint.json.JsonModule;
 import com.proofpoint.node.NodeInfo;
-import com.proofpoint.node.NodeModule;
+import com.proofpoint.node.testing.TestingNodeModule;
 import com.proofpoint.reporting.ReportingModule;
 import org.iq80.leveldb.util.FileUtils;
 import org.testng.annotations.AfterMethod;
@@ -61,6 +59,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
+import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
+import static com.proofpoint.discovery.client.ServiceTypes.serviceType;
 import static com.proofpoint.http.client.FullJsonResponseHandler.createFullJsonResponseHandler;
 import static com.proofpoint.http.client.JsonBodyGenerator.jsonBodyGenerator;
 import static com.proofpoint.http.client.Request.Builder.prepareDelete;
@@ -89,14 +89,13 @@ public class TestDiscoveryServer
 
         // start server
         Map<String, String> serverProperties = ImmutableMap.<String, String>builder()
-                    .put("node.environment", "testing")
-                    .put("static.db.location", tempDir.getAbsolutePath())
-                    .build();
+                .put("static.db.location", tempDir.getAbsolutePath())
+                .build();
 
         Injector serverInjector = bootstrapApplication("test-application")
                 .withModules(
                         new MBeanModule(),
-                        new NodeModule(),
+                        new TestingNodeModule("testing"),
                         new ReportingModule(),
                         new MBeanModule(),
                         new TestingHttpServerModule(),
@@ -138,14 +137,12 @@ public class TestDiscoveryServer
     {
         // publish announcement
         Map<String, String> announcerProperties = ImmutableMap.<String, String>builder()
-            .put("node.environment", "testing")
-            .put("node.pool", "red")
             .put("testing.discovery.uri", server.getBaseUrl().toString())
             .build();
 
         Injector announcerInjector = bootstrapApplication("test-application")
                 .withModules(
-                        new NodeModule(),
+                        new TestingNodeModule("testing", "red"),
                         new ReportingModule(),
                         new MBeanModule(),
                         new InMemoryEventModule(),
@@ -158,7 +155,7 @@ public class TestDiscoveryServer
                             }
                         },
                         new JsonModule(),
-                        new com.proofpoint.discovery.client.DiscoveryModule()
+                        new DiscoveryModule()
                 )
                 .doNotInitializeLogging()
                 .setRequiredConfigurationProperties(announcerProperties)
@@ -238,17 +235,17 @@ public class TestDiscoveryServer
         assertTrue(selectorFor("apple", "red").selectAllServices().isEmpty());
     }
 
-    private ServiceSelector selectorFor(String type, String pool)
+    private ServiceSelector selectorFor(final String type, String pool)
             throws Exception
     {
         Map<String, String> clientProperties = ImmutableMap.<String, String>builder()
-            .put("node.environment", "testing")
             .put("testing.discovery.uri", server.getBaseUrl().toString())
+            .put("discovery.apple.pool", pool)
             .build();
 
         Injector clientInjector = bootstrapApplication("test-application")
                 .withModules(
-                        new NodeModule(),
+                        new TestingNodeModule("testing"),
                         new ReportingModule(),
                         new MBeanModule(),
                         new InMemoryEventModule(),
@@ -261,7 +258,15 @@ public class TestDiscoveryServer
                             }
                         },
                         new JsonModule(),
-                        new com.proofpoint.discovery.client.DiscoveryModule()
+                        new DiscoveryModule(),
+                        new Module()
+                        {
+                            @Override
+                            public void configure(Binder binder)
+                            {
+                                discoveryBinder(binder).bindSelector(type);
+                            }
+                        }
                 )
                 .doNotInitializeLogging()
                 .setRequiredConfigurationProperties(clientProperties)
@@ -269,9 +274,7 @@ public class TestDiscoveryServer
 
         lifeCycleManagers.add(clientInjector.getInstance(LifeCycleManager.class));
 
-        NodeInfo nodeInfo = clientInjector.getInstance(NodeInfo.class);
-        DiscoveryLookupClient client = clientInjector.getInstance(DiscoveryLookupClient.class);
-        return new SimpleServiceSelector(type, new ServiceSelectorConfig().setPool(pool), nodeInfo, client);
+        return clientInjector.getInstance(Key.get(ServiceSelector.class, serviceType(type)));
     }
 
     private URI uriFor(String path)
