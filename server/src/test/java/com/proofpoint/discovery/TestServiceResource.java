@@ -40,17 +40,15 @@ import static org.testng.Assert.assertEquals;
 public class TestServiceResource
 {
     private InMemoryDynamicStore dynamicStore;
-    private InMemoryStaticStore staticStore;
     private ServiceResource resource;
     private ProxyStore proxyStore;
 
     @BeforeMethod
     protected void setUp()
     {
-        dynamicStore = new InMemoryDynamicStore(new DiscoveryConfig(), new TestingTimeProvider());
-        staticStore = new InMemoryStaticStore();
+        dynamicStore = new InMemoryDynamicStore(new DiscoveryConfig(), new TestingTimeSupplier());
         proxyStore = mock(ProxyStore.class);
-        resource = new ServiceResource(dynamicStore, staticStore, proxyStore, new NodeInfo("testing"));
+        resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), proxyStore, new NodeInfo("testing"));
     }
 
     @Test

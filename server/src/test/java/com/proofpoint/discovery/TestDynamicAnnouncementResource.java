@@ -18,7 +18,7 @@ package com.proofpoint.discovery;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.discovery.DiscoveryConfig.StringSet;
-import com.proofpoint.discovery.store.RealTimeProvider;
+import com.proofpoint.discovery.store.RealTimeSupplier;
 import com.proofpoint.node.NodeInfo;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -41,7 +41,7 @@ public class TestDynamicAnnouncementResource
     @BeforeMethod
     public void setup()
     {
-        store = new InMemoryDynamicStore(new DiscoveryConfig(), new RealTimeProvider());
+        store = new InMemoryDynamicStore(new DiscoveryConfig(), new RealTimeSupplier());
         resource = new DynamicAnnouncementResource(store, new NodeInfo("testing"), new DiscoveryConfig());
     }
 

@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.proofpoint.discovery;
+package com.proofpoint.discovery.store;
 
 import com.google.common.base.Supplier;
 import org.joda.time.DateTime;
 
-public class TestInMemoryStaticStore
-        extends TestStaticStore
+public class RealTimeSupplier
+    implements Supplier<DateTime>
 {
     @Override
-    protected StaticStore initializeStore(Supplier<DateTime> timeSupplier)
+    public DateTime get()
     {
-        return new InMemoryStaticStore();
+        return new DateTime();
     }
 }

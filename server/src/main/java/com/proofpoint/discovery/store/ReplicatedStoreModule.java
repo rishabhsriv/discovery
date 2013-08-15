@@ -15,12 +15,14 @@
  */
 package com.proofpoint.discovery.store;
 
+import com.google.common.base.Supplier;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.balancing.HttpServiceBalancerStats;
@@ -67,7 +69,7 @@ public class ReplicatedStoreModule
 
         // global
         binder.bind(StoreResource.class).in(Scopes.SINGLETON);
-        binder.bind(DateTime.class).toProvider(RealTimeProvider.class).in(Scopes.NO_SCOPE);
+        binder.bind(new TypeLiteral<Supplier<DateTime>>() {}).to(RealTimeSupplier.class).in(Scopes.SINGLETON);
         binder.bind(SmileMapper.class).in(Scopes.SINGLETON);
         binder.bind(ConflictResolver.class).in(Scopes.SINGLETON);
 
@@ -245,7 +247,7 @@ public class ReplicatedStoreModule
         private final Key<? extends RemoteStore> remoteStoreKey;
 
         private Injector injector;
-        private Provider<DateTime> dateTimeProvider;
+        private Supplier<DateTime> timeSupplier;
         private DistributedStore store;
 
         public DistributedStoreProvider(String name,
@@ -267,7 +269,7 @@ public class ReplicatedStoreModule
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
                 RemoteStore remoteStore = injector.getInstance(remoteStoreKey);
 
-                store = new DistributedStore(name, localStore, remoteStore, storeConfig, dateTimeProvider);
+                store = new DistributedStore(name, localStore, remoteStore, storeConfig, timeSupplier);
                 store.start();
             }
 
@@ -289,10 +291,9 @@ public class ReplicatedStoreModule
         }
 
         @Inject
-        public void setDateTimeProvider(Provider<DateTime> dateTimeProvider)
+        public void setTimeSupplier(Supplier<DateTime> timeSupplier)
         {
-            this.dateTimeProvider = dateTimeProvider;
+            this.timeSupplier = timeSupplier;
         }
     }
-
 }
