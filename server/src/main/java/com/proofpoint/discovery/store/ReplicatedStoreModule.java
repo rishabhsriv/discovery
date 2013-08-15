@@ -33,6 +33,8 @@ import org.joda.time.DateTime;
 import org.weakref.jmx.ObjectNameBuilder;
 
 import javax.annotation.PreDestroy;
+import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 
@@ -101,6 +103,7 @@ public class ReplicatedStoreModule
                 .to(storeConfigKey);
     }
 
+    @ThreadSafe
     private static class ReplicatorProvider
         implements Provider<Replicator>
     {
@@ -109,9 +112,16 @@ public class ReplicatedStoreModule
         private final Key<? extends HttpClient> httpClientKey;
         private final Key<StoreConfig> storeConfigKey;
 
+        @GuardedBy("this")
         private Injector injector;
+
+        @GuardedBy("this")
         private NodeInfo nodeInfo;
+
+        @GuardedBy("this")
         private ServiceSelector serviceSelector;
+
+        @GuardedBy("this")
         private Replicator replicator;
 
         private ReplicatorProvider(String name, Key<? extends LocalStore> localStoreKey, Key<? extends HttpClient> httpClientKey, Key<StoreConfig> storeConfigKey)
@@ -152,31 +162,41 @@ public class ReplicatedStoreModule
         }
 
         @Inject
-        public void setInjector(Injector injector)
+        public synchronized void setInjector(Injector injector)
         {
             this.injector = injector;
         }
 
         @Inject
-        public void setNodeInfo(NodeInfo nodeInfo)
+        public synchronized void setNodeInfo(NodeInfo nodeInfo)
         {
             this.nodeInfo = nodeInfo;
         }
 
         @Inject
-        public void setServiceSelector(ServiceSelector serviceSelector)
+        public synchronized void setServiceSelector(ServiceSelector serviceSelector)
         {
             this.serviceSelector = serviceSelector;
         }
     }
 
+    @ThreadSafe
     private static class RemoteHttpStoreProvider
             implements Provider<HttpRemoteStore>
     {
+        @GuardedBy("this")
         private HttpRemoteStore remoteStore;
+
+        @GuardedBy("this")
         private Injector injector;
+
+        @GuardedBy("this")
         private NodeInfo nodeInfo;
+
+        @GuardedBy("this")
         private ServiceSelector serviceSelector;
+
+        @GuardedBy("this")
         private ReportExporter reportExporter;
 
         private final String name;
@@ -214,25 +234,25 @@ public class ReplicatedStoreModule
         }
 
         @Inject
-        public void setInjector(Injector injector)
+        public synchronized void setInjector(Injector injector)
         {
             this.injector = injector;
         }
 
         @Inject
-        public void setNodeInfo(NodeInfo nodeInfo)
+        public synchronized void setNodeInfo(NodeInfo nodeInfo)
         {
             this.nodeInfo = nodeInfo;
         }
 
         @Inject
-        public void setServiceSelector(ServiceSelector serviceSelector)
+        public synchronized void setServiceSelector(ServiceSelector serviceSelector)
         {
             this.serviceSelector = serviceSelector;
         }
 
         @Inject
-        private void setReportExporter(ReportExporter reportExporter)
+        private synchronized void setReportExporter(ReportExporter reportExporter)
         {
             this.reportExporter = reportExporter;
         }
@@ -285,13 +305,13 @@ public class ReplicatedStoreModule
         }
 
         @Inject
-        public void setInjector(Injector injector)
+        public synchronized void setInjector(Injector injector)
         {
             this.injector = injector;
         }
 
         @Inject
-        public void setTimeSupplier(Supplier<DateTime> timeSupplier)
+        public synchronized void setTimeSupplier(Supplier<DateTime> timeSupplier)
         {
             this.timeSupplier = timeSupplier;
         }
