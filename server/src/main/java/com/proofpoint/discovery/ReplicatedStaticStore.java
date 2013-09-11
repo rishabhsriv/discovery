@@ -50,7 +50,7 @@ public class ReplicatedStaticStore
     @Override
     public void put(Service service)
     {
-        byte[] key = service.getId().toString().getBytes(UTF_8);
+        byte[] key = service.getId().getBytes();
         byte[] value = codec.toJson(service).getBytes(UTF_8);
 
         store.put(key, value);
@@ -59,9 +59,7 @@ public class ReplicatedStaticStore
     @Override
     public void delete(Id<Service> id)
     {
-        byte[] key = id.toString().getBytes(UTF_8);
-
-        store.delete(key);
+        store.delete(id.getBytes());
     }
 
     @Override
