@@ -17,7 +17,7 @@ package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
-import com.google.common.util.concurrent.CheckedFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -37,11 +37,13 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.google.common.base.Throwables.propagate;
 import static com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient.DEFAULT_DELAY;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 
@@ -139,15 +141,24 @@ public class ProxyStore
         public void start()
         {
             try {
-                refresh().checkedGet(30, TimeUnit.SECONDS);
+                refresh().get(30, TimeUnit.SECONDS);
             }
             catch (TimeoutException ignored) {
             }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            catch (ExecutionException e) {
+                if (e.getCause() instanceof DiscoveryException) {
+                    throw (DiscoveryException) e.getCause();
+                }
+                throw propagate(e);
+            }
         }
 
-        private CheckedFuture<ServiceDescriptors, DiscoveryException> refresh()
+        private ListenableFuture<ServiceDescriptors> refresh()
         {
-            final CheckedFuture<ServiceDescriptors, DiscoveryException> future = lookupClient.getServices(type);
+            final ListenableFuture<ServiceDescriptors> future = lookupClient.getServices(type);
 
             future.addListener(new Runnable()
             {
@@ -156,9 +167,9 @@ public class ProxyStore
                 {
                     Duration delay = DEFAULT_DELAY;
                     try {
-                        ServiceDescriptors descriptors = future.checkedGet();
+                        ServiceDescriptors descriptors = future.get();
                         delay = descriptors.getMaxAge();
-                        Builder builder = ImmutableSet.builder();
+                        Builder<Service> builder = ImmutableSet.builder();
                         for (ServiceDescriptor descriptor : descriptors.getServiceDescriptors()) {
                             builder.add(new Service(
                                     Id.<Service>valueOf(descriptor.getId()),
@@ -173,11 +184,17 @@ public class ProxyStore
                             log.info("Proxied discovery server connect succeeded for refresh (%s)", type);
                         }
                     }
-                    catch (DiscoveryException e) {
-                        if (serverUp.compareAndSet(true, false)) {
-                            log.error("Cannot connect to proxy discovery server for refresh (%s): %s", type, e.getMessage());
+                    catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
+                    }
+                    catch (ExecutionException e) {
+                        if (!(e.getCause() instanceof DiscoveryException)) {
+                            throw propagate(e);
                         }
-                        log.debug(e, "Cannot connect to proxy discovery server for refresh (%s)", type);
+                        if (serverUp.compareAndSet(true, false)) {
+                            log.error("Cannot connect to proxy discovery server for refresh (%s): %s", type, e.getCause().getMessage());
+                        }
+                        log.debug(e.getCause(), "Cannot connect to proxy discovery server for refresh (%s)", type);
                     }
                     finally {
                         if (!poolExecutor.isShutdown()) {

@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.proofpoint.configuration.testing.ConfigAssertions.assertLegacyEquivalence;
 import static com.proofpoint.testing.ValidationAssertions.assertFailsValidation;
 
 public class TestDiscoveryConfig
@@ -61,9 +62,9 @@ public class TestDiscoveryConfig
     }
 
     @Test
-    public void testDeprecatedProperties()
+    public void testLegacyProperties()
     {
-        ConfigAssertions.assertDeprecatedEquivalence(DiscoveryConfig.class,
+        assertLegacyEquivalence(DiscoveryConfig.class,
                 ImmutableMap.<String, String>of());
     }
 

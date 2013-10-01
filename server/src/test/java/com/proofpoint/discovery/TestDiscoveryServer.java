@@ -126,7 +126,7 @@ public class TestDiscoveryServer
         Map<String, String> announcerProperties = ImmutableMap.<String, String>builder()
             .put("node.environment", "testing")
             .put("node.pool", "red")
-            .put("discovery.uri", server.getBaseUrl().toString())
+            .put("testing.discovery.uri", server.getBaseUrl().toString())
             .build();
 
         Injector announcerInjector = Guice.createInjector(Stage.PRODUCTION,
@@ -212,7 +212,7 @@ public class TestDiscoveryServer
     {
         Map<String, String> clientProperties = ImmutableMap.<String, String>builder()
             .put("node.environment", "testing")
-            .put("discovery.uri", server.getBaseUrl().toString())
+            .put("testing.discovery.uri", server.getBaseUrl().toString())
             .put("discovery.apple.pool", "red")
             .build();
 

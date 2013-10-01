@@ -21,9 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static org.mockito.Mockito.mock;
@@ -117,7 +114,7 @@ public class TestProxyStore
         }
 
         @Override
-        public <T, E extends Exception> AsyncHttpResponseFuture<T, E> executeAsync(Request request, ResponseHandler<T, E> responseHandler)
+        public <T, E extends Exception> AsyncHttpResponseFuture<T> executeAsync(Request request, ResponseHandler<T, E> responseHandler)
         {
             assertEquals(request.getMethod(), "GET");
             URI uri = request.getUri();
@@ -136,7 +133,7 @@ public class TestProxyStore
             }
             final Services filteredServices = new Services(config.getProxyEnvironment(), builder.build());
 
-            return new TestingResponseFuture(request, responseHandler, filteredServices);
+            return new TestingResponseFuture<>(request, responseHandler, filteredServices);
         }
 
         @Override
@@ -159,7 +156,7 @@ public class TestProxyStore
 
         private static class TestingResponseFuture<T, E extends Exception>
                 extends AbstractFuture<T>
-                implements AsyncHttpResponseFuture<T, E>
+                implements AsyncHttpResponseFuture<T>
         {
             public TestingResponseFuture(Request request, ResponseHandler<T, E> responseHandler, final Services filteredServices)
             {
@@ -214,29 +211,6 @@ public class TestProxyStore
             public String getState()
             {
                 return "done";
-            }
-
-            @Override
-            public T checkedGet()
-                    throws E
-            {
-                try {
-                    return get();
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return null;
-                }
-                catch (ExecutionException e) {
-                    throw (E) e.getCause();
-                }
-            }
-
-            @Override
-            public T checkedGet(long l, TimeUnit timeUnit)
-                    throws TimeoutException, E
-            {
-                return checkedGet();
             }
         }
     }
