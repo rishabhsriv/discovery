@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.CheckedFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Provider;
 import com.proofpoint.discovery.client.DiscoveryException;
 import com.proofpoint.discovery.client.DiscoveryLookupClient;
 import com.proofpoint.discovery.client.HttpDiscoveryLookupClient;
@@ -35,7 +34,6 @@ import com.proofpoint.units.Duration;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.proofpoint.discovery.client.DiscoveryAnnouncementClient.DEFAULT_DELAY;
+import static com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient.DEFAULT_DELAY;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 
 public class ProxyStore
@@ -64,10 +62,10 @@ public class ProxyStore
             AsyncHttpClient httpClient = injector.getInstance(
                     Key.get(AsyncHttpClient.class, ForProxyStore.class));
             DiscoveryLookupClient lookupClient = new HttpDiscoveryLookupClient(
-                    new ProxyURIProvider(discoveryConfig),
                     new NodeInfo(discoveryConfig.getProxyEnvironment()),
                     jsonCodec(ServiceDescriptorsRepresentation.class),
-                    httpClient);
+                    httpClient,
+                    null);
             ScheduledThreadPoolExecutor poolExecutor = new ScheduledThreadPoolExecutor(5, new ThreadFactoryBuilder()
                     .setNameFormat("Proxy-Discovery-%s")
                     .setDaemon(true)
@@ -122,22 +120,6 @@ public class ProxyStore
             }
         }
         return builder.build();
-    }
-
-    private static class ProxyURIProvider implements Provider<URI>
-    {
-        private final URI uri;
-
-        public ProxyURIProvider(DiscoveryConfig discoveryConfig)
-        {
-            uri = discoveryConfig.getProxyUri();
-        }
-
-        @Override
-        public URI get()
-        {
-            return uri;
-        }
     }
 
     private class ServiceUpdater

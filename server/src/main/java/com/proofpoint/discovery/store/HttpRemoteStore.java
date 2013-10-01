@@ -265,10 +265,11 @@ public class HttpRemoteStore
                 httpClient.execute(request, new ResponseHandler<Void, Exception>()
                 {
                     @Override
-                    public Exception handleException(Request request, Exception exception)
+                    public Void handleException(Request request, Exception exception)
+                            throws Exception
                     {
                         // ignore
-                        return exception;
+                        throw exception;
                     }
 
                     @Override

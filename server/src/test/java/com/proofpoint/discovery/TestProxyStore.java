@@ -121,8 +121,8 @@ public class TestProxyStore
         {
             assertEquals(request.getMethod(), "GET");
             URI uri = request.getUri();
-            assertTrue(uri.toString().startsWith("http://discovery.example.com/v1/service/"), "uri " + uri.toString() + " starts with expected prefix");
-            String type = uri.toASCIIString().substring(40);
+            assertTrue(uri.toString().startsWith("v1/service/"), "uri " + uri.toString() + " starts with expected prefix");
+            String type = uri.toASCIIString().substring(11);
             if (type.endsWith("/")) {
                 type = type.substring(0, type.length() - 1);
             }

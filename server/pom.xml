@@ -11,7 +11,7 @@
     <parent>
         <groupId>com.proofpoint.platform</groupId>
         <artifactId>rest-server-base</artifactId>
-        <version>0.71</version>
+        <version>0.77</version>
     </parent>
 
     <properties>
@@ -70,11 +70,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.proofpoint.platform</groupId>
-            <artifactId>jmx-http-rpc-experimental</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
             <version>2.1.2</version>
@@ -120,7 +115,7 @@
 
         <dependency>
             <groupId>com.proofpoint.platform</groupId>
-            <artifactId>discovery-experimental</artifactId>
+            <artifactId>discovery</artifactId>
         </dependency>
 
         <dependency>

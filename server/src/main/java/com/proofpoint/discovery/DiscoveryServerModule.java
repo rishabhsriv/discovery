@@ -16,8 +16,12 @@
 package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Binder;
+import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.google.inject.PrivateBinder;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.proofpoint.discovery.client.ServiceDescriptor;
@@ -27,6 +31,12 @@ import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.PersistentStore;
 import com.proofpoint.discovery.store.PersistentStoreConfig;
 import com.proofpoint.discovery.store.ReplicatedStoreModule;
+import com.proofpoint.http.client.AsyncHttpClient;
+import com.proofpoint.http.client.balancing.BalancingAsyncHttpClient;
+import com.proofpoint.http.client.balancing.BalancingHttpClientConfig;
+import com.proofpoint.http.client.balancing.ForBalancingHttpClient;
+import com.proofpoint.http.client.balancing.HttpServiceBalancer;
+import com.proofpoint.http.client.balancing.HttpServiceBalancerImpl;
 import com.proofpoint.node.NodeInfo;
 
 import javax.inject.Singleton;
@@ -34,7 +44,8 @@ import java.util.List;
 
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
-import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
+import static com.proofpoint.http.client.HttpClientBinder.httpClientPrivateBinder;
+import static org.weakref.jmx.guice.ExportBinder.newExporter;
 
 public class DiscoveryServerModule
         implements Module
@@ -58,7 +69,13 @@ public class DiscoveryServerModule
         bindConfig(binder).prefixedWith("static").to(PersistentStoreConfig.class);
 
         // proxy announcements
-        httpClientBinder(binder).bindAsyncHttpClient("discovery.proxy", ForProxyStore.class);
+        PrivateBinder privateBinder = binder.newPrivateBinder();
+        privateBinder.bind(HttpServiceBalancer.class).annotatedWith(ForBalancingHttpClient.class).toProvider(ProxyBalancerProvider.class);
+        httpClientPrivateBinder(privateBinder, binder).bindAsyncHttpClient("discovery.proxy", ForBalancingHttpClient.class);
+        bindConfig(binder).prefixedWith("discovery.proxy").to(BalancingHttpClientConfig.class);
+        privateBinder.bind(AsyncHttpClient.class).annotatedWith(ForProxyStore.class).to(BalancingAsyncHttpClient.class).in(Scopes.SINGLETON);
+        privateBinder.expose(AsyncHttpClient.class).annotatedWith(ForProxyStore.class);
+        newExporter(binder).export(AsyncHttpClient.class).annotatedWith(ForProxyStore.class).withGeneratedName();
         binder.bind(ProxyStore.class).in(Scopes.SINGLETON);
     }
 
@@ -86,5 +103,26 @@ public class DiscoveryServerModule
                 return ImmutableList.copyOf(inventory.getServiceDescriptors(getType()));
             }
         };
+    }
+
+    private static class ProxyBalancerProvider implements Provider<HttpServiceBalancer>
+    {
+        private final DiscoveryConfig discoveryConfig;
+
+        @Inject
+        private ProxyBalancerProvider(DiscoveryConfig discoveryConfig)
+        {
+            this.discoveryConfig = discoveryConfig;
+        }
+
+        @Override
+        public HttpServiceBalancer get()
+        {
+            HttpServiceBalancerImpl proxyBalancer = new HttpServiceBalancerImpl("discovery-upstream");
+            if (discoveryConfig.getProxyUri() != null) {
+                proxyBalancer.updateHttpUris(ImmutableSet.of(discoveryConfig.getProxyUri()));
+            }
+            return proxyBalancer;
+        }
     }
 }

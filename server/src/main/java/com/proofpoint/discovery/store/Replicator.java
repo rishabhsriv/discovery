@@ -142,9 +142,10 @@ public class Replicator
                 httpClient.execute(request, new ResponseHandler<Void, Exception>()
                 {
                     @Override
-                    public Exception handleException(Request request, Exception exception)
+                    public Void handleException(Request request, Exception exception)
+                            throws Exception
                     {
-                        return exception;
+                        throw exception;
                     }
 
                     @Override

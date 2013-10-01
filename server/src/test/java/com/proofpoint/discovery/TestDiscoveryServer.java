@@ -22,15 +22,16 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Stage;
 import com.proofpoint.configuration.ConfigurationFactory;
 import com.proofpoint.configuration.ConfigurationModule;
-import com.proofpoint.discovery.client.DiscoveryAnnouncementClient;
 import com.proofpoint.discovery.client.DiscoveryLookupClient;
 import com.proofpoint.discovery.client.DiscoveryModule;
-import com.proofpoint.discovery.client.ServiceAnnouncement;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.client.ServiceSelectorConfig;
+import com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient;
+import com.proofpoint.discovery.client.announce.ServiceAnnouncement;
 import com.proofpoint.discovery.client.testing.SimpleServiceSelector;
 import com.proofpoint.http.client.ApacheHttpClient;
 import com.proofpoint.http.client.FullJsonResponseHandler.JsonResponse;
@@ -128,7 +129,7 @@ public class TestDiscoveryServer
             .put("discovery.uri", server.getBaseUrl().toString())
             .build();
 
-        Injector announcerInjector = Guice.createInjector(
+        Injector announcerInjector = Guice.createInjector(Stage.PRODUCTION,
                 new NodeModule(),
                 new JsonModule(),
                 new ConfigurationModule(new ConfigurationFactory(announcerProperties)),
@@ -222,8 +223,9 @@ public class TestDiscoveryServer
                 new com.proofpoint.discovery.client.DiscoveryModule()
         );
 
+        NodeInfo nodeInfo = clientInjector.getInstance(NodeInfo.class);
         DiscoveryLookupClient client = clientInjector.getInstance(DiscoveryLookupClient.class);
-        return new SimpleServiceSelector(type, new ServiceSelectorConfig().setPool(pool), client);
+        return new SimpleServiceSelector(type, new ServiceSelectorConfig().setPool(pool), nodeInfo, client);
     }
 
     private URI uriFor(String path)
