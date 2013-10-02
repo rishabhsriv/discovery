@@ -75,7 +75,7 @@ public class HttpRemoteStore
     private final int queueSize;
     private final Duration updateInterval;
 
-    private final ConcurrentMap<String, BatchProcessor<Entry>> processors = new ConcurrentHashMap<String, BatchProcessor<Entry>>();
+    private final ConcurrentMap<String, BatchProcessor<Entry>> processors = new ConcurrentHashMap<>();
     private final String name;
     private final NodeInfo node;
     private final ServiceSelector selector;
@@ -157,7 +157,7 @@ public class HttpRemoteStore
                 Thread.currentThread().interrupt();
             }
             catch (ExecutionException e) {
-                Throwables.propagate(e);
+                throw Throwables.propagate(e);
             }
 
             executor.shutdownNow();
@@ -186,7 +186,7 @@ public class HttpRemoteStore
         Iterable<ServiceDescriptor> newDescriptors = filter(descriptors, predicate);
 
         for (ServiceDescriptor descriptor : newDescriptors) {
-            BatchProcessor<Entry> processor = new BatchProcessor<Entry>(descriptor.getNodeId(),
+            BatchProcessor<Entry> processor = new BatchProcessor<>(descriptor.getNodeId(),
                     new MyBatchHandler(name, descriptor, httpClient),
                     maxBatchSize,
                     queueSize);
@@ -247,6 +247,7 @@ public class HttpRemoteStore
 
         @Override
         public void processBatch(final Collection<Entry> entries)
+                throws Exception
         {
             final Request request = Request.Builder.preparePost()
                     .setUri(uri)
@@ -268,7 +269,6 @@ public class HttpRemoteStore
                     public Void handleException(Request request, Exception exception)
                             throws Exception
                     {
-                        // ignore
                         throw exception;
                     }
 
@@ -276,16 +276,15 @@ public class HttpRemoteStore
                     public Void handle(Request request, Response response)
                             throws Exception
                     {
-                        // ignore
+                        if (response.getStatusCode() >= 300) {
+                            throw new Exception("Remote server returned " + response.getStatusCode() + " status code");
+                        }
                         return null;
                     }
                 });
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-            }
-            catch (Exception e) {
-                // ignore
             }
         }
     }

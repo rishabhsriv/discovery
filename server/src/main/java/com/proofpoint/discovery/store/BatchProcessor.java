@@ -59,7 +59,7 @@ public class BatchProcessor<T>
         this.name = name;
         this.handler = handler;
         this.maxBatchSize = maxBatchSize;
-        this.queue = new ArrayBlockingQueue<T>(queueSize);
+        this.queue = new ArrayBlockingQueue<>(queueSize);
     }
 
     @PostConstruct
@@ -72,7 +72,7 @@ public class BatchProcessor<T>
                 public void run()
                 {
                     while (!Thread.interrupted()) {
-                        final List<T> entries = new ArrayList<T>(maxBatchSize);
+                        final List<T> entries = new ArrayList<>(maxBatchSize);
 
                         try {
                             T first = queue.take();
@@ -148,6 +148,7 @@ public class BatchProcessor<T>
 
     public static interface BatchHandler<T>
     {
-        void processBatch(Collection<T> entries);
+        void processBatch(Collection<T> entries)
+                throws Exception;
     }
 }
