@@ -18,7 +18,9 @@ package com.proofpoint.discovery.store;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.proofpoint.log.Logger;
-import org.weakref.jmx.Managed;
+import com.proofpoint.reporting.Gauge;
+import com.proofpoint.stats.CounterStat;
+import org.weakref.jmx.Nested;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -31,7 +33,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class BatchProcessor<T>
 {
@@ -45,9 +46,9 @@ public class BatchProcessor<T>
     private ExecutorService executor;
     private volatile Future<?> future;
 
-    private final AtomicLong processedEntries = new AtomicLong();
-    private final AtomicLong droppedEntries = new AtomicLong();
-    private final AtomicLong errors = new AtomicLong();
+    private final CounterStat processedEntries = new CounterStat();
+    private final CounterStat droppedEntries = new CounterStat();
+    private final CounterStat errors = new CounterStat();
 
     public BatchProcessor(String name, BatchHandler<T> handler, int maxBatchSize, int queueSize)
     {
@@ -81,13 +82,13 @@ public class BatchProcessor<T>
 
                             handler.processBatch(Collections.unmodifiableList(entries));
 
-                            processedEntries.addAndGet(entries.size());
+                            processedEntries.update(entries.size());
                         }
                         catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
                         catch (Throwable t) {
-                            errors.incrementAndGet();
+                            errors.update(1);
                             log.warn(t, "Error handling batch");
                         }
 
@@ -98,25 +99,25 @@ public class BatchProcessor<T>
         }
     }
 
-    @Managed
-    public long getProcessedEntries()
+    @Nested
+    public CounterStat getProcessedEntries()
     {
-        return processedEntries.get();
+        return processedEntries;
     }
 
-    @Managed
-    public long getDroppedEntries()
+    @Nested
+    public CounterStat getDroppedEntries()
     {
-        return droppedEntries.get();
+        return droppedEntries;
     }
 
-    @Managed
-    public long getErrors()
+    @Nested
+    public CounterStat getErrors()
     {
-        return errors.get();
+        return errors;
     }
 
-    @Managed
+    @Gauge
     public long getQueueSize()
     {
         return queue.size();
@@ -141,7 +142,7 @@ public class BatchProcessor<T>
         while (!queue.offer(entry)) {
             // throw away oldest and try again
             if (queue.poll() != null) {
-                droppedEntries.incrementAndGet();
+                droppedEntries.update(1);
             }
         }
     }
