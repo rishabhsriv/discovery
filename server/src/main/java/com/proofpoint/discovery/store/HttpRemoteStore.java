@@ -53,11 +53,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.compose;
-import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
@@ -69,7 +69,8 @@ import static org.weakref.jmx.ObjectNames.generatedNameOf;
 public class HttpRemoteStore
         implements RemoteStore
 {
-    private final static Logger log = Logger.get(HttpRemoteStore.class);
+    private static final Logger log = Logger.get(HttpRemoteStore.class);
+    private static final Pattern HTTP_PATTERN = Pattern.compile("^http(?:s)?://");
 
     private final int maxBatchSize;
     private final int queueSize;
@@ -77,7 +78,6 @@ public class HttpRemoteStore
 
     private final ConcurrentMap<String, BatchProcessor<Entry>> processors = new ConcurrentHashMap<>();
     private final String name;
-    private final NodeInfo node;
     private final ServiceSelector selector;
     private final HttpClient httpClient;
 
@@ -86,11 +86,12 @@ public class HttpRemoteStore
 
     private final AtomicLong lastRemoteServerRefreshTimestamp = new AtomicLong();
     private final ReportExporter reportExporter;
+    private final Predicate<ServiceDescriptor> ourNodeIdPredicate;
 
 
     @Inject
     public HttpRemoteStore(String name,
-            NodeInfo node,
+            final NodeInfo node,
             ServiceSelector selector,
             StoreConfig config,
             HttpClient httpClient,
@@ -104,7 +105,6 @@ public class HttpRemoteStore
         checkNotNull(reportExporter, "reportExporter is null");
 
         this.name = name;
-        this.node = node;
         this.selector = selector;
         this.httpClient = httpClient;
         this.reportExporter = reportExporter;
@@ -112,6 +112,14 @@ public class HttpRemoteStore
         maxBatchSize = config.getMaxBatchSize();
         queueSize = config.getQueueSize();
         updateInterval = config.getRemoteUpdateInterval();
+        ourNodeIdPredicate = new Predicate<ServiceDescriptor>()
+        {
+            @Override
+            public boolean apply(ServiceDescriptor input)
+            {
+                return node.getNodeId().equals(input.getNodeId());
+            }
+        };
     }
 
     @PostConstruct
@@ -168,40 +176,42 @@ public class HttpRemoteStore
 
     private void updateProcessors(List<ServiceDescriptor> descriptors)
     {
-        Set<String> nodeIds = ImmutableSet.copyOf(transform(descriptors, getNodeIdFunction()));
+        Set<String> hostPorts = ImmutableSet.copyOf(transform(descriptors, getHostPortFunction()));
 
         // remove old ones
         Iterator<Map.Entry<String, BatchProcessor<Entry>>> iterator = processors.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, BatchProcessor<Entry>> entry = iterator.next();
 
-            if (!nodeIds.contains(entry.getKey())) {
+            if (!hostPorts.contains(entry.getKey())) {
                 iterator.remove();
                 entry.getValue().stop();
                 reportExporter.unexport(nameFor(entry.getKey()));
             }
         }
 
-        Predicate<ServiceDescriptor> predicate = compose(and(not(equalTo(node.getNodeId())), not(in(processors.keySet()))), getNodeIdFunction());
+
+        Predicate<ServiceDescriptor> predicate = and(not(ourNodeIdPredicate), compose(not(in(processors.keySet())), getHostPortFunction()));
         Iterable<ServiceDescriptor> newDescriptors = filter(descriptors, predicate);
 
         for (ServiceDescriptor descriptor : newDescriptors) {
-            BatchProcessor<Entry> processor = new BatchProcessor<>(descriptor.getNodeId(),
+            String hostPort = getHostPort(descriptor);
+            BatchProcessor<Entry> processor = new BatchProcessor<>(hostPort,
                     new MyBatchHandler(name, descriptor, httpClient),
                     maxBatchSize,
                     queueSize);
 
             processor.start();
-            processors.put(descriptor.getNodeId(), processor);
-            reportExporter.export(nameFor(descriptor.getNodeId()), processor);
+            processors.put(hostPort, processor);
+            reportExporter.export(nameFor(hostPort), processor);
         }
 
         lastRemoteServerRefreshTimestamp.set(System.currentTimeMillis());
     }
 
-    private String nameFor(String id)
+    private String nameFor(String hostPort)
     {
-        return generatedNameOf(BatchProcessor.class, named(name + "-" + id));
+        return generatedNameOf(BatchProcessor.class, named(name + "-" + hostPort));
     }
 
     @Managed
@@ -210,15 +220,20 @@ public class HttpRemoteStore
         return lastRemoteServerRefreshTimestamp.get();
     }
 
-    private static Function<ServiceDescriptor, String> getNodeIdFunction()
+    private static Function<ServiceDescriptor, String> getHostPortFunction()
     {
         return new Function<ServiceDescriptor, String>()
         {
             public String apply(ServiceDescriptor descriptor)
             {
-                return descriptor.getNodeId();
+                return getHostPort(descriptor);
             }
         };
+    }
+
+    private static String getHostPort(ServiceDescriptor descriptor)
+    {
+        return HTTP_PATTERN.matcher(descriptor.getProperties().get("http")).replaceFirst("");
     }
 
     @Override
