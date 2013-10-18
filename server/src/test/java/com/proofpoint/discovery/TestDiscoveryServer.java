@@ -19,10 +19,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.inject.Binder;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Stage;
+import com.proofpoint.bootstrap.LifeCycleManager;
 import com.proofpoint.configuration.ConfigurationFactory;
 import com.proofpoint.configuration.ConfigurationModule;
 import com.proofpoint.discovery.client.DiscoveryLookupClient;
@@ -33,6 +32,7 @@ import com.proofpoint.discovery.client.ServiceSelectorConfig;
 import com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient;
 import com.proofpoint.discovery.client.announce.ServiceAnnouncement;
 import com.proofpoint.discovery.client.testing.SimpleServiceSelector;
+import com.proofpoint.event.client.InMemoryEventModule;
 import com.proofpoint.http.client.ApacheHttpClient;
 import com.proofpoint.http.client.FullJsonResponseHandler.JsonResponse;
 import com.proofpoint.http.client.HttpClient;
@@ -44,6 +44,7 @@ import com.proofpoint.jaxrs.JaxrsModule;
 import com.proofpoint.json.JsonModule;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.node.NodeModule;
+import com.proofpoint.reporting.ReportingModule;
 import org.iq80.leveldb.util.FileUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -56,9 +57,12 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
 import static com.proofpoint.http.client.FullJsonResponseHandler.createFullJsonResponseHandler;
 import static com.proofpoint.http.client.JsonBodyGenerator.jsonBodyGenerator;
 import static com.proofpoint.http.client.Request.Builder.prepareDelete;
@@ -67,6 +71,7 @@ import static com.proofpoint.http.client.StatusResponseHandler.createStatusRespo
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static com.proofpoint.json.JsonCodec.mapJsonCodec;
 import static javax.ws.rs.core.Response.Status;
+import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
@@ -76,6 +81,7 @@ public class TestDiscoveryServer
 {
     private TestingHttpServer server;
     private File tempDir;
+    private Set<LifeCycleManager> lifeCycleManagers;
 
     @BeforeMethod
     public void setup()
@@ -89,32 +95,41 @@ public class TestDiscoveryServer
                     .put("static.db.location", tempDir.getAbsolutePath())
                     .build();
 
-        Injector serverInjector = Guice.createInjector(
-                new MBeanModule(),
-                new NodeModule(),
-                new TestingHttpServerModule(),
-                new JsonModule(),
-                new JaxrsModule(),
-                new DiscoveryServerModule(),
-                new DiscoveryModule(),
-                new ConfigurationModule(new ConfigurationFactory(serverProperties)),
-                new Module() {
-                    public void configure(Binder binder)
-                    {
-                        // TODO: use testing mbean server
-                        binder.bind(MBeanServer.class).toInstance(new TestingMBeanServer());
-                    }
-                });
+        Injector serverInjector = bootstrapApplication("test-application")
+                .withModules(
+                        new MBeanModule(),
+                        new NodeModule(),
+                        new ReportingModule(),
+                        new MBeanModule(),
+                        new TestingHttpServerModule(),
+                        new JsonModule(),
+                        new JaxrsModule(),
+                        new DiscoveryServerModule(),
+                        new DiscoveryModule(),
+                        new Module()
+                        {
+                            public void configure(Binder binder)
+                            {
+                                // TODO: use testing mbean server
+                                binder.bind(MBeanServer.class).toInstance(new TestingMBeanServer());
+                            }
+                        })
+                .doNotInitializeLogging()
+                .setRequiredConfigurationProperties(serverProperties)
+                .initialize();
 
+        lifeCycleManagers = new HashSet<>();
+        lifeCycleManagers.add(serverInjector.getInstance(LifeCycleManager.class));
         server = serverInjector.getInstance(TestingHttpServer.class);
-        server.start();
     }
 
     @AfterMethod
     public void teardown()
             throws Exception
     {
-        server.stop();
+        for (LifeCycleManager lifeCycleManager : lifeCycleManagers) {
+            lifeCycleManager.stop();
+        }
         FileUtils.deleteRecursively(tempDir);
     }
 
@@ -129,12 +144,28 @@ public class TestDiscoveryServer
             .put("testing.discovery.uri", server.getBaseUrl().toString())
             .build();
 
-        Injector announcerInjector = Guice.createInjector(Stage.PRODUCTION,
-                new NodeModule(),
-                new JsonModule(),
-                new ConfigurationModule(new ConfigurationFactory(announcerProperties)),
-                new com.proofpoint.discovery.client.DiscoveryModule()
-        );
+        Injector announcerInjector = bootstrapApplication("test-application")
+                .withModules(
+                        new NodeModule(),
+                        new ReportingModule(),
+                        new MBeanModule(),
+                        new InMemoryEventModule(),
+                        new Module()
+                        {
+                            @Override
+                            public void configure(Binder binder)
+                            {
+                                binder.bind(MBeanServer.class).toInstance(mock(MBeanServer.class));
+                            }
+                        },
+                        new JsonModule(),
+                        new com.proofpoint.discovery.client.DiscoveryModule()
+                )
+                .doNotInitializeLogging()
+                .setRequiredConfigurationProperties(announcerProperties)
+                .initialize();
+
+        lifeCycleManagers.add(announcerInjector.getInstance(LifeCycleManager.class));
 
         ServiceAnnouncement announcement = ServiceAnnouncement.serviceAnnouncement("apple")
                 .addProperties(ImmutableMap.of("key", "value"))
@@ -209,19 +240,35 @@ public class TestDiscoveryServer
     }
 
     private ServiceSelector selectorFor(String type, String pool)
+            throws Exception
     {
         Map<String, String> clientProperties = ImmutableMap.<String, String>builder()
             .put("node.environment", "testing")
             .put("testing.discovery.uri", server.getBaseUrl().toString())
-            .put("discovery.apple.pool", "red")
             .build();
 
-        Injector clientInjector = Guice.createInjector(
-                new NodeModule(),
-                new JsonModule(),
-                new ConfigurationModule(new ConfigurationFactory(clientProperties)),
-                new com.proofpoint.discovery.client.DiscoveryModule()
-        );
+        Injector clientInjector = bootstrapApplication("test-application")
+                .withModules(
+                        new NodeModule(),
+                        new ReportingModule(),
+                        new MBeanModule(),
+                        new InMemoryEventModule(),
+                        new Module()
+                        {
+                            @Override
+                            public void configure(Binder binder)
+                            {
+                                binder.bind(MBeanServer.class).toInstance(mock(MBeanServer.class));
+                            }
+                        },
+                        new JsonModule(),
+                        new com.proofpoint.discovery.client.DiscoveryModule()
+                )
+                .doNotInitializeLogging()
+                .setRequiredConfigurationProperties(clientProperties)
+                .initialize();
+
+        lifeCycleManagers.add(clientInjector.getInstance(LifeCycleManager.class));
 
         NodeInfo nodeInfo = clientInjector.getInstance(NodeInfo.class);
         DiscoveryLookupClient client = clientInjector.getInstance(DiscoveryLookupClient.class);

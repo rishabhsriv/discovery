@@ -31,6 +31,8 @@ import com.proofpoint.reporting.ReportingModule;
 import com.proofpoint.tracetoken.TraceTokenModule;
 import org.weakref.jmx.guice.MBeanModule;
 
+import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
+
 public class Main
 {
     private final static Logger log = Logger.get(Main.class);
@@ -39,19 +41,20 @@ public class Main
             throws Exception
     {
         try {
-            Bootstrap app = new Bootstrap(new MBeanModule(),
-                                          new NodeModule(),
-                                          new HttpServerModule(),
-                                          new JaxrsModule(),
-                                          new JsonModule(),
-                                          new JmxModule(),
-                                          new DiscoveryServerModule(),
-                                          new HttpEventModule(),
-                                          new ReportingModule(),
-                                          new ReportingClientModule(),
-                                          new TraceTokenModule(),
-                                          new DiscoveryModule()
-                         );
+            Bootstrap app = bootstrapApplication("discovery")
+                    .withModules(new MBeanModule(),
+                            new NodeModule(),
+                            new HttpServerModule(),
+                            new JaxrsModule(),
+                            new JsonModule(),
+                            new JmxModule(),
+                            new DiscoveryServerModule(),
+                            new HttpEventModule(),
+                            new ReportingModule(),
+                            new ReportingClientModule(),
+                            new TraceTokenModule(),
+                            new DiscoveryModule()
+                    );
 
             Injector injector = app.initialize();
 

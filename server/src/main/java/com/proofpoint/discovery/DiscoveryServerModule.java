@@ -37,11 +37,15 @@ import com.proofpoint.http.client.balancing.BalancingHttpClientConfig;
 import com.proofpoint.http.client.balancing.ForBalancingHttpClient;
 import com.proofpoint.http.client.balancing.HttpServiceBalancer;
 import com.proofpoint.http.client.balancing.HttpServiceBalancerImpl;
+import com.proofpoint.http.client.balancing.HttpServiceBalancerStats;
 import com.proofpoint.node.NodeInfo;
+import com.proofpoint.reporting.ReportCollectionFactory;
+import org.weakref.jmx.ObjectNameBuilder;
 
 import javax.inject.Singleton;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientPrivateBinder;
@@ -108,17 +112,23 @@ public class DiscoveryServerModule
     private static class ProxyBalancerProvider implements Provider<HttpServiceBalancer>
     {
         private final DiscoveryConfig discoveryConfig;
+        private final ReportCollectionFactory reportCollectionFactory;
 
         @Inject
-        private ProxyBalancerProvider(DiscoveryConfig discoveryConfig)
+        private ProxyBalancerProvider(DiscoveryConfig discoveryConfig, ReportCollectionFactory reportCollectionFactory)
         {
-            this.discoveryConfig = discoveryConfig;
+            this.discoveryConfig = checkNotNull(discoveryConfig, "discoveryConfig is null");
+            this.reportCollectionFactory = checkNotNull(reportCollectionFactory, "reportCollectionFactory is null");
         }
 
         @Override
         public HttpServiceBalancer get()
         {
-            HttpServiceBalancerImpl proxyBalancer = new HttpServiceBalancerImpl("discovery-upstream");
+            String name = new ObjectNameBuilder(HttpServiceBalancerStats.class.getPackage().getName())
+                    .withProperty("type", "discovery-upstream")
+                    .build();
+            HttpServiceBalancerImpl proxyBalancer = new HttpServiceBalancerImpl("discovery-upstream",
+                    reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class, name));
             if (discoveryConfig.getProxyUri() != null) {
                 proxyBalancer.updateHttpUris(ImmutableSet.of(discoveryConfig.getProxyUri()));
             }
