@@ -18,9 +18,7 @@ package com.proofpoint.discovery.store;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.proofpoint.discovery.client.ServiceDescriptor;
@@ -32,8 +30,8 @@ import com.proofpoint.http.client.Response;
 import com.proofpoint.http.client.ResponseHandler;
 import com.proofpoint.log.Logger;
 import com.proofpoint.node.NodeInfo;
+import com.proofpoint.reporting.ReportExporter;
 import com.proofpoint.units.Duration;
-import org.weakref.jmx.MBeanExporter;
 import org.weakref.jmx.Managed;
 
 import javax.annotation.PostConstruct;
@@ -56,11 +54,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.compose;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.inject.name.Names.named;
@@ -85,7 +85,7 @@ public class HttpRemoteStore
     private ScheduledExecutorService executor;
 
     private final AtomicLong lastRemoteServerRefreshTimestamp = new AtomicLong();
-    private final MBeanExporter mbeanExporter;
+    private final ReportExporter reportExporter;
 
 
     @Inject
@@ -94,20 +94,20 @@ public class HttpRemoteStore
             ServiceSelector selector,
             StoreConfig config,
             HttpClient httpClient,
-            MBeanExporter mbeanExporter)
+            ReportExporter reportExporter)
     {
-        Preconditions.checkNotNull(name, "name is null");
-        Preconditions.checkNotNull(node, "node is null");
-        Preconditions.checkNotNull(selector, "selector is null");
-        Preconditions.checkNotNull(httpClient, "httpClient is null");
-        Preconditions.checkNotNull(config, "config is null");
-        Preconditions.checkNotNull(mbeanExporter, "mBeanExporter is null");
+        checkNotNull(name, "name is null");
+        checkNotNull(node, "node is null");
+        checkNotNull(selector, "selector is null");
+        checkNotNull(httpClient, "httpClient is null");
+        checkNotNull(config, "config is null");
+        checkNotNull(reportExporter, "reportExporter is null");
 
         this.name = name;
         this.node = node;
         this.selector = selector;
         this.httpClient = httpClient;
-        this.mbeanExporter = mbeanExporter;
+        this.reportExporter = reportExporter;
 
         maxBatchSize = config.getMaxBatchSize();
         queueSize = config.getQueueSize();
@@ -157,7 +157,7 @@ public class HttpRemoteStore
                 Thread.currentThread().interrupt();
             }
             catch (ExecutionException e) {
-                throw Throwables.propagate(e);
+                throw propagate(e);
             }
 
             executor.shutdownNow();
@@ -178,7 +178,7 @@ public class HttpRemoteStore
             if (!nodeIds.contains(entry.getKey())) {
                 iterator.remove();
                 entry.getValue().stop();
-                mbeanExporter.unexport(nameFor(entry.getKey()));
+                reportExporter.unexport(nameFor(entry.getKey()));
             }
         }
 
@@ -193,7 +193,7 @@ public class HttpRemoteStore
 
             processor.start();
             processors.put(descriptor.getNodeId(), processor);
-            mbeanExporter.export(nameFor(descriptor.getNodeId()), processor);
+            reportExporter.export(nameFor(descriptor.getNodeId()), processor);
         }
 
         lastRemoteServerRefreshTimestamp.set(System.currentTimeMillis());

@@ -24,8 +24,8 @@ import com.google.inject.Scopes;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.node.NodeInfo;
+import com.proofpoint.reporting.ReportExporter;
 import org.joda.time.DateTime;
-import org.weakref.jmx.MBeanExporter;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -36,7 +36,7 @@ import static com.google.inject.name.Names.named;
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
 import static org.weakref.jmx.ObjectNames.generatedNameOf;
-import static org.weakref.jmx.guice.MBeanModule.newExporter;
+import static org.weakref.jmx.guice.ExportBinder.newExporter;
 
 /**
  * Expects a LocalStore to be bound elsewhere.
@@ -166,7 +166,7 @@ public class ReplicatedStoreModule
         private Injector injector;
         private NodeInfo nodeInfo;
         private ServiceSelector serviceSelector;
-        private MBeanExporter mbeanExporter;
+        private ReportExporter reportExporter;
 
         private final String name;
         private final Key<? extends HttpClient> httpClientKey;
@@ -187,7 +187,7 @@ public class ReplicatedStoreModule
                 HttpClient httpClient = injector.getInstance(httpClientKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
 
-                remoteStore = new HttpRemoteStore(name, nodeInfo, serviceSelector, storeConfig, httpClient, mbeanExporter);
+                remoteStore = new HttpRemoteStore(name, nodeInfo, serviceSelector, storeConfig, httpClient, reportExporter);
                 remoteStore.start();
             }
 
@@ -221,9 +221,9 @@ public class ReplicatedStoreModule
         }
 
         @Inject
-        public void setMbeanExporter(MBeanExporter mbeanExporter)
+        private void setReportExporter(ReportExporter reportExporter)
         {
-            this.mbeanExporter = mbeanExporter;
+            this.reportExporter = reportExporter;
         }
     }
 

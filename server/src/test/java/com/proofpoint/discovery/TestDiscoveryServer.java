@@ -22,8 +22,6 @@ import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.proofpoint.bootstrap.LifeCycleManager;
-import com.proofpoint.configuration.ConfigurationFactory;
-import com.proofpoint.configuration.ConfigurationModule;
 import com.proofpoint.discovery.client.DiscoveryLookupClient;
 import com.proofpoint.discovery.client.DiscoveryModule;
 import com.proofpoint.discovery.client.ServiceDescriptor;
@@ -106,6 +104,7 @@ public class TestDiscoveryServer
                         new JaxrsModule(),
                         new DiscoveryServerModule(),
                         new DiscoveryModule(),
+                        new ReportingModule(),
                         new Module()
                         {
                             public void configure(Binder binder)
