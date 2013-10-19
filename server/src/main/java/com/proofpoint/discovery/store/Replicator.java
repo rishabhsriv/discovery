@@ -25,6 +25,8 @@ import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
 import com.proofpoint.http.client.Response;
 import com.proofpoint.http.client.ResponseHandler;
+import com.proofpoint.http.client.balancing.HttpServiceBalancerStats;
+import com.proofpoint.http.client.balancing.HttpServiceBalancerStats.Status;
 import com.proofpoint.log.Logger;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.units.Duration;
@@ -50,6 +52,7 @@ public class Replicator
     private final NodeInfo node;
     private final ServiceSelector selector;
     private final HttpClient httpClient;
+    private final HttpServiceBalancerStats httpServiceBalancerStats;
     private final LocalStore localStore;
     private final Duration replicationInterval;
 
@@ -59,18 +62,18 @@ public class Replicator
     private final ObjectMapper mapper = new ObjectMapper(new SmileFactory());
     private final AtomicLong lastReplicationTimestamp = new AtomicLong();
 
-    @Inject
     public Replicator(String name,
             NodeInfo node,
             ServiceSelector selector,
             HttpClient httpClient,
-            LocalStore localStore,
+            HttpServiceBalancerStats httpServiceBalancerStats, LocalStore localStore,
             StoreConfig config)
     {
         this.name = name;
         this.node = node;
         this.selector = selector;
         this.httpClient = httpClient;
+        this.httpServiceBalancerStats = httpServiceBalancerStats;
         this.localStore = localStore;
 
         this.replicationInterval = config.getReplicationInterval();
@@ -127,7 +130,7 @@ public class Replicator
                 continue;
             }
 
-            String uri = descriptor.getProperties().get("http");
+            final String uri = descriptor.getProperties().get("http");
             if (uri == null) {
                 log.error("service descriptor for node %s is missing http uri", descriptor.getNodeId());
                 continue;
@@ -139,12 +142,16 @@ public class Replicator
                     .build();
 
             try {
+                final long startTime = System.nanoTime();
                 httpClient.execute(request, new ResponseHandler<Void, Exception>()
                 {
                     @Override
                     public Void handleException(Request request, Exception exception)
                             throws Exception
                     {
+                        URI uri1 = URI.create(uri);
+                        httpServiceBalancerStats.responseTime(uri1, Status.FAILURE).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+                        httpServiceBalancerStats.failure(uri1, exception.getClass().getSimpleName()).update(1);
                         throw exception;
                     }
 
@@ -154,8 +161,9 @@ public class Replicator
                     {
                         // TODO: read server date (to use to calibrate entry dates)
 
-
+                        URI uri1 = URI.create(uri);
                         if (response.getStatusCode() == 200) {
+                            httpServiceBalancerStats.responseTime(uri1, Status.SUCCESS).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
                             try {
                                 List<Entry> entries = mapper.readValue(response.getInputStream(), new TypeReference<List<Entry>>() {});
                                 for (Entry entry : entries) {
@@ -165,6 +173,10 @@ public class Replicator
                             catch (EOFException e) {
                                 // ignore
                             }
+                        }
+                        else {
+                            httpServiceBalancerStats.responseTime(uri1, Status.FAILURE).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+                            httpServiceBalancerStats.failure(uri1, response.getStatusCode() + " status code").update(1);
                         }
 
                         return null;

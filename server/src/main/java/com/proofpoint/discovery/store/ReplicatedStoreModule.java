@@ -23,9 +23,12 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
+import com.proofpoint.http.client.balancing.HttpServiceBalancerStats;
 import com.proofpoint.node.NodeInfo;
+import com.proofpoint.reporting.ReportCollectionFactory;
 import com.proofpoint.reporting.ReportExporter;
 import org.joda.time.DateTime;
+import org.weakref.jmx.ObjectNameBuilder;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -125,7 +128,13 @@ public class ReplicatedStoreModule
                 HttpClient httpClient = injector.getInstance(httpClientKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
 
-                replicator = new Replicator(name, nodeInfo, serviceSelector, httpClient, localStore, storeConfig);
+                ReportCollectionFactory reportCollectionFactory = injector.getInstance(ReportCollectionFactory.class);
+                String objectName = new ObjectNameBuilder(HttpServiceBalancerStats.class.getPackage().getName())
+                        .withProperty("type", "replicator-" + name)
+                        .build();
+                HttpServiceBalancerStats httpServiceBalancerStats = reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class, objectName);
+
+                replicator = new Replicator(name, nodeInfo, serviceSelector, httpClient, httpServiceBalancerStats, localStore, storeConfig);
                 replicator.start();
             }
 
