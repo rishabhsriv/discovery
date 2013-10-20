@@ -42,7 +42,7 @@ public class TestInMemoryStore
     @Test
     public void testPut()
     {
-        Entry entry = entryOf("blue", "apple", 1, 0);
+        Entry entry = entryOf("blue", "apple", 1);
         store.put(entry);
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
@@ -52,7 +52,7 @@ public class TestInMemoryStore
     public void testDelete()
     {
         byte[] key = "blue".getBytes(Charsets.UTF_8);
-        Entry entry = entryOf("blue", "apple", 1, 0);
+        Entry entry = entryOf("blue", "apple", 1);
         store.put(entry);
 
         store.delete(key, entry.getVersion());
@@ -64,7 +64,7 @@ public class TestInMemoryStore
     public void testDeleteOlderVersion()
     {
         byte[] key = "blue".getBytes(Charsets.UTF_8);
-        Entry entry = entryOf("blue", "apple", 5, 0);
+        Entry entry = entryOf("blue", "apple", 5);
         store.put(entry);
 
         store.delete(key, new Version(2));
@@ -75,10 +75,10 @@ public class TestInMemoryStore
     @Test
     public void testResolvesConflict()
     {
-        Entry entry2 = entryOf("blue", "apple", 2, 0);
+        Entry entry2 = entryOf("blue", "apple", 2);
         store.put(entry2);
 
-        Entry entry1 = entryOf("blue", "banana", 1, 0);
+        Entry entry1 = entryOf("blue", "banana", 1);
         store.put(entry1);
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
@@ -87,14 +87,14 @@ public class TestInMemoryStore
     @Test
     public void testDefaultsMaxAge()
     {
-        Entry entry = entryOf("blue", "apple", 1, 0);
-        store.put(new Entry(entry.getKey(), entry.getValue(), entry.getVersion(), entry.getTimestamp(), null));
+        Entry entry = entryOf("blue", "apple", 1);
+        store.put(new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
     }
 
-    private static Entry entryOf(String key, String value, long version, long timestamp)
+    private static Entry entryOf(String key, String value, long timestamp)
     {
-        return new Entry(key.getBytes(UTF_8), value.getBytes(Charsets.UTF_8), new Version(version), timestamp, 60_000L);
+        return new Entry(key.getBytes(UTF_8), value.getBytes(Charsets.UTF_8), timestamp, 60_000L);
     }
 }

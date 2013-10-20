@@ -47,7 +47,6 @@ public class InMemoryStore
         if (entry.getMaxAgeInMs() == null) {
             entry = new Entry(entry.getKey(),
                     entry.getValue(),
-                    entry.getVersion(),
                     entry.getTimestamp(),
                     maxAgeInMs);
         }

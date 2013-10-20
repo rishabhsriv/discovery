@@ -35,7 +35,6 @@ public class TestEntry
     private final Entry entry = new Entry(
             new byte[] { 0, 1, 2},
             new byte[] { 3, 4, 5},
-            new Version(6789L),
             6789L,
             12345L
     );
