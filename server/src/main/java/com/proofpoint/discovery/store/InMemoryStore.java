@@ -77,7 +77,7 @@ public class InMemoryStore
     }
 
     @Override
-    public void delete(byte[] key, Version version)
+    public void delete(byte[] key, long timestamp)
     {
         Preconditions.checkNotNull(key, "key is null");
 
@@ -88,7 +88,7 @@ public class InMemoryStore
             Entry old = map.get(wrappedKey);
 
             done = true;
-            if (old != null && EnumSet.of(AFTER, SAME).contains(version.compare(old.getVersion()))) {
+            if (old != null && EnumSet.of(AFTER, SAME).contains(new Version(timestamp).compare(new Version(old.getTimestamp())))) {
                 done = map.remove(wrappedKey, old);
             }
         }
