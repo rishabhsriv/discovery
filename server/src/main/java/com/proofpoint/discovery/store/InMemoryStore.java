@@ -20,12 +20,8 @@ import com.proofpoint.discovery.DiscoveryConfig;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
-import java.util.EnumSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static com.proofpoint.discovery.store.Version.Occurs.AFTER;
-import static com.proofpoint.discovery.store.Version.Occurs.SAME;
 
 public class InMemoryStore
         implements LocalStore
@@ -88,7 +84,7 @@ public class InMemoryStore
             Entry old = map.get(wrappedKey);
 
             done = true;
-            if (old != null && EnumSet.of(AFTER, SAME).contains(new Version(timestamp).compare(new Version(old.getTimestamp())))) {
+            if (old != null && !resolver.isNewer(old, timestamp)) {
                 done = map.remove(wrappedKey, old);
             }
         }
