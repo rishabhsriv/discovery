@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 public class DiscoveryConfig
 {
-    private Duration maxAge = new Duration(30, TimeUnit.SECONDS);
+    private Duration maxAge = new Duration(90, TimeUnit.SECONDS);
     private StringSet proxyProxiedTypes = StringSet.of();
     private String proxyEnvironment = null;
     private URI proxyUri = null;

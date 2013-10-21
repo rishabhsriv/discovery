@@ -36,7 +36,7 @@ public class TestDiscoveryConfig
     public void testDefaults()
     {
         ConfigAssertions.assertRecordedDefaults(ConfigAssertions.recordDefaults(DiscoveryConfig.class)
-                .setMaxAge(new Duration(30, TimeUnit.SECONDS))
+                .setMaxAge(new Duration(90, TimeUnit.SECONDS))
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of())
                 .setProxyEnvironment(null)
                 .setProxyUri(null));

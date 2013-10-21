@@ -15,6 +15,7 @@
  */
 package com.proofpoint.discovery;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import com.proofpoint.bootstrap.Bootstrap;
 import com.proofpoint.discovery.client.DiscoveryModule;
@@ -54,7 +55,14 @@ public class Main
                             new ReportingClientModule(),
                             new TraceTokenModule(),
                             new DiscoveryModule()
-                    );
+                    )
+                    .withApplicationDefaults(ImmutableMap.of(
+                            "http-server.admin.port", "4121",
+                            "http-server.http.port", "4111",
+                            "http-server.log.retention-time", "7d",
+                            "http-server.threads.max", "20",
+                            "jmx.rmiregistry.port", "4101"
+                    ));
 
             Injector injector = app.initialize();
 
