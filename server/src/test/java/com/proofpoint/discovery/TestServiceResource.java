@@ -23,6 +23,7 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.Set;
 
@@ -36,19 +37,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 public class TestServiceResource
 {
     private InMemoryDynamicStore dynamicStore;
     private ServiceResource resource;
     private ProxyStore proxyStore;
+    private InitializationTracker initializationTracker;
 
     @BeforeMethod
     protected void setUp()
     {
         dynamicStore = new InMemoryDynamicStore(new DiscoveryConfig(), new TestingTimeSupplier());
         proxyStore = mock(ProxyStore.class);
-        resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), proxyStore, new NodeInfo("testing"));
+        initializationTracker = mock(InitializationTracker.class);
+        resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), proxyStore, new NodeInfo("testing"), initializationTracker);
     }
 
     @Test
@@ -256,5 +260,47 @@ public class TestServiceResource
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redWeb),
                 toServiceWith(greenNodeId, green.getLocation(), green.getPool()).apply(greenStorage),
                 toServiceWith(blueNodeId, blue.getLocation(), blue.getPool()).apply(blueStorage))));
+    }
+
+    @Test
+    public void testGetByTypeInitializationPending()
+    {
+        when(initializationTracker.isPending()).thenReturn(true);
+
+        try {
+            resource.getServices("storage");
+            fail("expected WebApplicationException(503)");
+        }
+        catch (WebApplicationException e) {
+            assertEquals(e.getResponse().getStatus(), 503);
+        }
+    }
+
+    @Test
+    public void testGetByTypeAndPoolInitializationPending()
+    {
+        when(initializationTracker.isPending()).thenReturn(true);
+
+        try {
+            resource.getServices("storage", "alpha");
+            fail("expected WebApplicationException(503)");
+        }
+        catch (WebApplicationException e) {
+            assertEquals(e.getResponse().getStatus(), 503);
+        }
+    }
+
+    @Test
+    public void testGetAllInitializationPending()
+    {
+        when(initializationTracker.isPending()).thenReturn(true);
+
+        try {
+            resource.getServices();
+            fail("expected WebApplicationException(503)");
+        }
+        catch (WebApplicationException e) {
+            assertEquals(e.getResponse().getStatus(), 503);
+        }
     }
 }

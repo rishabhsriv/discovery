@@ -58,6 +58,7 @@ public class DiscoveryServerModule
     {
         bindConfig(binder).to(DiscoveryConfig.class);
         binder.bind(ServiceResource.class).in(Scopes.SINGLETON);
+        binder.bind(InitializationTracker.class).in(Scopes.SINGLETON);
 
         discoveryBinder(binder).bindHttpAnnouncement("discovery");
 

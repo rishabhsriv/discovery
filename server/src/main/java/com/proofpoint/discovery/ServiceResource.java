@@ -22,6 +22,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
@@ -36,14 +37,16 @@ public class ServiceResource
     private final StaticStore staticStore;
     private final ProxyStore proxyStore;
     private final NodeInfo node;
+    private final InitializationTracker initializationTracker;
 
     @Inject
-    public ServiceResource(DynamicStore dynamicStore, StaticStore staticStore, ProxyStore proxyStore, NodeInfo node)
+    public ServiceResource(DynamicStore dynamicStore, StaticStore staticStore, ProxyStore proxyStore, NodeInfo node, InitializationTracker initializationTracker)
     {
         this.dynamicStore = dynamicStore;
         this.staticStore = staticStore;
         this.proxyStore = proxyStore;
         this.node = node;
+        this.initializationTracker = initializationTracker;
     }
 
     @GET
@@ -51,6 +54,7 @@ public class ServiceResource
     @Produces(MediaType.APPLICATION_JSON)
     public Services getServices(@PathParam("type") String type, @PathParam("pool") String pool)
     {
+        ensureInitialized();
         return new Services(node.getEnvironment(), firstNonNull(proxyStore.get(type, pool),
                 union(dynamicStore.get(type, pool), staticStore.get(type, pool))));
     }
@@ -60,6 +64,7 @@ public class ServiceResource
     @Produces(MediaType.APPLICATION_JSON)
     public Services getServices(@PathParam("type") String type)
     {
+        ensureInitialized();
         return new Services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
                 union(dynamicStore.get(type), staticStore.get(type))));
     }
@@ -68,7 +73,15 @@ public class ServiceResource
     @Produces(MediaType.APPLICATION_JSON)
     public Services getServices()
     {
+        ensureInitialized();
         Set<Service> services = union(dynamicStore.getAll(), staticStore.getAll());
         return new Services(node.getEnvironment(), proxyStore.filterAndGetAll(services));
+    }
+
+    private void ensureInitialized()
+    {
+        if (initializationTracker.isPending()) {
+            throw new WebApplicationException(503);
+        }
     }
 }

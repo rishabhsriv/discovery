@@ -23,6 +23,7 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
+import com.proofpoint.discovery.InitializationTracker;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.balancing.HttpServiceBalancerStats;
@@ -139,6 +140,7 @@ public class ReplicatedStoreModule
                 LocalStore localStore = injector.getInstance(localStoreKey);
                 HttpClient httpClient = injector.getInstance(httpClientKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
+                InitializationTracker initializationTracker = injector.getInstance(InitializationTracker.class);
 
                 ReportCollectionFactory reportCollectionFactory = injector.getInstance(ReportCollectionFactory.class);
                 String objectName = new ObjectNameBuilder(HttpServiceBalancerStats.class.getPackage().getName())
@@ -146,7 +148,7 @@ public class ReplicatedStoreModule
                         .build();
                 HttpServiceBalancerStats httpServiceBalancerStats = reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class, objectName);
 
-                replicator = new Replicator(name, nodeInfo, serviceSelector, httpClient, httpServiceBalancerStats, localStore, storeConfig);
+                replicator = new Replicator(name, nodeInfo, serviceSelector, httpClient, httpServiceBalancerStats, localStore, storeConfig, initializationTracker);
                 replicator.start();
             }
 

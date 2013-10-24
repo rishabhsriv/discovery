@@ -19,6 +19,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.proofpoint.discovery.InitializationTracker;
+import com.proofpoint.discovery.InitializationTracker.CompletionNotifier;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
@@ -34,7 +36,6 @@ import org.weakref.jmx.Managed;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.inject.Inject;
 import java.io.EOFException;
 import java.net.URI;
 import java.util.List;
@@ -55,6 +56,7 @@ public class Replicator
     private final HttpServiceBalancerStats httpServiceBalancerStats;
     private final LocalStore localStore;
     private final Duration replicationInterval;
+    private final CompletionNotifier completionNotifier;
 
     private ScheduledFuture<?> future;
     private ScheduledExecutorService executor;
@@ -66,8 +68,10 @@ public class Replicator
             NodeInfo node,
             ServiceSelector selector,
             HttpClient httpClient,
-            HttpServiceBalancerStats httpServiceBalancerStats, LocalStore localStore,
-            StoreConfig config)
+            HttpServiceBalancerStats httpServiceBalancerStats,
+            LocalStore localStore,
+            StoreConfig config,
+            InitializationTracker initializationTracker)
     {
         this.name = name;
         this.node = node;
@@ -77,7 +81,7 @@ public class Replicator
         this.localStore = localStore;
 
         this.replicationInterval = config.getReplicationInterval();
-
+        completionNotifier = initializationTracker.createTask();
     }
 
     @PostConstruct
@@ -191,6 +195,7 @@ public class Replicator
             }
         }
 
+        completionNotifier.complete();
         lastReplicationTimestamp.set(System.currentTimeMillis());
     }
 }
