@@ -126,7 +126,7 @@ public class DiscoveryServerModule
         public HttpServiceBalancer get()
         {
             String name = new ObjectNameBuilder(HttpServiceBalancerStats.class.getPackage().getName())
-                    .withProperty("type", "discovery-upstream")
+                    .withProperty("serviceType", "discovery-upstream")
                     .build();
             HttpServiceBalancerImpl proxyBalancer = new HttpServiceBalancerImpl("discovery-upstream",
                     reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class, name));

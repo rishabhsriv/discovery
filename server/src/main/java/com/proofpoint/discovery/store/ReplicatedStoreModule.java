@@ -144,7 +144,7 @@ public class ReplicatedStoreModule
 
                 ReportCollectionFactory reportCollectionFactory = injector.getInstance(ReportCollectionFactory.class);
                 String objectName = new ObjectNameBuilder(HttpServiceBalancerStats.class.getPackage().getName())
-                        .withProperty("type", "replicator-" + name)
+                        .withProperty("serviceType", "replicator-" + name)
                         .build();
                 HttpServiceBalancerStats httpServiceBalancerStats = reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class, objectName);
 
