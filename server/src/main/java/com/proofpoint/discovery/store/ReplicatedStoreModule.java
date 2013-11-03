@@ -43,6 +43,7 @@ import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.name.Names.named;
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
+import static com.proofpoint.reporting.ReportBinder.reportBinder;
 import static org.weakref.jmx.ObjectNames.generatedNameOf;
 import static org.weakref.jmx.guice.ExportBinder.newExporter;
 
@@ -91,7 +92,7 @@ public class ReplicatedStoreModule
 
         binder.bind(RemoteStore.class).annotatedWith(annotation).to(Key.get(HttpRemoteStore.class, annotation));
 
-        newExporter(binder).export(DistributedStore.class).annotatedWith(annotation).as(generatedNameOf(DistributedStore.class, named(name)));
+        reportBinder(binder).export(DistributedStore.class).annotatedWith(annotation).as(generatedNameOf(DistributedStore.class, named(name)));
         newExporter(binder).export(HttpRemoteStore.class).annotatedWith(annotation).as(generatedNameOf(HttpRemoteStore.class, named(name)));
         newExporter(binder).export(Replicator.class).annotatedWith(annotation).as(generatedNameOf(Replicator.class, named(name)));
 

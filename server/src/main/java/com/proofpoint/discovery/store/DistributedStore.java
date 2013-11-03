@@ -20,6 +20,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.proofpoint.reporting.Gauge;
 import com.proofpoint.units.Duration;
 import org.joda.time.DateTime;
 import org.weakref.jmx.Managed;
@@ -107,6 +108,18 @@ public class DistributedStore
         }
 
         lastGcTimestamp.set(System.currentTimeMillis());
+    }
+
+    @Gauge
+    public long getActiveEntryCount()
+    {
+        long count = 0;
+        for (Entry entry : localStore.getAll()) {
+            if (!isExpired(entry) && entry.getValue() != null) {
+                ++count;
+            }
+        }
+        return count;
     }
 
     private boolean isExpired(Entry entry)
