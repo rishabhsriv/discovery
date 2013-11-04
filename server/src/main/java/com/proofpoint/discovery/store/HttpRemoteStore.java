@@ -33,6 +33,7 @@ import com.proofpoint.node.NodeInfo;
 import com.proofpoint.reporting.ReportExporter;
 import com.proofpoint.units.Duration;
 import org.weakref.jmx.Managed;
+import org.weakref.jmx.ObjectNameBuilder;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -63,8 +64,6 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
-import static com.google.inject.name.Names.named;
-import static org.weakref.jmx.ObjectNames.generatedNameOf;
 
 public class HttpRemoteStore
         implements RemoteStore
@@ -211,7 +210,11 @@ public class HttpRemoteStore
 
     private String nameFor(String hostPort)
     {
-        return generatedNameOf(BatchProcessor.class, named(name + "-" + hostPort));
+        return new ObjectNameBuilder(BatchProcessor.class.getPackage().getName())
+                .withProperty("type", BatchProcessor.class.getSimpleName())
+                .withProperty("name", name)
+                .withProperty("target", hostPort)
+                .build();
     }
 
     @Managed
