@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class DiscoveryConfig
 {
     private Duration maxAge = new Duration(90, TimeUnit.SECONDS);
+    private String mapTarget = "general";
     private StringSet proxyProxiedTypes = StringSet.of();
     private String proxyEnvironment = null;
     private UriSet proxyUris = UriSet.of();
@@ -48,6 +49,18 @@ public class DiscoveryConfig
     public DiscoveryConfig setMaxAge(Duration maxAge)
     {
         this.maxAge = maxAge;
+        return this;
+    }
+
+    public String getGeneralPoolMapTarget()
+    {
+        return mapTarget;
+    }
+
+    @Config("reporting.tag.datacenter")
+    public DiscoveryConfig setGeneralPoolMapTarget(String mapTarget)
+    {
+        this.mapTarget = mapTarget;
         return this;
     }
 

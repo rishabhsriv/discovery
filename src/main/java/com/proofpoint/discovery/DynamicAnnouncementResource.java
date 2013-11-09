@@ -40,6 +40,7 @@ public class DynamicAnnouncementResource
 {
     private final NodeInfo nodeInfo;
     private final DynamicStore dynamicStore;
+    private final String generalPoolMapTarget;
     private final Set<String> proxyTypes;
 
     @Inject
@@ -47,6 +48,7 @@ public class DynamicAnnouncementResource
     {
         this.dynamicStore = dynamicStore;
         this.nodeInfo = nodeInfo;
+        generalPoolMapTarget = discoveryConfig.getGeneralPoolMapTarget();
         proxyTypes = discoveryConfig.getProxyProxiedTypes();
     }
 
@@ -77,8 +79,14 @@ public class DynamicAnnouncementResource
 
         String location = firstNonNull(announcement.getLocation(), "/somewhere/" + nodeId.toString());
 
+        String pool = announcement.getPool();
+        if ("general".equals(pool)) {
+            pool = generalPoolMapTarget;
+        }
+
         DynamicAnnouncement announcementWithLocation = DynamicAnnouncement.copyOf(announcement)
                 .setLocation(location)
+                .setPool(pool)
                 .build();
 
         dynamicStore.put(nodeId, announcementWithLocation);

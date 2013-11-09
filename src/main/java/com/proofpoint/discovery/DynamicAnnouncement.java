@@ -152,6 +152,12 @@ public class DynamicAnnouncement
             return this;
         }
 
+        public Builder setPool(String pool)
+        {
+            this.pool = pool;
+            return this;
+        }
+
         public DynamicAnnouncement build()
         {
             return new DynamicAnnouncement(environment, pool, location, services);

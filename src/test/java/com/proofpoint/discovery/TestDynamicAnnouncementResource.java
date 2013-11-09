@@ -39,7 +39,7 @@ public class TestDynamicAnnouncementResource
     public void setup()
     {
         store = new InMemoryDynamicStore(new DiscoveryConfig(), new RealTimeSupplier());
-        resource = new DynamicAnnouncementResource(store, new NodeInfo("testing"), new DiscoveryConfig());
+        resource = new DynamicAnnouncementResource(store, new NodeInfo("testing"), new DiscoveryConfig().setGeneralPoolMapTarget("SNV"));
     }
 
     @Test
@@ -112,6 +112,31 @@ public class TestDynamicAnnouncementResource
         assertThat(response.getStatus()).isEqualTo(BAD_REQUEST.getStatusCode());
 
         assertThat(store.getAll()).isEmpty();
+    }
+
+    @Test
+    public void testPutGeneral()
+    {
+        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("http", "http://localhost:1111"));
+        DynamicAnnouncement announcement = new DynamicAnnouncement("testing", "general", "/a/b/c", ImmutableSet.of(
+                serviceAnnouncement)
+        );
+
+        Id<Node> nodeId = Id.random();
+        Response response = resource.put(nodeId, announcement);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(ACCEPTED.getStatusCode());
+
+        assertThat(store.getAll()).hasSize(1);
+        Service service = store.getAll().iterator().next();
+
+        assertThat(service.getId()).isNotNull();
+        assertThat(service.getNodeId()).isEqualTo(nodeId);
+        assertThat(service.getLocation()).isEqualTo(announcement.getLocation());
+        assertThat(service.getType()).isEqualTo(serviceAnnouncement.getType());
+        assertThat(service.getPool()).isEqualTo("SNV");
+        assertThat(service.getProperties()).isEqualTo(serviceAnnouncement.getProperties());
     }
 
     @Test
