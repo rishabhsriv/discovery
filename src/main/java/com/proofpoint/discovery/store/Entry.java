@@ -18,6 +18,7 @@ package com.proofpoint.discovery.store;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.MoreObjects;
 import com.proofpoint.discovery.Service;
 import com.proofpoint.json.JsonCodec;
 
@@ -25,6 +26,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @AutoValue
 public abstract class Entry
@@ -74,4 +76,15 @@ public abstract class Entry
     @Nullable
     @JsonProperty
     public abstract Long getMaxAgeInMs();
+
+    @Override
+    public String toString()
+    {
+        return MoreObjects.toStringHelper(this)
+                .add("key", new String(getKey(), UTF_8))
+                .add("value", getValue())
+                .add("timestamp", getTimestamp())
+                .add("maxAgeInMs", getMaxAgeInMs())
+                .toString();
+    }
 }

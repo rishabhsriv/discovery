@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 import com.proofpoint.bootstrap.LifeCycleManager;
+import com.proofpoint.discovery.DiscoveryConfig;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.client.ServiceState;
@@ -47,7 +48,7 @@ public class TestingStoreServer
     private final AtomicBoolean serverInSelector = new AtomicBoolean(true);
     private final ServiceSelector serviceSelector;
 
-    public TestingStoreServer(StoreConfig storeConfig)
+    public TestingStoreServer(StoreConfig storeConfig, DiscoveryConfig discoveryConfig)
     {
         Injector injector;
         try {
@@ -60,6 +61,7 @@ public class TestingStoreServer
                             new ReportingModule(),
                             binder -> {
                                 binder.bind(StoreConfig.class).toInstance(storeConfig);
+                                binder.bind(DiscoveryConfig.class).toInstance(discoveryConfig);
                                 jaxrsBinder(binder).bind(StoreResource.class);
                                 binder.bind(new TypeLiteral<Map<String, InMemoryStore>>() {})
                                         .toInstance(ImmutableMap.of("dynamic", inMemoryStore));

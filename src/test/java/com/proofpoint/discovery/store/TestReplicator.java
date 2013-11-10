@@ -17,6 +17,7 @@ package com.proofpoint.discovery.store;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.proofpoint.discovery.DiscoveryConfig;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.InitializationTracker;
 import com.proofpoint.discovery.Node;
@@ -36,6 +37,9 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
+import static com.proofpoint.discovery.DiscoveryConfig.ReplicationMode.PHASE_ONE;
+import static com.proofpoint.discovery.DiscoveryConfig.ReplicationMode.PHASE_THREE;
+import static com.proofpoint.discovery.DiscoveryConfig.ReplicationMode.PHASE_TWO;
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -46,11 +50,19 @@ public class TestReplicator
     private static final Id<Node> NODE_ID = Id.random();
     private static final Id<Node> TOMBSTONE_ID = Id.random();
     private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID,"type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
+    private static final Service TESTING_GENERAL_SERVICE_1 = new Service(TESTING_SERVICE_1.getId(), NODE_ID,"type1", "general", "/test-location", TESTING_SERVICE_1.getProperties());
     private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID,"type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
+    private static final Service TESTING_GENERAL_SERVICE_2 = new Service(TESTING_SERVICE_2.getId(), NODE_ID,"type2", "general", "/test-location", TESTING_SERVICE_2.getProperties());
     private static final Entry TESTING_ENTRY = entry(
             NODE_ID.getBytes(),
             ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2),
             System.currentTimeMillis(),
+            20_000L
+    );
+    private static final Entry TESTING_GENERAL_ENTRY = entry(
+            NODE_ID.getBytes(),
+            ImmutableList.of(TESTING_GENERAL_SERVICE_1, TESTING_GENERAL_SERVICE_2),
+            TESTING_ENTRY.getTimestamp(),
             20_000L
     );
     private static final Entry TESTING_TOMBSTONE = entry(
@@ -60,10 +72,10 @@ public class TestReplicator
             null
     );
 
-    private final TestingStoreServer server = new TestingStoreServer(new StoreConfig());
-    private final InMemoryStore serverStore = server.getInMemoryStore();
     private final HttpClient client = new JettyHttpClient();
 
+    private TestingStoreServer server;
+    private InMemoryStore serverStore;
     private HttpServiceBalancerStats stats;
     private InMemoryStore inMemoryStore;
     private SerialScheduledExecutorService executor;
@@ -72,7 +84,6 @@ public class TestReplicator
     @BeforeMethod
     public void setup()
     {
-        server.reset();
         TestingReportCollectionFactory reportCollectionFactory = new TestingReportCollectionFactory();
         stats = reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class);
         inMemoryStore = new InMemoryStore();
@@ -85,22 +96,20 @@ public class TestReplicator
             replicator.shutdown();
         }
         replicator = null;
+        server.stop();
+        server = null;
     }
 
     @AfterClass(alwaysRun = true)
     public void tearDown()
     {
-        server.stop();
         Closeables.closeQuietly(client);
     }
 
     @Test
     public void testReplicationOnStartup()
     {
-        serverStore.put(TESTING_ENTRY);
-        serverStore.put(TESTING_TOMBSTONE);
-
-        replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
+        replicator = createReplicator(new DiscoveryConfig(), true, new DiscoveryConfig(), TESTING_ENTRY, TESTING_TOMBSTONE);
 
         assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
     }
@@ -108,8 +117,7 @@ public class TestReplicator
     @Test
     public void testReplicationInterval()
     {
-
-        replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
+        replicator = createReplicator(new DiscoveryConfig(), true, new DiscoveryConfig());
 
         executor.elapseTimeNanosecondBefore(1, SECONDS);
         assertThat(inMemoryStore.getAll()).isEmpty();
@@ -124,8 +132,7 @@ public class TestReplicator
     @Test
     public void testReplicationToAddedServer()
     {
-        server.setServerInSelector(false);
-        replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
+        replicator = createReplicator(new DiscoveryConfig(), false, new DiscoveryConfig());
 
         executor.elapseTimeNanosecondBefore(1, SECONDS);
         assertThat(inMemoryStore.getAll()).isEmpty();
@@ -141,7 +148,7 @@ public class TestReplicator
     @Test
     public void testNoReplicationToRemovedServer()
     {
-        replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
+        replicator = createReplicator(new DiscoveryConfig(), true, new DiscoveryConfig());
 
         executor.elapseTimeNanosecondBefore(1, SECONDS);
         assertThat(inMemoryStore.getAll()).isEmpty();
@@ -153,8 +160,132 @@ public class TestReplicator
         assertThat(inMemoryStore.getAll()).isEmpty();
     }
 
-    private Replicator createReplicator(StoreConfig storeConfig)
+    @Test
+    public void testReplicationPhaseOneFromLegacy()
     {
+        replicator = createReplicator(
+                new DiscoveryConfig(),
+                true,
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
+                TESTING_GENERAL_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    @Test
+    public void testReplicationLegacyFromPhaseOne()
+    {
+        replicator = createReplicator(
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
+                true,
+                new DiscoveryConfig(),
+                TESTING_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_GENERAL_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    @Test
+    public void testReplicationPhaseOneFromPhaseOne()
+    {
+        replicator = createReplicator(
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
+                true,
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
+                TESTING_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    @Test
+    public void testReplicationPhaseTwoFromPhaseOne()
+    {
+        replicator = createReplicator(
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
+                true,
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
+                TESTING_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    @Test
+    public void testReplicationPhaseOneFromPhaseTwo()
+    {
+        replicator = createReplicator(
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
+                true,
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
+                TESTING_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    @Test
+    public void testReplicationPhaseTwoFromPhaseTwo()
+    {
+        replicator = createReplicator(
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
+                true,
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
+                TESTING_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    @Test
+    public void testReplicationPhaseThreeFromPhaseTwo()
+    {
+        replicator = createReplicator(
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
+                true,
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_THREE),
+                TESTING_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    @Test
+    public void testReplicationPhaseTwoFromPhaseThree()
+    {
+        replicator = createReplicator(
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_THREE),
+                true,
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
+                TESTING_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    @Test
+    public void testReplicationPhaseThreeFromPhaseThree()
+    {
+        replicator = createReplicator(
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_THREE),
+                true,
+                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_THREE),
+                TESTING_ENTRY,
+                TESTING_TOMBSTONE);
+
+        assertThat(inMemoryStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
+    }
+
+    private Replicator createReplicator(DiscoveryConfig serverConfig, boolean serverInSelector, DiscoveryConfig discoveryConfig, Entry... initialEntries)
+    {
+        server = new TestingStoreServer(new StoreConfig(), serverConfig);
+        serverStore = server.getInMemoryStore();
+        server.setServerInSelector(serverInSelector);
+        for (int i = 0; i < initialEntries.length; i++) {
+            serverStore.put(initialEntries[i]);
+
+        }
         Replicator replicator = new Replicator(
                 "dynamic",
                 new NodeInfo("test_environment"),
@@ -162,9 +293,10 @@ public class TestReplicator
                 client,
                 stats,
                 inMemoryStore,
-                storeConfig,
+                new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)),
                 new InitializationTracker(),
-                executor);
+                executor,
+                discoveryConfig);
         replicator.start();
         return replicator;
     }

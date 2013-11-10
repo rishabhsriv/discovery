@@ -154,6 +154,7 @@ public class ReplicatedStoreModule
                 HttpClient httpClient = injector.getInstance(httpClientKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
                 InitializationTracker initializationTracker = injector.getInstance(InitializationTracker.class);
+                DiscoveryConfig discoveryConfig = injector.getInstance(DiscoveryConfig.class);
 
                 ReportCollectionFactory reportCollectionFactory = injector.getInstance(ReportCollectionFactory.class);
                 HttpServiceBalancerStats httpServiceBalancerStats = reportCollectionFactory.createReportCollection(
@@ -164,7 +165,7 @@ public class ReplicatedStoreModule
                 );
 
                 replicator = new Replicator(name, nodeInfo, serviceSelector, httpClient, httpServiceBalancerStats, localStore, storeConfig, initializationTracker,
-                        newSingleThreadScheduledExecutor(daemonThreadsNamed("replicator-" + name)));
+                        newSingleThreadScheduledExecutor(daemonThreadsNamed("replicator-" + name)), discoveryConfig);
                 replicator.start();
             }
 
@@ -236,9 +237,10 @@ public class ReplicatedStoreModule
             if (remoteStore == null) {
                 HttpClient httpClient = injector.getInstance(httpClientKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
+                DiscoveryConfig discoveryConfig = injector.getInstance(DiscoveryConfig.class);
 
                 remoteStore = new HttpRemoteStore(name, nodeInfo, serviceSelector, storeConfig, httpClient, reportExporter,
-                        newSingleThreadScheduledExecutor(daemonThreadsNamed("http-remote-store-" + name)));
+                        newSingleThreadScheduledExecutor(daemonThreadsNamed("http-remote-store-" + name)), discoveryConfig);
                 remoteStore.start();
             }
 

@@ -19,8 +19,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import com.proofpoint.discovery.DiscoveryConfig;
+import com.proofpoint.discovery.DiscoveryConfig.ReplicationMode;
 import com.proofpoint.discovery.InitializationTracker;
 import com.proofpoint.discovery.InitializationTracker.CompletionNotifier;
+import com.proofpoint.discovery.Service;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
@@ -29,6 +32,7 @@ import com.proofpoint.http.client.Response;
 import com.proofpoint.http.client.ResponseHandler;
 import com.proofpoint.http.client.balancing.HttpServiceBalancerStats;
 import com.proofpoint.http.client.balancing.HttpServiceBalancerStats.Status;
+import com.proofpoint.json.JsonCodec;
 import com.proofpoint.log.Logger;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.units.Duration;
@@ -41,6 +45,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.proofpoint.discovery.store.Entries.transformPools;
 
 public class Replicator
 {
@@ -55,6 +61,8 @@ public class Replicator
     private final Duration replicationInterval;
     private final CompletionNotifier completionNotifier;
     private final ScheduledExecutorService executor;
+    private final String generalPoolMapTarget;
+    private final ReplicationMode generalPoolLegacyReplicationMode;
 
     private ScheduledFuture<?> future;
 
@@ -69,7 +77,8 @@ public class Replicator
             InMemoryStore localStore,
             StoreConfig config,
             InitializationTracker initializationTracker,
-            ScheduledExecutorService executor)
+            ScheduledExecutorService executor,
+            DiscoveryConfig discoveryConfig)
     {
         this.name = name;
         this.node = node;
@@ -80,6 +89,8 @@ public class Replicator
         this.replicationInterval = config.getReplicationInterval();
         completionNotifier = initializationTracker.createTask();
         this.executor = executor;
+        generalPoolMapTarget = discoveryConfig.getGeneralPoolMapTarget();
+        generalPoolLegacyReplicationMode = discoveryConfig.getGeneralPoolLegacyReplicationMode();
     }
 
     public synchronized void start()
@@ -157,7 +168,12 @@ public class Replicator
                             httpServiceBalancerStats.requestTime(uri1, Status.SUCCESS).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
                             try {
                                 List<Entry> entries = mapper.readValue(response.getInputStream(), new TypeReference<List<Entry>>() {});
-                                entries.forEach(localStore::put);
+                                for (Entry entry : entries) {
+                                    if (generalPoolLegacyReplicationMode != ReplicationMode.PHASE_THREE) {
+                                        entry = transformPools(entry, "general", generalPoolMapTarget);
+                                    }
+                                    localStore.put(entry);
+                                }
                             }
                             catch (EOFException | NullPointerException ignored) {
                             }
