@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Replicator
 {
-    private final static Logger log = Logger.get(Replicator.class);
+    private static final Logger log = Logger.get(Replicator.class);
 
     private final String name;
     private final NodeInfo node;

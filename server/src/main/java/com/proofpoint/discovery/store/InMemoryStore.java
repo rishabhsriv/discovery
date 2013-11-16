@@ -30,7 +30,7 @@ import static com.proofpoint.discovery.store.Version.Occurs.SAME;
 public class InMemoryStore
         implements LocalStore
 {
-    private final ConcurrentMap<ByteBuffer, Entry> map = new ConcurrentHashMap<ByteBuffer, Entry>();
+    private final ConcurrentMap<ByteBuffer, Entry> map = new ConcurrentHashMap<>();
     private final ConflictResolver resolver;
     private final long maxAgeInMs;
 

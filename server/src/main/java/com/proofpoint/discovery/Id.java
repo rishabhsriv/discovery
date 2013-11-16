@@ -34,7 +34,7 @@ public class Id<T>
     public static <T> Id<T> valueOf(UUID id)
     {
         Preconditions.checkNotNull(id, "id is null");
-        return new Id<T>(id);
+        return new Id<>(id);
     }
 
     public static <T> Id<T> valueOf(String id)

@@ -41,7 +41,7 @@ public class DynamicAnnouncementResource
 {
     private final NodeInfo nodeInfo;
     private final DynamicStore dynamicStore;
-    private Set<String> proxyTypes;
+    private final Set<String> proxyTypes;
 
     @Inject
     public DynamicAnnouncementResource(DynamicStore dynamicStore, NodeInfo nodeInfo, DiscoveryConfig discoveryConfig)

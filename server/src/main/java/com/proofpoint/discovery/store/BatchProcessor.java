@@ -36,7 +36,7 @@ import java.util.concurrent.Future;
 
 public class BatchProcessor<T>
 {
-    private final static Logger log = Logger.get(BatchProcessor.class);
+    private static final Logger log = Logger.get(BatchProcessor.class);
 
     private final BatchHandler<T> handler;
     private final int maxBatchSize;

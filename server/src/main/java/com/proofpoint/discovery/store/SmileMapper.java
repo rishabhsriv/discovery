@@ -63,7 +63,7 @@ public class SmileMapper
      * probably not a very good way to do it, but let's start by
      * blacklisting things we are not to handle.
      */
-    private final static ImmutableSet<Class<?>> IO_CLASSES = ImmutableSet.<Class<?>>builder()
+    private static final ImmutableSet<Class<?>> IO_CLASSES = ImmutableSet.<Class<?>>builder()
             .add(InputStream.class)
             .add(java.io.Reader.class)
             .add(OutputStream.class)
@@ -210,7 +210,7 @@ public class SmileMapper
 
     private static List<String> messagesFor(Collection<? extends ConstraintViolation<?>> violations)
     {
-        ImmutableList.Builder<String> messages = new ImmutableList.Builder<String>();
+        ImmutableList.Builder<String> messages = new ImmutableList.Builder<>();
         for (ConstraintViolation<?> violation : violations) {
             messages.add(violation.getPropertyPath().toString() + " " + violation.getMessage());
         }

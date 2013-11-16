@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.proofpoint.units.Duration;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -48,7 +47,7 @@ public class StoreResource
         this.tombstoneMaxAges = ImmutableMap.copyOf(Maps.transformValues(configs, new Function<StoreConfig, Duration>()
         {
             @Override
-            public Duration apply(@Nullable StoreConfig config)
+            public Duration apply(StoreConfig config)
             {
                 return config.getTombstoneMaxAge();
             }

@@ -36,7 +36,7 @@ import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
 
 public class Main
 {
-    private final static Logger log = Logger.get(Main.class);
+    private static final Logger log = Logger.get(Main.class);
 
     public static void main(String[] args)
             throws Exception
