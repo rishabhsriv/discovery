@@ -22,7 +22,10 @@ import com.proofpoint.discovery.store.Entry;
 import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.RemoteStore;
 import com.proofpoint.discovery.store.StoreConfig;
+import com.proofpoint.units.Duration;
 import org.joda.time.DateTime;
+
+import java.util.concurrent.TimeUnit;
 
 public class TestReplicatedStaticStore
     extends TestStaticStore
@@ -33,8 +36,8 @@ public class TestReplicatedStaticStore
         RemoteStore dummy = new RemoteStore() {
             public void put(Entry entry) { }
         };
-
-        DistributedStore distributedStore = new DistributedStore("static", new InMemoryStore(new ConflictResolver()), dummy, new StoreConfig(), timeSupplier);
+        DiscoveryConfig config = new DiscoveryConfig().setMaxAge(new Duration(1, TimeUnit.MINUTES));
+        DistributedStore distributedStore = new DistributedStore("static", new InMemoryStore(new ConflictResolver(), config), dummy, new StoreConfig(), timeSupplier);
 
         return new ReplicatedStaticStore(distributedStore);
     }

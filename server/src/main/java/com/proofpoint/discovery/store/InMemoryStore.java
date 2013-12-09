@@ -16,6 +16,7 @@
 package com.proofpoint.discovery.store;
 
 import com.google.common.base.Preconditions;
+import com.proofpoint.discovery.DiscoveryConfig;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -31,16 +32,26 @@ public class InMemoryStore
 {
     private final ConcurrentMap<ByteBuffer, Entry> map = new ConcurrentHashMap<ByteBuffer, Entry>();
     private final ConflictResolver resolver;
+    private final long maxAgeInMs;
 
     @Inject
-    public InMemoryStore(ConflictResolver resolver)
+    public InMemoryStore(ConflictResolver resolver, DiscoveryConfig config)
     {
         this.resolver = resolver;
+        maxAgeInMs = config.getMaxAge().toMillis();
     }
 
     @Override
     public void put(Entry entry)
     {
+        if (entry.getMaxAgeInMs() == null) {
+            entry = new Entry(entry.getKey(),
+                    entry.getValue(),
+                    entry.getVersion(),
+                    entry.getTimestamp(),
+                    maxAgeInMs);
+        }
+
         ByteBuffer key = ByteBuffer.wrap(entry.getKey());
 
         boolean done = false;

@@ -16,8 +16,12 @@
 package com.proofpoint.discovery.store;
 
 import com.google.common.base.Charsets;
+import com.proofpoint.discovery.DiscoveryConfig;
+import com.proofpoint.units.Duration;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static org.testng.Assert.assertEquals;
@@ -31,7 +35,8 @@ public class TestInMemoryStore
     protected void setUp()
             throws Exception
     {
-        store = new InMemoryStore(new ConflictResolver());
+        DiscoveryConfig config = new DiscoveryConfig().setMaxAge(new Duration(1, TimeUnit.MINUTES));
+        store = new InMemoryStore(new ConflictResolver(), config);
     }
 
     @Test
@@ -79,8 +84,17 @@ public class TestInMemoryStore
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
     }
 
+    @Test
+    public void testDefaultsMaxAge()
+    {
+        Entry entry = entryOf("blue", "apple", 1, 0);
+        store.put(new Entry(entry.getKey(), entry.getValue(), entry.getVersion(), entry.getTimestamp(), null));
+
+        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+    }
+
     private static Entry entryOf(String key, String value, long version, long timestamp)
     {
-        return new Entry(key.getBytes(UTF_8), value.getBytes(Charsets.UTF_8), new Version(version), timestamp, null);
+        return new Entry(key.getBytes(UTF_8), value.getBytes(Charsets.UTF_8), new Version(version), timestamp, 60_000L);
     }
 }

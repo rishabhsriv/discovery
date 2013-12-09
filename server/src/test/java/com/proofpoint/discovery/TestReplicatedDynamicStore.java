@@ -34,7 +34,7 @@ public class TestReplicatedDynamicStore
             public void put(Entry entry) { }
         };
 
-        DistributedStore distributedStore = new DistributedStore("dynamic", new InMemoryStore(new ConflictResolver()), dummy, new StoreConfig(), timeSupplier);
+        DistributedStore distributedStore = new DistributedStore("dynamic", new InMemoryStore(new ConflictResolver(), config), dummy, new StoreConfig(), timeSupplier);
 
         return new ReplicatedDynamicStore(distributedStore, config);
     }
