@@ -77,15 +77,15 @@ public class TestServiceResource
 
         when(proxyStore.get(any(String.class))).thenReturn(null);
 
-        assertEquals(resource.getServices("storage"), new Services("testing", of(
+        assertEquals(resource.getTypeServices("storage"), new Services("testing", of(
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
                 toServiceWith(greenNodeId, green.getLocation(), green.getPool()).apply(greenStorage),
                 toServiceWith(blueNodeId, blue.getLocation(), blue.getPool()).apply(blueStorage))));
 
-        assertEquals(resource.getServices("web"), new Services("testing", ImmutableSet.of(
+        assertEquals(resource.getTypeServices("web"), new Services("testing", ImmutableSet.of(
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redWeb))));
 
-        assertEquals(resource.getServices("unknown"), new Services("testing", Collections.<Service>emptySet()));
+        assertEquals(resource.getTypeServices("unknown"), new Services("testing", Collections.<Service>emptySet()));
 
         verify(proxyStore, times(3)).get(any(String.class));
         verifyNoMoreInteractions(proxyStore);
@@ -155,7 +155,7 @@ public class TestServiceResource
             }
         });
 
-        assertEquals(resource.getServices(), new Services("testing", ImmutableSet.of(
+        assertEquals(resource.getAllServices(), new Services("testing", ImmutableSet.of(
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redWeb),
                 toServiceWith(greenNodeId, green.getLocation(), green.getPool()).apply(greenStorage),
@@ -188,9 +188,9 @@ public class TestServiceResource
         Service proxyStorageService = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "general", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get("storage")).thenReturn(of(proxyStorageService));
 
-        assertEquals(resource.getServices("storage"), new Services("testing", of(proxyStorageService)));
+        assertEquals(resource.getTypeServices("storage"), new Services("testing", of(proxyStorageService)));
 
-        assertEquals(resource.getServices("web"), new Services("testing", ImmutableSet.<Service>of()));
+        assertEquals(resource.getTypeServices("web"), new Services("testing", ImmutableSet.<Service>of()));
     }
 
     @Test
@@ -254,7 +254,7 @@ public class TestServiceResource
                         (Set<Service>) invocationOnMock.getArguments()[0]);
             }
         });
-        assertEquals(resource.getServices(), new Services("testing", ImmutableSet.of(
+        assertEquals(resource.getAllServices(), new Services("testing", ImmutableSet.of(
                 proxyStorageService,
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redWeb),
@@ -268,7 +268,7 @@ public class TestServiceResource
         when(initializationTracker.isPending()).thenReturn(true);
 
         try {
-            resource.getServices("storage");
+            resource.getTypeServices("storage");
             fail("expected WebApplicationException(503)");
         }
         catch (WebApplicationException e) {
@@ -296,7 +296,7 @@ public class TestServiceResource
         when(initializationTracker.isPending()).thenReturn(true);
 
         try {
-            resource.getServices();
+            resource.getAllServices();
             fail("expected WebApplicationException(503)");
         }
         catch (WebApplicationException e) {

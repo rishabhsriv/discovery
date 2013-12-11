@@ -62,7 +62,7 @@ public class ServiceResource
     @GET
     @Path("{type}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Services getServices(@PathParam("type") String type)
+    public Services getTypeServices(@PathParam("type") String type)
     {
         ensureInitialized();
         return new Services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
@@ -71,7 +71,7 @@ public class ServiceResource
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Services getServices()
+    public Services getAllServices()
     {
         ensureInitialized();
         Set<Service> services = union(dynamicStore.getAll(), staticStore.getAll());
