@@ -93,6 +93,7 @@ public class TestDiscoveryServer
                 .build();
 
         Injector serverInjector = bootstrapApplication("test-application")
+                .doNotInitializeLogging()
                 .withModules(
                         new MBeanModule(),
                         new TestingNodeModule("testing"),
@@ -112,7 +113,6 @@ public class TestDiscoveryServer
                                 binder.bind(MBeanServer.class).toInstance(new TestingMBeanServer());
                             }
                         })
-                .doNotInitializeLogging()
                 .setRequiredConfigurationProperties(serverProperties)
                 .initialize();
 
@@ -141,6 +141,7 @@ public class TestDiscoveryServer
             .build();
 
         Injector announcerInjector = bootstrapApplication("test-application")
+                .doNotInitializeLogging()
                 .withModules(
                         new TestingNodeModule("testing", "red"),
                         new ReportingModule(),
@@ -157,7 +158,6 @@ public class TestDiscoveryServer
                         new JsonModule(),
                         new DiscoveryModule()
                 )
-                .doNotInitializeLogging()
                 .setRequiredConfigurationProperties(announcerProperties)
                 .initialize();
 
@@ -244,6 +244,7 @@ public class TestDiscoveryServer
             .build();
 
         Injector clientInjector = bootstrapApplication("test-application")
+                .doNotInitializeLogging()
                 .withModules(
                         new TestingNodeModule("testing"),
                         new ReportingModule(),
@@ -268,7 +269,6 @@ public class TestDiscoveryServer
                             }
                         }
                 )
-                .doNotInitializeLogging()
                 .setRequiredConfigurationProperties(clientProperties)
                 .initialize();
 

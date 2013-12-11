@@ -77,7 +77,7 @@ public class DiscoveryServerModule
         PrivateBinder privateBinder = binder.newPrivateBinder();
         privateBinder.bind(HttpServiceBalancer.class).annotatedWith(ForBalancingHttpClient.class).toProvider(ProxyBalancerProvider.class);
         httpClientPrivateBinder(privateBinder, binder).bindAsyncHttpClient("discovery.proxy", ForBalancingHttpClient.class);
-        bindConfig(binder).prefixedWith("discovery.proxy").to(BalancingHttpClientConfig.class);
+        bindConfig(privateBinder).prefixedWith("discovery.proxy").to(BalancingHttpClientConfig.class);
         privateBinder.bind(AsyncHttpClient.class).annotatedWith(ForProxyStore.class).to(BalancingAsyncHttpClient.class).in(Scopes.SINGLETON);
         privateBinder.expose(AsyncHttpClient.class).annotatedWith(ForProxyStore.class);
         newExporter(binder).export(AsyncHttpClient.class).annotatedWith(ForProxyStore.class).withGeneratedName();
