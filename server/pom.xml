@@ -11,12 +11,14 @@
     <parent>
         <groupId>com.proofpoint.platform</groupId>
         <artifactId>rest-server-base</artifactId>
-        <version>0.88</version>
+        <version>0.90</version>
     </parent>
 
     <properties>
         <main-class>com.proofpoint.discovery.Main</main-class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <dep.leveldb.version>0.7</dep.leveldb.version>
     </properties>
 
     <inceptionYear>2010</inceptionYear>
@@ -39,16 +41,6 @@
     </scm>
 
     <developers>
-        <developer>
-            <id>dain</id>
-            <name>Dain Sundstrom</name>
-            <email>dain@iq80.com</email>
-        </developer>
-        <developer>
-            <id>mtraverso</id>
-            <name>Martin Traverso</name>
-            <email>mtraverso@gmail.com</email>
-        </developer>
     </developers>
 
     <prerequisites>
@@ -97,13 +89,13 @@
         <dependency>
             <groupId>org.iq80.leveldb</groupId>
             <artifactId>leveldb-api</artifactId>
-            <version>0.5</version>
+            <version>${dep.leveldb.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.iq80.leveldb</groupId>
             <artifactId>leveldb</artifactId>
-            <version>0.5</version>
+            <version>${dep.leveldb.version}</version>
         </dependency>
 
         <!-- Proofpoint platform -->
