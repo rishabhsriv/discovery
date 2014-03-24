@@ -29,11 +29,11 @@ import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient;
 import com.proofpoint.discovery.client.announce.ServiceAnnouncement;
 import com.proofpoint.event.client.InMemoryEventModule;
-import com.proofpoint.http.client.ApacheHttpClient;
 import com.proofpoint.http.client.FullJsonResponseHandler.JsonResponse;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
 import com.proofpoint.http.client.StatusResponseHandler.StatusResponse;
+import com.proofpoint.http.client.jetty.JettyHttpClient;
 import com.proofpoint.http.server.testing.TestingHttpServer;
 import com.proofpoint.http.server.testing.TestingHttpServerModule;
 import com.proofpoint.jaxrs.JaxrsModule;
@@ -203,7 +203,7 @@ public class TestDiscoveryServer
                 .put("properties", ImmutableMap.of("http", "http://host"))
                 .build();
 
-        HttpClient client = new ApacheHttpClient();
+        HttpClient client = new JettyHttpClient();
 
         Request request = preparePost()
                 .setUri(uriFor("/v1/announcement/static"))

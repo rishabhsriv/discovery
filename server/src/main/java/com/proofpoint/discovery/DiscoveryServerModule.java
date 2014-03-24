@@ -31,8 +31,8 @@ import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.PersistentStore;
 import com.proofpoint.discovery.store.PersistentStoreConfig;
 import com.proofpoint.discovery.store.ReplicatedStoreModule;
-import com.proofpoint.http.client.AsyncHttpClient;
-import com.proofpoint.http.client.balancing.BalancingAsyncHttpClient;
+import com.proofpoint.http.client.HttpClient;
+import com.proofpoint.http.client.balancing.BalancingHttpClient;
 import com.proofpoint.http.client.balancing.BalancingHttpClientConfig;
 import com.proofpoint.http.client.balancing.ForBalancingHttpClient;
 import com.proofpoint.http.client.balancing.HttpServiceBalancer;
@@ -76,11 +76,11 @@ public class DiscoveryServerModule
         // proxy announcements
         PrivateBinder privateBinder = binder.newPrivateBinder();
         privateBinder.bind(HttpServiceBalancer.class).annotatedWith(ForBalancingHttpClient.class).toProvider(ProxyBalancerProvider.class);
-        httpClientPrivateBinder(privateBinder, binder).bindAsyncHttpClient("discovery.proxy", ForBalancingHttpClient.class);
+        httpClientPrivateBinder(privateBinder, binder).bindHttpClient("discovery.proxy", ForBalancingHttpClient.class);
         bindConfig(privateBinder).prefixedWith("discovery.proxy").to(BalancingHttpClientConfig.class);
-        privateBinder.bind(AsyncHttpClient.class).annotatedWith(ForProxyStore.class).to(BalancingAsyncHttpClient.class).in(Scopes.SINGLETON);
-        privateBinder.expose(AsyncHttpClient.class).annotatedWith(ForProxyStore.class);
-        newExporter(binder).export(AsyncHttpClient.class).annotatedWith(ForProxyStore.class).withGeneratedName();
+        privateBinder.bind(HttpClient.class).annotatedWith(ForProxyStore.class).to(BalancingHttpClient.class).in(Scopes.SINGLETON);
+        privateBinder.expose(HttpClient.class).annotatedWith(ForProxyStore.class);
+        newExporter(binder).export(HttpClient.class).annotatedWith(ForProxyStore.class).withGeneratedName();
         binder.bind(ProxyStore.class).in(Scopes.SINGLETON);
     }
 

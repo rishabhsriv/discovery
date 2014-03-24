@@ -27,7 +27,7 @@ import com.proofpoint.discovery.client.HttpDiscoveryLookupClient;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceDescriptors;
 import com.proofpoint.discovery.client.ServiceDescriptorsRepresentation;
-import com.proofpoint.http.client.AsyncHttpClient;
+import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.log.Logger;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.units.Duration;
@@ -61,8 +61,8 @@ public class ProxyStore
 
         if (!proxyTypes.isEmpty()) {
             map = new ConcurrentHashMap<>();
-            AsyncHttpClient httpClient = injector.getInstance(
-                    Key.get(AsyncHttpClient.class, ForProxyStore.class));
+            HttpClient httpClient = injector.getInstance(
+                    Key.get(HttpClient.class, ForProxyStore.class));
             DiscoveryLookupClient lookupClient = new HttpDiscoveryLookupClient(
                     new NodeInfo(discoveryConfig.getProxyEnvironment()),
                     jsonCodec(ServiceDescriptorsRepresentation.class),

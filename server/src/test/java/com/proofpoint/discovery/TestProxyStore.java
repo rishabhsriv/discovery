@@ -9,7 +9,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.proofpoint.discovery.DiscoveryConfig.StringSet;
 import com.proofpoint.discovery.client.DiscoveryException;
-import com.proofpoint.http.client.AsyncHttpClient;
+import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
 import com.proofpoint.http.client.RequestStats;
 import com.proofpoint.http.client.Response;
@@ -57,8 +57,8 @@ public class TestProxyStore
                 .setProxyEnvironment("upstream")
                 .setProxyUri(URI.create("http://discovery.example.com"));
         Injector injector = mock(Injector.class);
-        AsyncHttpClient httpClient = new TestingDiscoveryHttpClient(config, new Service[]{service1, service2, service3});
-        when(injector.getInstance(Key.get(AsyncHttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
+        HttpClient httpClient = new TestingDiscoveryHttpClient(config, new Service[]{service1, service2, service3});
+        when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
         ProxyStore proxyStore = new ProxyStore(config, injector);
         Thread.sleep(100);
 
@@ -91,18 +91,19 @@ public class TestProxyStore
         Service service3 = new Service(Id.<Service>random(), Id.<Node>random(), "customer", "general", "/location/3", ImmutableMap.of("key3", "value3"));
 
         Injector injector = mock(Injector.class);
-        AsyncHttpClient httpClient = new TestingDiscoveryHttpClient(new DiscoveryConfig()
+        HttpClient httpClient = new TestingDiscoveryHttpClient(new DiscoveryConfig()
                 .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
                 .setProxyEnvironment("mismatch")
                 .setProxyUri(URI.create("http://discovery.example.com")), new Service[]{service1, service2, service3});
-        when(injector.getInstance(Key.get(AsyncHttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
+        when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
         new ProxyStore(new DiscoveryConfig()
                 .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
                 .setProxyEnvironment("upstream")
                 .setProxyUri(URI.create("http://discovery.example.com")), injector);
     }
 
-    private static class TestingDiscoveryHttpClient implements AsyncHttpClient
+    private static class TestingDiscoveryHttpClient
+            implements HttpClient
     {
         private final DiscoveryConfig config;
         private final ImmutableSet<Service> services;
@@ -114,7 +115,7 @@ public class TestProxyStore
         }
 
         @Override
-        public <T, E extends Exception> AsyncHttpResponseFuture<T> executeAsync(Request request, ResponseHandler<T, E> responseHandler)
+        public <T, E extends Exception> HttpResponseFuture<T> executeAsync(Request request, ResponseHandler<T, E> responseHandler)
         {
             assertEquals(request.getMethod(), "GET");
             URI uri = request.getUri();
@@ -156,7 +157,7 @@ public class TestProxyStore
 
         private static class TestingResponseFuture<T, E extends Exception>
                 extends AbstractFuture<T>
-                implements AsyncHttpResponseFuture<T>
+                implements HttpResponseFuture<T>
         {
             public TestingResponseFuture(Request request, ResponseHandler<T, E> responseHandler, final Services filteredServices)
             {
