@@ -17,8 +17,8 @@ package com.proofpoint.discovery.store;
 
 public interface LocalStore
 {
-    void put(Entry entry);
+    boolean put(Entry entry);
     Entry get(byte[] key);
-    void delete(byte[] key, long timestamp);
+    boolean delete(byte[] key, long timestamp);
     Iterable<Entry> getAll();
 }

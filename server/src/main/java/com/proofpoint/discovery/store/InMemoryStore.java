@@ -38,7 +38,7 @@ public class InMemoryStore
     }
 
     @Override
-    public void put(Entry entry)
+    public boolean put(Entry entry)
     {
         if (entry.getMaxAgeInMs() == null) {
             entry = new Entry(entry.getKey(),
@@ -57,11 +57,16 @@ public class InMemoryStore
             if (old != null) {
                 entry = resolver.resolve(old, entry);
 
-                if (entry != old) {
+                if (entry == old) {
+                    return false;
+                }
+                else {
                     done = map.replace(key, old, entry);
                 }
             }
         }
+
+        return true;
     }
 
     @Override
@@ -73,7 +78,7 @@ public class InMemoryStore
     }
 
     @Override
-    public void delete(byte[] key, long timestamp)
+    public boolean delete(byte[] key, long timestamp)
     {
         Preconditions.checkNotNull(key, "key is null");
 
@@ -83,11 +88,14 @@ public class InMemoryStore
         while (!done) {
             Entry old = map.get(wrappedKey);
 
-            done = true;
-            if (old != null && !resolver.isNewer(old, timestamp)) {
+            if (old == null || resolver.isNewer(old, timestamp)) {
+                return false;
+            }
+            else {
                 done = map.remove(wrappedKey, old);
             }
         }
+        return true;
     }
 
     @Override

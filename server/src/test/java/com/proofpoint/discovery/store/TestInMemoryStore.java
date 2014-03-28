@@ -25,7 +25,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 public class TestInMemoryStore
 {
@@ -43,7 +45,17 @@ public class TestInMemoryStore
     public void testPut()
     {
         Entry entry = entryOf("blue", "apple", 1);
-        store.put(entry);
+        assertTrue(store.put(entry));
+
+        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+    }
+
+    @Test
+    public void testPutAlreadyThere()
+    {
+        Entry entry = entryOf("blue", "apple", 1);
+        assertTrue(store.put(entry));
+        assertFalse(store.put(entryOf("blue", "apple", 1)));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
     }
@@ -55,7 +67,17 @@ public class TestInMemoryStore
         Entry entry = entryOf("blue", "apple", 1);
         store.put(entry);
 
-        store.delete(key, entry.getTimestamp());
+        assertTrue(store.delete(key, entry.getTimestamp()));
+
+        assertNull(store.get(key));
+    }
+
+    @Test
+    public void testDeleteMissingEntry()
+    {
+        byte[] key = "blue".getBytes(Charsets.UTF_8);
+
+        assertFalse(store.delete(key, 1));
 
         assertNull(store.get(key));
     }
@@ -67,19 +89,31 @@ public class TestInMemoryStore
         Entry entry = entryOf("blue", "apple", 5);
         store.put(entry);
 
-        store.delete(key, 2);
+        assertFalse(store.delete(key, 2));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+    }
+
+    @Test
+    public void testUpdate()
+    {
+        Entry entry1 = entryOf("blue", "banana", 1);
+        assertTrue(store.put(entry1));
+
+        Entry entry2 = entryOf("blue", "apple", 2);
+        assertTrue(store.put(entry2));
+
+        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
     }
 
     @Test
     public void testResolvesConflict()
     {
         Entry entry2 = entryOf("blue", "apple", 2);
-        store.put(entry2);
+        assertTrue(store.put(entry2));
 
         Entry entry1 = entryOf("blue", "banana", 1);
-        store.put(entry1);
+        assertFalse(store.put(entry1));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
     }

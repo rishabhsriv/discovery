@@ -48,7 +48,7 @@ public class PersistentStore
     }
 
     @Override
-    public void put(Entry entry)
+    public boolean put(Entry entry)
     {
         byte[] dbEntry;
         try {
@@ -59,6 +59,7 @@ public class PersistentStore
         }
 
         db.put(entry.getKey(), dbEntry);
+        return true; // todo implement check for already in db
     }
 
     @Override
@@ -73,9 +74,10 @@ public class PersistentStore
     }
 
     @Override
-    public void delete(byte[] key, long timestamp)
+    public boolean delete(byte[] key, long timestamp)
     {
         db.delete(key);
+        return true; // todo implement check for no change
     }
 
     @Override
