@@ -11,7 +11,6 @@
 
 - Inject executors into Replicator, HttpRemoteStore, DistributedStore and BatchProcessor
 - Remove tombstone expiration check from StoreResource
-- Resolve conflicting writes in persistent store
 
 - CLI
 

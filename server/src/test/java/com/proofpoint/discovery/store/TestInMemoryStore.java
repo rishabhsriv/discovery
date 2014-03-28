@@ -127,6 +127,18 @@ public class TestInMemoryStore
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
     }
 
+    @Test
+    public void testDoesntDefaultMaxAge()
+    {
+        store = new InMemoryStore(new ConflictResolver());
+
+        Entry entry = entryOf("blue", "apple", 1);
+        entry = new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null);
+        store.put(entry);
+
+        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+    }
+
     private static Entry entryOf(String key, String value, long timestamp)
     {
         return new Entry(key.getBytes(UTF_8), value.getBytes(Charsets.UTF_8), timestamp, 60_000L);

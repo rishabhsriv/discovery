@@ -37,10 +37,16 @@ public class InMemoryStore
         maxAgeInMs = config.getMaxAge().toMillis();
     }
 
+    InMemoryStore(ConflictResolver resolver)
+    {
+        this.resolver = resolver;
+        maxAgeInMs = Long.MAX_VALUE;
+    }
+
     @Override
     public boolean put(Entry entry)
     {
-        if (entry.getMaxAgeInMs() == null) {
+        if (maxAgeInMs != Long.MAX_VALUE && entry.getMaxAgeInMs() == null) {
             entry = new Entry(entry.getKey(),
                     entry.getValue(),
                     entry.getTimestamp(),
