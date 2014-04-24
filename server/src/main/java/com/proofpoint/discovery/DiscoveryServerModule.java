@@ -49,7 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientPrivateBinder;
-import static org.weakref.jmx.guice.ExportBinder.newExporter;
+import static com.proofpoint.reporting.ReportBinder.reportBinder;
 
 public class DiscoveryServerModule
         implements Module
@@ -80,7 +80,7 @@ public class DiscoveryServerModule
         bindConfig(privateBinder).prefixedWith("discovery.proxy").to(BalancingHttpClientConfig.class);
         privateBinder.bind(HttpClient.class).annotatedWith(ForProxyStore.class).to(BalancingHttpClient.class).in(Scopes.SINGLETON);
         privateBinder.expose(HttpClient.class).annotatedWith(ForProxyStore.class);
-        newExporter(binder).export(HttpClient.class).annotatedWith(ForProxyStore.class).withGeneratedName();
+        reportBinder(binder).export(HttpClient.class).annotatedWith(ForProxyStore.class).withGeneratedName();
         binder.bind(ProxyStore.class).in(Scopes.SINGLETON);
     }
 
@@ -126,6 +126,7 @@ public class DiscoveryServerModule
         public HttpServiceBalancer get()
         {
             String name = new ObjectNameBuilder(HttpServiceBalancerStats.class.getPackage().getName())
+                    .withProperty("type", "ServiceClient")
                     .withProperty("serviceType", "discovery-upstream")
                     .build();
             HttpServiceBalancerImpl proxyBalancer = new HttpServiceBalancerImpl("discovery-upstream",

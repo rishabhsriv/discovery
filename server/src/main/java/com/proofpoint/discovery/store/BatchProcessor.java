@@ -82,13 +82,13 @@ public class BatchProcessor<T>
 
                             handler.processBatch(Collections.unmodifiableList(entries));
 
-                            processedEntries.update(entries.size());
+                            processedEntries.add(entries.size());
                         }
                         catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
                         catch (Throwable t) {
-                            errors.update(1);
+                            errors.add(1);
                             log.warn(t, "Error handling batch");
                         }
 
@@ -142,7 +142,7 @@ public class BatchProcessor<T>
         while (!queue.offer(entry)) {
             // throw away oldest and try again
             if (queue.poll() != null) {
-                droppedEntries.update(1);
+                droppedEntries.add(1);
             }
         }
     }

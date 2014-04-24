@@ -155,8 +155,8 @@ public class Replicator
                             throws Exception
                     {
                         URI uri1 = URI.create(uri);
-                        httpServiceBalancerStats.responseTime(uri1, Status.FAILURE).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-                        httpServiceBalancerStats.failure(uri1, exception.getClass().getSimpleName()).update(1);
+                        httpServiceBalancerStats.requestTime(uri1, Status.FAILURE).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+                        httpServiceBalancerStats.failure(uri1, exception.getClass().getSimpleName()).add(1);
                         throw exception;
                     }
 
@@ -168,7 +168,7 @@ public class Replicator
 
                         URI uri1 = URI.create(uri);
                         if (response.getStatusCode() == 200) {
-                            httpServiceBalancerStats.responseTime(uri1, Status.SUCCESS).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+                            httpServiceBalancerStats.requestTime(uri1, Status.SUCCESS).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
                             try {
                                 List<Entry> entries = mapper.readValue(response.getInputStream(), new TypeReference<List<Entry>>() {});
                                 for (Entry entry : entries) {
@@ -180,8 +180,8 @@ public class Replicator
                             }
                         }
                         else {
-                            httpServiceBalancerStats.responseTime(uri1, Status.FAILURE).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-                            httpServiceBalancerStats.failure(uri1, response.getStatusCode() + " status code").update(1);
+                            httpServiceBalancerStats.requestTime(uri1, Status.FAILURE).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+                            httpServiceBalancerStats.failure(uri1, response.getStatusCode() + " status code").add(1);
                         }
 
                         return null;
