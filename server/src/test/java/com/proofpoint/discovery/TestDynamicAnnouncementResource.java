@@ -26,9 +26,6 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import static com.google.common.collect.Iterables.transform;
-import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
-import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -48,8 +45,9 @@ public class TestDynamicAnnouncementResource
     @Test
     public void testPutNew()
     {
+        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("http", "http://localhost:1111"));
         DynamicAnnouncement announcement = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("http", "http://localhost:1111")))
+                serviceAnnouncement)
         );
 
         Id<Node> nodeId = Id.random();
@@ -58,7 +56,15 @@ public class TestDynamicAnnouncementResource
         assertNotNull(response);
         assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
 
-        assertEqualsIgnoreOrder(store.getAll(), transform(announcement.getServiceAnnouncements(), toServiceWith(nodeId, announcement.getLocation(), announcement.getPool())));
+        assertEquals(store.getAll().size(), 1);
+        Service service = store.getAll().iterator().next();
+
+        assertNotNull(service.getId());
+        assertEquals(service.getNodeId(), nodeId);
+        assertEquals(service.getLocation(), announcement.getLocation());
+        assertEquals(service.getType(), serviceAnnouncement.getType());
+        assertEquals(service.getPool(), announcement.getPool());
+        assertEquals(service.getProperties(), serviceAnnouncement.getProperties());
     }
 
     @Test
@@ -71,8 +77,9 @@ public class TestDynamicAnnouncementResource
 
         store.put(nodeId, previous);
 
+        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "new"));
         DynamicAnnouncement announcement = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "new")))
+                serviceAnnouncement)
         );
 
         Response response = resource.put(nodeId, announcement);
@@ -80,7 +87,15 @@ public class TestDynamicAnnouncementResource
         assertNotNull(response);
         assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
 
-        assertEqualsIgnoreOrder(store.getAll(), transform(announcement.getServiceAnnouncements(), toServiceWith(nodeId, announcement.getLocation(), announcement.getPool())));
+        assertEquals(store.getAll().size(), 1);
+        Service service = store.getAll().iterator().next();
+
+        assertNotNull(service.getId());
+        assertEquals(service.getNodeId(), nodeId);
+        assertEquals(service.getLocation(), announcement.getLocation());
+        assertEquals(service.getType(), serviceAnnouncement.getType());
+        assertEquals(service.getPool(), announcement.getPool());
+        assertEquals(service.getProperties(), serviceAnnouncement.getProperties());
     }
 
     @Test
@@ -122,13 +137,14 @@ public class TestDynamicAnnouncementResource
     public void testDeleteExisting()
     {
         Id<Node> blueNodeId = Id.random();
+        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "valueBlue"));
         DynamicAnnouncement blue = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "valueBlue"))
+                serviceAnnouncement
         ));
 
         Id<Node> redNodeId = Id.random();
         DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "valueBlue"))
+                serviceAnnouncement
         ));
 
         store.put(redNodeId, red);
@@ -139,7 +155,15 @@ public class TestDynamicAnnouncementResource
         assertNotNull(response);
         assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
 
-        assertEqualsIgnoreOrder(store.getAll(), transform(red.getServiceAnnouncements(), toServiceWith(redNodeId, red.getLocation(), red.getPool())));
+        assertEquals(store.getAll().size(), 1);
+        Service service = store.getAll().iterator().next();
+
+        assertNotNull(service.getId());
+        assertEquals(service.getNodeId(), redNodeId);
+        assertEquals(service.getLocation(), red.getLocation());
+        assertEquals(service.getType(), serviceAnnouncement.getType());
+        assertEquals(service.getPool(), red.getPool());
+        assertEquals(service.getProperties(), serviceAnnouncement.getProperties());
     }
 
     @Test
