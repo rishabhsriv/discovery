@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -25,7 +24,6 @@ import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -54,16 +52,6 @@ public class StoreResource
         }));
     }
 
-    @PUT
-    @Path("{key}")
-    public void put(@PathParam("store") String storeName, @PathParam("key") String key, byte[] value)
-    {
-        LocalStore store = localStores.get(storeName);
-
-        Entry entry = new Entry(key.getBytes(Charsets.UTF_8), value, System.currentTimeMillis(), null);
-        store.put(entry);
-    }
-    
     @POST
     @Consumes({"application/x-jackson-smile", "application/json"})
     public Response setMultipleEntries(@PathParam("store") String storeName, List<Entry> entries)
