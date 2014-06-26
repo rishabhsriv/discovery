@@ -150,10 +150,7 @@ public class TestDynamicAnnouncementResource
         store.put(redNodeId, red);
         store.put(blueNodeId, blue);
 
-        Response response = resource.delete(blueNodeId);
-
-        assertNotNull(response);
-        assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+        resource.delete(blueNodeId);
 
         assertEquals(store.getAll().size(), 1);
         Service service = store.getAll().iterator().next();
@@ -169,10 +166,7 @@ public class TestDynamicAnnouncementResource
     @Test
     public void testDeleteMissing()
     {
-        Response response = resource.delete(Id.<Node>random());
-
-        assertNotNull(response);
-        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        resource.delete(Id.<Node>random());
 
         assertTrue(store.getAll().isEmpty());
     }
