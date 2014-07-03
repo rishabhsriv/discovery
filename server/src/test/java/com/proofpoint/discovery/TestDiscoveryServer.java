@@ -46,9 +46,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.weakref.jmx.guice.MBeanModule;
-import org.weakref.jmx.testing.TestingMBeanServer;
+import org.weakref.jmx.testing.TestingMBeanModule;
 
-import javax.management.MBeanServer;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
@@ -69,7 +68,6 @@ import static com.proofpoint.http.client.StatusResponseHandler.createStatusRespo
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static com.proofpoint.json.JsonCodec.mapJsonCodec;
 import static javax.ws.rs.core.Response.Status;
-import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
@@ -98,21 +96,13 @@ public class TestDiscoveryServer
                         new MBeanModule(),
                         new TestingNodeModule("testing"),
                         new ReportingModule(),
-                        new MBeanModule(),
+                        new TestingMBeanModule(),
                         new TestingHttpServerModule(),
                         new JsonModule(),
                         new JaxrsModule(),
                         new DiscoveryServerModule(),
                         new DiscoveryModule(),
-                        new ReportingModule(),
-                        new Module()
-                        {
-                            public void configure(Binder binder)
-                            {
-                                // TODO: use testing mbean server
-                                binder.bind(MBeanServer.class).toInstance(new TestingMBeanServer());
-                            }
-                        })
+                        new ReportingModule())
                 .setRequiredConfigurationProperties(serverProperties)
                 .initialize();
 
@@ -145,16 +135,8 @@ public class TestDiscoveryServer
                 .withModules(
                         new TestingNodeModule("testing", "red"),
                         new ReportingModule(),
-                        new MBeanModule(),
+                        new TestingMBeanModule(),
                         new InMemoryEventModule(),
-                        new Module()
-                        {
-                            @Override
-                            public void configure(Binder binder)
-                            {
-                                binder.bind(MBeanServer.class).toInstance(mock(MBeanServer.class));
-                            }
-                        },
                         new JsonModule(),
                         new DiscoveryModule()
                 )
@@ -248,16 +230,8 @@ public class TestDiscoveryServer
                 .withModules(
                         new TestingNodeModule("testing"),
                         new ReportingModule(),
-                        new MBeanModule(),
+                        new TestingMBeanModule(),
                         new InMemoryEventModule(),
-                        new Module()
-                        {
-                            @Override
-                            public void configure(Binder binder)
-                            {
-                                binder.bind(MBeanServer.class).toInstance(mock(MBeanServer.class));
-                            }
-                        },
                         new JsonModule(),
                         new DiscoveryModule(),
                         new Module()
