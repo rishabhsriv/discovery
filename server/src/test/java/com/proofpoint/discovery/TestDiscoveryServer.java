@@ -18,10 +18,8 @@ package com.proofpoint.discovery;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
-import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Module;
 import com.proofpoint.bootstrap.LifeCycleManager;
 import com.proofpoint.discovery.client.DiscoveryModule;
 import com.proofpoint.discovery.client.ServiceDescriptor;
@@ -234,14 +232,7 @@ public class TestDiscoveryServer
                         new InMemoryEventModule(),
                         new JsonModule(),
                         new DiscoveryModule(),
-                        new Module()
-                        {
-                            @Override
-                            public void configure(Binder binder)
-                            {
-                                discoveryBinder(binder).bindSelector(type);
-                            }
-                        }
+                        binder -> discoveryBinder(binder).bindSelector(type)
                 )
                 .setRequiredConfigurationProperties(clientProperties)
                 .initialize();

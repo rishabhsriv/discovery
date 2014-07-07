@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.proofpoint.units.Duration;
@@ -42,14 +41,7 @@ public class StoreResource
     public StoreResource(Map<String, LocalStore> localStores, Map<String, StoreConfig> configs)
     {
         this.localStores = ImmutableMap.copyOf(localStores);
-        this.tombstoneMaxAges = ImmutableMap.copyOf(Maps.transformValues(configs, new Function<StoreConfig, Duration>()
-        {
-            @Override
-            public Duration apply(StoreConfig config)
-            {
-                return config.getTombstoneMaxAge();
-            }
-        }));
+        this.tombstoneMaxAges = ImmutableMap.copyOf(Maps.transformValues(configs, StoreConfig::getTombstoneMaxAge));
     }
 
     @POST

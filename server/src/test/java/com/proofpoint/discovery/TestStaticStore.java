@@ -121,9 +121,7 @@ public abstract class TestStaticStore
         }
         Set<Service> services = builder.build();
 
-        for (Service service : services) {
-            store.put(service);
-        }
+        services.forEach(store::put);
 
         assertEquals(store.getAll(), services);
     }

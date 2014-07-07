@@ -18,7 +18,6 @@ package com.proofpoint.discovery;
 import com.google.common.base.Supplier;
 import com.proofpoint.discovery.store.ConflictResolver;
 import com.proofpoint.discovery.store.DistributedStore;
-import com.proofpoint.discovery.store.Entry;
 import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.RemoteStore;
 import com.proofpoint.discovery.store.StoreConfig;
@@ -30,9 +29,7 @@ public class TestReplicatedDynamicStore
     @Override
     protected DynamicStore initializeStore(DiscoveryConfig config, Supplier<DateTime> timeSupplier)
     {
-        RemoteStore dummy = new RemoteStore() {
-            public void put(Entry entry) { }
-        };
+        RemoteStore dummy = entry -> { };
 
         DistributedStore distributedStore = new DistributedStore("dynamic", new InMemoryStore(new ConflictResolver(), config), dummy, new StoreConfig(), timeSupplier);
 

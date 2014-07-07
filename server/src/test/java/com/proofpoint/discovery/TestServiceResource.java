@@ -18,8 +18,6 @@ package com.proofpoint.discovery;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.node.NodeInfo;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -39,6 +37,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+@SuppressWarnings("unchecked")
 public class TestServiceResource
 {
     private InMemoryDynamicStore dynamicStore;
@@ -145,15 +144,7 @@ public class TestServiceResource
         dynamicStore.put(greenNodeId, green);
         dynamicStore.put(blueNodeId, blue);
 
-        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(new Answer<Set<Service>>()
-        {
-            @Override
-            public Set<Service> answer(InvocationOnMock invocationOnMock)
-                    throws Throwable
-            {
-                return (Set<Service>) invocationOnMock.getArguments()[0];
-            }
-        });
+        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> (Set<Service>) invocationOnMock.getArguments()[0]);
 
         assertEquals(resource.getAllServices(), new Services("testing", ImmutableSet.of(
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
@@ -244,16 +235,8 @@ public class TestServiceResource
         dynamicStore.put(blueNodeId, blue);
 
         final Service proxyStorageService = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
-        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(new Answer<Set<Service>>()
-        {
-            @Override
-            public Set<Service> answer(InvocationOnMock invocationOnMock)
-                    throws Throwable
-            {
-                return union(of(proxyStorageService),
-                        (Set<Service>) invocationOnMock.getArguments()[0]);
-            }
-        });
+        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> union(of(proxyStorageService),
+                (Set<Service>) invocationOnMock.getArguments()[0]));
         assertEquals(resource.getAllServices(), new Services("testing", ImmutableSet.of(
                 proxyStorageService,
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),

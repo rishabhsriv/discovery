@@ -110,15 +110,6 @@ public class DynamicServiceAnnouncement
 
     public static Function<DynamicServiceAnnouncement, Service> toServiceWith(final Id<Node> nodeId, final String location, final String pool)
     {
-        return new Function<DynamicServiceAnnouncement, Service>()
-        {
-            @Override
-            public Service apply(DynamicServiceAnnouncement announcement)
-            {
-                return new Service(announcement.getId(), nodeId, announcement.getType(), pool, location, announcement.getProperties());
-            }
-        };
+        return announcement -> new Service(announcement.getId(), nodeId, announcement.getType(), pool, location, announcement.getProperties());
     }
-
-
 }

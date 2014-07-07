@@ -69,31 +69,28 @@ public class BatchProcessor<T>
         if (future == null) {
             executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("batch-processor-" + name + "-%d").build());
 
-            future = executor.submit(new Runnable() {
-                public void run()
-                {
-                    while (!Thread.interrupted()) {
-                        final List<T> entries = new ArrayList<>(maxBatchSize);
+            future = executor.submit(() -> {
+                while (!Thread.interrupted()) {
+                    final List<T> entries = new ArrayList<>(maxBatchSize);
 
-                        try {
-                            T first = queue.take();
-                            entries.add(first);
-                            queue.drainTo(entries, maxBatchSize - 1);
+                    try {
+                        T first = queue.take();
+                        entries.add(first);
+                        queue.drainTo(entries, maxBatchSize - 1);
 
-                            handler.processBatch(Collections.unmodifiableList(entries));
+                        handler.processBatch(Collections.unmodifiableList(entries));
 
-                            processedEntries.add(entries.size());
-                        }
-                        catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                        catch (Throwable t) {
-                            errors.add(1);
-                            log.warn(t, "Error handling batch");
-                        }
-
-                        // TODO: expose timestamp of last execution via jmx
+                        processedEntries.add(entries.size());
                     }
+                    catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    catch (Throwable t) {
+                        errors.add(1);
+                        log.warn(t, "Error handling batch");
+                    }
+
+                    // TODO: expose timestamp of last execution via jmx
                 }
             });
         }

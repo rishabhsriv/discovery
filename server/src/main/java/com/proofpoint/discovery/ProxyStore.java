@@ -94,9 +94,7 @@ public class ProxyStore
                 builder.add(service);
             }
         }
-        for (Set<Service> set : map.values()) {
-            builder.addAll(set);
-        }
+        map.values().forEach(builder::addAll);
         return builder.build();
     }
 
@@ -160,53 +158,41 @@ public class ProxyStore
         {
             final ListenableFuture<ServiceDescriptors> future = lookupClient.getServices(type);
 
-            future.addListener(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    Duration delay = DEFAULT_DELAY;
-                    try {
-                        ServiceDescriptors descriptors = future.get();
-                        delay = descriptors.getMaxAge();
-                        Builder<Service> builder = ImmutableSet.builder();
-                        for (ServiceDescriptor descriptor : descriptors.getServiceDescriptors()) {
-                            builder.add(new Service(
-                                    Id.<Service>valueOf(descriptor.getId()),
-                                    Id.<Node>valueOf(descriptor.getNodeId()),
-                                    descriptor.getType(),
-                                    descriptor.getPool(),
-                                    descriptor.getLocation(),
-                                    descriptor.getProperties()));
-                        }
-                        map.put(type, builder.build());
-                        if (serverUp.compareAndSet(false, true)) {
-                            log.info("Proxied discovery server connect succeeded for refresh (%s)", type);
-                        }
+            future.addListener(() -> {
+                Duration delay = DEFAULT_DELAY;
+                try {
+                    ServiceDescriptors descriptors = future.get();
+                    delay = descriptors.getMaxAge();
+                    Builder<Service> builder = ImmutableSet.builder();
+                    for (ServiceDescriptor descriptor : descriptors.getServiceDescriptors()) {
+                        builder.add(new Service(
+                                Id.<Service>valueOf(descriptor.getId()),
+                                Id.<Node>valueOf(descriptor.getNodeId()),
+                                descriptor.getType(),
+                                descriptor.getPool(),
+                                descriptor.getLocation(),
+                                descriptor.getProperties()));
                     }
-                    catch (InterruptedException ignored) {
-                        Thread.currentThread().interrupt();
+                    map.put(type, builder.build());
+                    if (serverUp.compareAndSet(false, true)) {
+                        log.info("Proxied discovery server connect succeeded for refresh (%s)", type);
                     }
-                    catch (ExecutionException e) {
-                        if (!(e.getCause() instanceof DiscoveryException)) {
-                            throw propagate(e);
-                        }
-                        if (serverUp.compareAndSet(true, false)) {
-                            log.error("Cannot connect to proxy discovery server for refresh (%s): %s", type, e.getCause().getMessage());
-                        }
-                        log.debug(e.getCause(), "Cannot connect to proxy discovery server for refresh (%s)", type);
+                }
+                catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
+                catch (ExecutionException e) {
+                    if (!(e.getCause() instanceof DiscoveryException)) {
+                        throw propagate(e);
                     }
-                    finally {
-                        if (!poolExecutor.isShutdown()) {
-                            poolExecutor.schedule(new Runnable()
-                            {
-                                @Override
-                                public void run()
-                                {
-                                    refresh();
-                                }
-                            }, (long) delay.toMillis(), TimeUnit.MILLISECONDS);
-                        }
+                    if (serverUp.compareAndSet(true, false)) {
+                        log.error("Cannot connect to proxy discovery server for refresh (%s): %s", type, e.getCause().getMessage());
+                    }
+                    log.debug(e.getCause(), "Cannot connect to proxy discovery server for refresh (%s)", type);
+                }
+                finally {
+                    if (!poolExecutor.isShutdown()) {
+                        poolExecutor.schedule((Runnable) this::refresh, (long) delay.toMillis(), TimeUnit.MILLISECONDS);
                     }
                 }
             }, poolExecutor);

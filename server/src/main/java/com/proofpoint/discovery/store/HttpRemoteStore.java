@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
-import com.proofpoint.http.client.BodyGenerator;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
 import com.proofpoint.http.client.Response;
@@ -39,7 +38,6 @@ import org.weakref.jmx.ObjectNameBuilder;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
@@ -112,14 +110,7 @@ public class HttpRemoteStore
         maxBatchSize = config.getMaxBatchSize();
         queueSize = config.getQueueSize();
         updateInterval = config.getRemoteUpdateInterval();
-        ourNodeIdPredicate = new Predicate<ServiceDescriptor>()
-        {
-            @Override
-            public boolean apply(ServiceDescriptor input)
-            {
-                return node.getNodeId().equals(input.getNodeId());
-            }
-        };
+        ourNodeIdPredicate = input -> node.getNodeId().equals(input.getNodeId());
     }
 
     @PostConstruct
@@ -129,17 +120,12 @@ public class HttpRemoteStore
             // note: this *must* be single threaded for the shutdown logic to work correctly
             executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("http-remote-store-" + name + "-%d").setDaemon(true).build());
 
-            future = executor.scheduleWithFixedDelay(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    try {
-                        updateProcessors(selector.selectAllServices());
-                    }
-                    catch (Throwable e) {
-                        log.warn(e, "Error refreshing batch processors");
-                    }
+            future = executor.scheduleWithFixedDelay(() -> {
+                try {
+                    updateProcessors(selector.selectAllServices());
+                }
+                catch (Throwable e) {
+                    log.warn(e, "Error refreshing batch processors");
                 }
             }, 0, updateInterval.toMillis(), TimeUnit.MILLISECONDS);
         }
@@ -155,11 +141,7 @@ public class HttpRemoteStore
                 // schedule a task to shut down all processors and wait for it to complete. We rely on the executor
                 // having a *single* thread to guarantee the execution happens after any currently running task
                 // (in case the cancel call above didn't do its magic and the scheduled task is still running)
-                executor.submit(new Runnable() {
-                    public void run() {
-                        updateProcessors(Collections.<ServiceDescriptor>emptyList());
-                    }
-                }).get();
+                executor.submit(() -> updateProcessors(Collections.<ServiceDescriptor>emptyList())).get();
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -226,13 +208,7 @@ public class HttpRemoteStore
 
     private static Function<ServiceDescriptor, String> getHostPortFunction()
     {
-        return new Function<ServiceDescriptor, String>()
-        {
-            public String apply(ServiceDescriptor descriptor)
-            {
-                return getHostPort(descriptor);
-            }
-        };
+        return HttpRemoteStore::getHostPort;
     }
 
     private static String getHostPort(ServiceDescriptor descriptor)
@@ -271,14 +247,7 @@ public class HttpRemoteStore
             final Request request = Request.Builder.preparePost()
                     .setUri(uri)
                     .setHeader("Content-Type", "application/x-jackson-smile")
-                    .setBodyGenerator(new BodyGenerator() {
-                        @Override
-                        public void write(OutputStream out)
-                                throws Exception
-                        {
-                            mapper.writeValue(out, entries);
-                        }
-                    })
+                    .setBodyGenerator(out -> mapper.writeValue(out, entries))
                     .build();
 
             try {

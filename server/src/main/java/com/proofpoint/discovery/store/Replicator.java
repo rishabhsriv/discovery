@@ -91,17 +91,12 @@ public class Replicator
         if (future == null) {
             executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("replicator-" + name + "-%d").setDaemon(true).build());
 
-            future = executor.scheduleAtFixedRate(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    try {
-                        synchronize();
-                    }
-                    catch (Throwable t) {
-                        log.warn(t, "Error replicating state");
-                    }
+            future = executor.scheduleAtFixedRate(() -> {
+                try {
+                    synchronize();
+                }
+                catch (Throwable t) {
+                    log.warn(t, "Error replicating state");
                 }
             }, 0, replicationInterval.toMillis(), TimeUnit.MILLISECONDS);
         }
@@ -171,9 +166,7 @@ public class Replicator
                             httpServiceBalancerStats.requestTime(uri1, Status.SUCCESS).add(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
                             try {
                                 List<Entry> entries = mapper.readValue(response.getInputStream(), new TypeReference<List<Entry>>() {});
-                                for (Entry entry : entries) {
-                                    localStore.put(entry);
-                                }
+                                entries.forEach(localStore::put);
                             }
                             catch (EOFException e) {
                                 // ignore

@@ -121,24 +121,12 @@ public class Service
 
     public static Predicate<Service> matchesType(final String type)
     {
-        return new Predicate<Service>()
-        {
-            public boolean apply(Service descriptor)
-            {
-                return descriptor.getType().equals(type);
-            }
-        };
+        return descriptor -> descriptor.getType().equals(type);
     }
 
     public static Predicate<Service> matchesPool(final String pool)
     {
-        return new Predicate<Service>()
-        {
-            public boolean apply(Service descriptor)
-            {
-                return descriptor.getPool().equals(pool);
-            }
-        };
+        return descriptor -> descriptor.getPool().equals(pool);
     }
 
     @Override

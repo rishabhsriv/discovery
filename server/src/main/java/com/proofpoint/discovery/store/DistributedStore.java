@@ -76,14 +76,7 @@ public class DistributedStore
     @PostConstruct
     public void start()
     {
-        garbageCollector.scheduleAtFixedRate(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                removeExpiredEntries();
-            }
-        }, 0, garbageCollectionInterval.toMillis(), TimeUnit.MILLISECONDS);
+        garbageCollector.scheduleAtFixedRate((Runnable) this::removeExpiredEntries, 0, garbageCollectionInterval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Managed
@@ -194,25 +187,13 @@ public class DistributedStore
         return Iterables.filter(localStore.getAll(), and(not(expired()), not(tombstone())));
     }
 
-    private Predicate<? super Entry> expired()
+    private Predicate<Entry> expired()
     {
-        return new Predicate<Entry>()
-        {
-            public boolean apply(Entry entry)
-            {
-                return isExpired(entry);
-            }
-        };
+        return this::isExpired;
     }
 
-    private Predicate<? super Entry> tombstone()
+    private Predicate<Entry> tombstone()
     {
-        return new Predicate<Entry>()
-        {
-            public boolean apply(Entry entry)
-            {
-                return entry.getValue() == null;
-            }
-        };
+        return entry -> entry.getValue() == null;
     }
 }
