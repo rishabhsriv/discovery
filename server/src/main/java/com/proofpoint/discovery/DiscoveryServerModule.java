@@ -49,6 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientPrivateBinder;
+import static com.proofpoint.jaxrs.JaxrsBinder.jaxrsBinder;
 import static com.proofpoint.reporting.ReportBinder.reportBinder;
 
 public class DiscoveryServerModule
@@ -57,18 +58,18 @@ public class DiscoveryServerModule
     public void configure(Binder binder)
     {
         bindConfig(binder).to(DiscoveryConfig.class);
-        binder.bind(ServiceResource.class).in(Scopes.SINGLETON);
+        jaxrsBinder(binder).bind(ServiceResource.class);
         binder.bind(InitializationTracker.class).in(Scopes.SINGLETON);
 
         discoveryBinder(binder).bindHttpAnnouncement("discovery");
 
         // dynamic announcements
-        binder.bind(DynamicAnnouncementResource.class).in(Scopes.SINGLETON);
+        jaxrsBinder(binder).bind(DynamicAnnouncementResource.class);
         binder.bind(DynamicStore.class).to(ReplicatedDynamicStore.class).in(Scopes.SINGLETON);
         binder.install(new ReplicatedStoreModule("dynamic", ForDynamicStore.class, InMemoryStore.class));
 
         // static announcements
-        binder.bind(StaticAnnouncementResource.class).in(Scopes.SINGLETON);
+        jaxrsBinder(binder).bind(StaticAnnouncementResource.class);
         binder.bind(StaticStore.class).to(ReplicatedStaticStore.class).in(Scopes.SINGLETON);
         binder.install(new ReplicatedStoreModule("static", ForStaticStore.class, PersistentStore.class));
         bindConfig(binder).prefixedWith("static").to(PersistentStoreConfig.class);

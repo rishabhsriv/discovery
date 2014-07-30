@@ -22,7 +22,6 @@ import com.proofpoint.discovery.client.DiscoveryModule;
 import com.proofpoint.discovery.client.announce.Announcer;
 import com.proofpoint.event.client.HttpEventModule;
 import com.proofpoint.http.server.HttpServerModule;
-import com.proofpoint.jaxrs.JaxrsModule;
 import com.proofpoint.jmx.JmxModule;
 import com.proofpoint.json.JsonModule;
 import com.proofpoint.log.Logger;
@@ -33,6 +32,7 @@ import com.proofpoint.tracetoken.TraceTokenModule;
 import org.weakref.jmx.guice.MBeanModule;
 
 import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
+import static com.proofpoint.jaxrs.JaxrsModule.explicitJaxrsModule;
 
 public class Main
 {
@@ -46,7 +46,7 @@ public class Main
                     .withModules(new MBeanModule(),
                             new NodeModule(),
                             new HttpServerModule(),
-                            new JaxrsModule(),
+                            explicitJaxrsModule(),
                             new JsonModule(),
                             new JmxModule(),
                             new DiscoveryServerModule(),

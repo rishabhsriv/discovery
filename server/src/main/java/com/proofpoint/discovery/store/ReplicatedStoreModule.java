@@ -43,6 +43,7 @@ import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.name.Names.named;
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
+import static com.proofpoint.jaxrs.JaxrsBinder.jaxrsBinder;
 import static com.proofpoint.reporting.ReportBinder.reportBinder;
 import static org.weakref.jmx.ObjectNames.generatedNameOf;
 import static org.weakref.jmx.guice.ExportBinder.newExporter;
@@ -72,9 +73,9 @@ public class ReplicatedStoreModule
         binder.disableCircularProxies();
 
         // global
-        binder.bind(StoreResource.class).in(Scopes.SINGLETON);
+        jaxrsBinder(binder).bind(StoreResource.class);
         binder.bind(new TypeLiteral<Supplier<DateTime>>() {}).to(RealTimeSupplier.class).in(Scopes.SINGLETON);
-        binder.bind(SmileMapper.class).in(Scopes.SINGLETON);
+        jaxrsBinder(binder).bind(SmileMapper.class);
         binder.bind(ConflictResolver.class).in(Scopes.SINGLETON);
 
         // per store
