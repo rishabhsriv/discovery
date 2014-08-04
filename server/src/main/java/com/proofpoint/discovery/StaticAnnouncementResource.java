@@ -54,6 +54,7 @@ public class StaticAnnouncementResource
 
     @POST
     @Consumes("application/json")
+    @Produces("application/json")
     public Response post(StaticAnnouncement announcement, @Context UriInfo uriInfo)
     {
         if (!nodeInfo.getEnvironment().equals(announcement.getEnvironment())) {
