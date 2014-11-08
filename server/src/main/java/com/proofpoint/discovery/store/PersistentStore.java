@@ -59,7 +59,7 @@ public class PersistentStore
     }
 
     @Override
-    synchronized public boolean put(Entry entry)
+    public synchronized boolean put(Entry entry)
     {
         if (!cache.put(entry)) {
             return false;
@@ -84,7 +84,7 @@ public class PersistentStore
     }
 
     @Override
-    synchronized public boolean delete(byte[] key, long timestamp)
+    public synchronized boolean delete(byte[] key, long timestamp)
     {
         if (!cache.delete(key, timestamp)) {
             return false;
