@@ -15,12 +15,10 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
@@ -28,6 +26,7 @@ import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
 import com.proofpoint.http.client.Response;
 import com.proofpoint.http.client.ResponseHandler;
+import com.proofpoint.json.JsonCodec;
 import com.proofpoint.log.Logger;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.reporting.ReportExporter;
@@ -63,6 +62,8 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
+import static com.proofpoint.http.client.SmileBodyGenerator.smileBodyGenerator;
+import static com.proofpoint.json.JsonCodec.jsonCodec;
 
 public class HttpRemoteStore
         implements RemoteStore
@@ -227,7 +228,9 @@ public class HttpRemoteStore
     private static class MyBatchHandler
             implements BatchProcessor.BatchHandler<Entry>
     {
-        private final ObjectMapper mapper = new ObjectMapper(new SmileFactory()).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        private static final JsonCodec<Collection<Entry>> ENTRIES_CODEC = jsonCodec(new TypeToken<Collection<Entry>>()
+        {
+        });
 
         private final URI uri;
         private final HttpClient httpClient;
@@ -247,7 +250,7 @@ public class HttpRemoteStore
             final Request request = Request.Builder.preparePost()
                     .setUri(uri)
                     .setHeader("Content-Type", "application/x-jackson-smile")
-                    .setBodyGenerator(out -> mapper.writeValue(out, entries))
+                    .setBodyGenerator(smileBodyGenerator(ENTRIES_CODEC, entries))
                     .build();
 
             try {

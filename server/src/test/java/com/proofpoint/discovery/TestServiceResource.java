@@ -144,7 +144,7 @@ public class TestServiceResource
         dynamicStore.put(greenNodeId, green);
         dynamicStore.put(blueNodeId, blue);
 
-        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> (Set<Service>) invocationOnMock.getArguments()[0]);
+        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
 
         assertEquals(resource.getAllServices(), new Services("testing", ImmutableSet.of(
                 toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
