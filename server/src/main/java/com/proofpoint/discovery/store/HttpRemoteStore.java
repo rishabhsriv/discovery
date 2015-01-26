@@ -250,7 +250,7 @@ public class HttpRemoteStore
             final Request request = Request.Builder.preparePost()
                     .setUri(uri)
                     .setHeader("Content-Type", "application/x-jackson-smile")
-                    .setBodyGenerator(smileBodyGenerator(ENTRIES_CODEC, entries))
+                    .setBodySource(smileBodyGenerator(ENTRIES_CODEC, entries))
                     .build();
 
             try {

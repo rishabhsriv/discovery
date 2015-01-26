@@ -102,6 +102,7 @@ public class TestDiscoveryServer
                         new DiscoveryModule(),
                         new ReportingModule())
                 .setRequiredConfigurationProperties(serverProperties)
+                .quiet()
                 .initialize();
 
         lifeCycleManagers = new HashSet<>();
@@ -139,6 +140,7 @@ public class TestDiscoveryServer
                         new DiscoveryModule()
                 )
                 .setRequiredConfigurationProperties(announcerProperties)
+                .quiet()
                 .initialize();
 
         lifeCycleManagers.add(announcerInjector.getInstance(LifeCycleManager.class));
@@ -188,7 +190,7 @@ public class TestDiscoveryServer
         Request request = preparePost()
                 .setUri(uriFor("/v1/announcement/static"))
                 .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                .setBodyGenerator(jsonBodyGenerator(jsonCodec(Object.class), announcement))
+                .setBodySource(jsonBodyGenerator(jsonCodec(Object.class), announcement))
                 .build();
         JsonResponse<Map<String, Object>> createResponse = client.execute(request, createFullJsonResponseHandler(mapJsonCodec(String.class, Object.class)));
 
@@ -235,6 +237,7 @@ public class TestDiscoveryServer
                         binder -> discoveryBinder(binder).bindSelector(type)
                 )
                 .setRequiredConfigurationProperties(clientProperties)
+                .quiet()
                 .initialize();
 
         lifeCycleManagers.add(clientInjector.getInstance(LifeCycleManager.class));
