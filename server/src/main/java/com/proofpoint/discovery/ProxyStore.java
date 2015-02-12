@@ -18,7 +18,6 @@ package com.proofpoint.discovery;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.proofpoint.discovery.client.DiscoveryException;
@@ -44,6 +43,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Throwables.propagate;
+import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient.DEFAULT_DELAY;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 
@@ -68,10 +68,7 @@ public class ProxyStore
                     jsonCodec(ServiceDescriptorsRepresentation.class),
                     httpClient,
                     null);
-            ScheduledThreadPoolExecutor poolExecutor = new ScheduledThreadPoolExecutor(5, new ThreadFactoryBuilder()
-                    .setNameFormat("Proxy-Discovery-%s")
-                    .setDaemon(true)
-                    .build());
+            ScheduledThreadPoolExecutor poolExecutor = new ScheduledThreadPoolExecutor(5, daemonThreadsNamed("Proxy-Discovery-%s"));
 
             for (String type : proxyTypes) {
                 new ServiceUpdater(type, lookupClient, poolExecutor).start();

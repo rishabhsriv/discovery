@@ -19,7 +19,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
@@ -47,7 +46,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -62,8 +60,10 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
+import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.http.client.SmileBodyGenerator.smileBodyGenerator;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
 public class HttpRemoteStore
         implements RemoteStore
@@ -119,7 +119,7 @@ public class HttpRemoteStore
     {
         if (future == null) {
             // note: this *must* be single threaded for the shutdown logic to work correctly
-            executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("http-remote-store-" + name + "-%d").setDaemon(true).build());
+            executor = newSingleThreadScheduledExecutor(daemonThreadsNamed("http-remote-store-" + name));
 
             future = executor.scheduleWithFixedDelay(() -> {
                 try {

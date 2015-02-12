@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.proofpoint.discovery.InitializationTracker;
 import com.proofpoint.discovery.InitializationTracker.CompletionNotifier;
 import com.proofpoint.discovery.client.ServiceDescriptor;
@@ -40,11 +39,13 @@ import javax.annotation.PreDestroy;
 import java.io.EOFException;
 import java.net.URI;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
 public class Replicator
 {
@@ -89,7 +90,7 @@ public class Replicator
     public synchronized void start()
     {
         if (future == null) {
-            executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("replicator-" + name + "-%d").setDaemon(true).build());
+            executor = newSingleThreadScheduledExecutor(daemonThreadsNamed("replicator-" + name));
 
             future = executor.scheduleAtFixedRate(() -> {
                 try {
