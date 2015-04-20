@@ -38,7 +38,7 @@ public class TestInMemoryStore
             throws Exception
     {
         DiscoveryConfig config = new DiscoveryConfig().setMaxAge(new Duration(1, TimeUnit.MINUTES));
-        store = new InMemoryStore(new ConflictResolver(), config);
+        store = new InMemoryStore(config);
     }
 
     @Test
@@ -130,7 +130,7 @@ public class TestInMemoryStore
     @Test
     public void testDoesntDefaultMaxAge()
     {
-        store = new InMemoryStore(new ConflictResolver());
+        store = new InMemoryStore();
 
         Entry entry = entryOf("blue", "apple", 1);
         entry = new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null);

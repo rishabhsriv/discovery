@@ -38,11 +38,11 @@ public class PersistentStore
     private final InMemoryStore cache;
 
     @Inject
-    public PersistentStore(PersistentStoreConfig config, ConflictResolver resolver)
+    public PersistentStore(PersistentStoreConfig config)
             throws IOException
     {
         db = Iq80DBFactory.factory.open(config.getLocation(), new Options().createIfMissing(true));
-        cache = new InMemoryStore(resolver);
+        cache = new InMemoryStore();
 
         for (Map.Entry<byte[], byte[]> dbEntry : db) {
             try {

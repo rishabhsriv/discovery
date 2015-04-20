@@ -16,6 +16,7 @@
 package com.proofpoint.discovery.store;
 
 import com.google.common.base.Preconditions;
+import com.google.common.primitives.Longs;
 import com.proofpoint.discovery.DiscoveryConfig;
 
 import javax.inject.Inject;
@@ -27,19 +28,16 @@ public class InMemoryStore
         implements LocalStore
 {
     private final ConcurrentMap<ByteBuffer, Entry> map = new ConcurrentHashMap<>();
-    private final ConflictResolver resolver;
     private final long maxAgeInMs;
 
     @Inject
-    public InMemoryStore(ConflictResolver resolver, DiscoveryConfig config)
+    public InMemoryStore(DiscoveryConfig config)
     {
-        this.resolver = resolver;
         maxAgeInMs = config.getMaxAge().toMillis();
     }
 
-    InMemoryStore(ConflictResolver resolver)
+    InMemoryStore()
     {
-        this.resolver = resolver;
         maxAgeInMs = Long.MAX_VALUE;
     }
 
@@ -61,7 +59,7 @@ public class InMemoryStore
 
             done = true;
             if (old != null) {
-                entry = resolver.resolve(old, entry);
+                entry = resolve(old, entry);
 
                 if (entry == old) {
                     return false;
@@ -94,7 +92,7 @@ public class InMemoryStore
         while (!done) {
             Entry old = map.get(wrappedKey);
 
-            if (old == null || resolver.isNewer(old, timestamp)) {
+            if (old == null || isNewer(old, timestamp)) {
                 return false;
             }
             else {
@@ -108,5 +106,19 @@ public class InMemoryStore
     public Iterable<Entry> getAll()
     {
         return map.values();
+    }
+
+    private static Entry resolve(Entry a, Entry b)
+    {
+        if (isNewer(b, a.getTimestamp())) {
+            return b;
+        }
+        else {
+            return a;
+        }
+    }
+
+    private static boolean isNewer(Entry entry, long timestamp) {
+        return (Longs.compare(entry.getTimestamp(), timestamp) > 0);
     }
 }

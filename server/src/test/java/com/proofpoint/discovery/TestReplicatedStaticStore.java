@@ -16,7 +16,6 @@
 package com.proofpoint.discovery;
 
 import com.google.common.base.Supplier;
-import com.proofpoint.discovery.store.ConflictResolver;
 import com.proofpoint.discovery.store.DistributedStore;
 import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.RemoteStore;
@@ -34,7 +33,7 @@ public class TestReplicatedStaticStore
     {
         RemoteStore dummy = entry -> { };
         DiscoveryConfig config = new DiscoveryConfig().setMaxAge(new Duration(1, TimeUnit.MINUTES));
-        DistributedStore distributedStore = new DistributedStore("static", new InMemoryStore(new ConflictResolver(), config), dummy, new StoreConfig(), timeSupplier);
+        DistributedStore distributedStore = new DistributedStore("static", new InMemoryStore(config), dummy, new StoreConfig(), timeSupplier);
 
         return new ReplicatedStaticStore(distributedStore);
     }

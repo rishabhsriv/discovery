@@ -16,7 +16,6 @@
 package com.proofpoint.discovery;
 
 import com.google.common.base.Supplier;
-import com.proofpoint.discovery.store.ConflictResolver;
 import com.proofpoint.discovery.store.DistributedStore;
 import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.RemoteStore;
@@ -31,7 +30,7 @@ public class TestReplicatedDynamicStore
     {
         RemoteStore dummy = entry -> { };
 
-        DistributedStore distributedStore = new DistributedStore("dynamic", new InMemoryStore(new ConflictResolver(), config), dummy, new StoreConfig(), timeSupplier);
+        DistributedStore distributedStore = new DistributedStore("dynamic", new InMemoryStore(config), dummy, new StoreConfig(), timeSupplier);
 
         return new ReplicatedDynamicStore(distributedStore, config);
     }
