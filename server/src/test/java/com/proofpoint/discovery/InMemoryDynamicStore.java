@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -24,11 +23,11 @@ import org.joda.time.DateTime;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Iterables.filter;
@@ -52,25 +51,23 @@ public class InMemoryDynamicStore
     }
 
     @Override
-    public synchronized boolean put(Id<Node> nodeId, DynamicAnnouncement announcement)
+    public synchronized void put(Id<Node> nodeId, DynamicAnnouncement announcement)
     {
-        Preconditions.checkNotNull(nodeId, "nodeId is null");
-        Preconditions.checkNotNull(announcement, "announcement is null");
+        checkNotNull(nodeId, "nodeId is null");
+        checkNotNull(announcement, "announcement is null");
 
         Set<Service> services = ImmutableSet.copyOf(transform(announcement.getServiceAnnouncements(), toServiceWith(nodeId, announcement.getLocation(), announcement.getPool())));
 
         DateTime expiration = currentTime.get().plusMillis((int) maxAge.toMillis());
-        Entry old = descriptors.put(nodeId, new Entry(expiration, services));
-
-        return old == null || old.getExpiration().isBefore(currentTime.get());
+        descriptors.put(nodeId, new Entry(expiration, services));
     }
 
     @Override
-    public synchronized boolean delete(Id<Node> nodeId)
+    public synchronized void delete(Id<Node> nodeId)
     {
-        Preconditions.checkNotNull(nodeId, "nodeId is null");
+        checkNotNull(nodeId, "nodeId is null");
 
-        return descriptors.remove(nodeId) != null;
+        descriptors.remove(nodeId);
     }
 
     @Override
@@ -88,7 +85,7 @@ public class InMemoryDynamicStore
     @Override
     public synchronized Set<Service> get(String type)
     {
-        Preconditions.checkNotNull(type, "type is null");
+        checkNotNull(type, "type is null");
 
         return ImmutableSet.copyOf(filter(getAll(), matchesType(type)));
     }
@@ -96,8 +93,8 @@ public class InMemoryDynamicStore
     @Override
     public synchronized Set<Service> get(String type, String pool)
     {
-        Preconditions.checkNotNull(type, "type is null");
-        Preconditions.checkNotNull(pool, "pool is null");
+        checkNotNull(type, "type is null");
+        checkNotNull(pool, "pool is null");
 
         return ImmutableSet.copyOf(filter(getAll(), and(matchesType(type), matchesPool(pool))));
     }
@@ -121,7 +118,7 @@ public class InMemoryDynamicStore
         private final Set<Service> services;
         private final DateTime expiration;
 
-        public Entry(DateTime expiration, Set<Service> services)
+        Entry(DateTime expiration, Set<Service> services)
         {
             this.expiration = expiration;
             this.services = ImmutableSet.copyOf(services);
