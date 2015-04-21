@@ -24,6 +24,9 @@ import org.testng.annotations.Test;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
@@ -31,7 +34,8 @@ import static org.testng.Assert.assertTrue;
 
 public class TestInMemoryStore
 {
-    private LocalStore store;
+    private InMemoryStore store;
+    private UpdateListener updateListener;
 
     @BeforeMethod
     protected void setUp()
@@ -39,6 +43,8 @@ public class TestInMemoryStore
     {
         DiscoveryConfig config = new DiscoveryConfig().setMaxAge(new Duration(1, TimeUnit.MINUTES));
         store = new InMemoryStore(config);
+        updateListener = mock(UpdateListener.class);
+        store.setUpdateListener(updateListener);
     }
 
     @Test
@@ -48,6 +54,7 @@ public class TestInMemoryStore
         assertTrue(store.put(entry));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        verifyNoMoreInteractions(updateListener);
     }
 
     @Test
@@ -58,6 +65,7 @@ public class TestInMemoryStore
         assertFalse(store.put(entryOf("blue", "apple", 1)));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        verifyNoMoreInteractions(updateListener);
     }
 
     @Test
@@ -70,6 +78,7 @@ public class TestInMemoryStore
         assertTrue(store.delete(key, entry.getTimestamp()));
 
         assertNull(store.get(key));
+        verifyNoMoreInteractions(updateListener);
     }
 
     @Test
@@ -80,6 +89,7 @@ public class TestInMemoryStore
         assertFalse(store.delete(key, 1));
 
         assertNull(store.get(key));
+        verifyNoMoreInteractions(updateListener);
     }
 
     @Test
@@ -92,11 +102,27 @@ public class TestInMemoryStore
         assertFalse(store.delete(key, 2));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        verifyNoMoreInteractions(updateListener);
     }
 
     @Test
     public void testUpdate()
     {
+        Entry entry1 = entryOf("blue", "banana", 1);
+        assertTrue(store.put(entry1));
+
+        Entry entry2 = entryOf("blue", "apple", 2);
+        assertTrue(store.put(entry2));
+
+        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
+        verify(updateListener).notifyUpdate(entry1, entry2);
+        verifyNoMoreInteractions(updateListener);
+    }
+
+    @Test
+    public void testUpdateNoListener()
+    {
+        store = new InMemoryStore(new DiscoveryConfig().setMaxAge(new Duration(1, TimeUnit.MINUTES)));
         Entry entry1 = entryOf("blue", "banana", 1);
         assertTrue(store.put(entry1));
 
@@ -116,6 +142,7 @@ public class TestInMemoryStore
         assertFalse(store.put(entry1));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
+        verifyNoMoreInteractions(updateListener);
     }
 
     @Test
@@ -125,6 +152,7 @@ public class TestInMemoryStore
         store.put(new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null));
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        verifyNoMoreInteractions(updateListener);
     }
 
     @Test
@@ -137,6 +165,7 @@ public class TestInMemoryStore
         store.put(entry);
 
         assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        verifyNoMoreInteractions(updateListener);
     }
 
     private static Entry entryOf(String key, String value, long timestamp)

@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
 import com.proofpoint.discovery.DiscoveryConfig;
 
@@ -24,11 +23,14 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class InMemoryStore
         implements LocalStore
 {
     private final ConcurrentMap<ByteBuffer, Entry> map = new ConcurrentHashMap<>();
     private final long maxAgeInMs;
+    private UpdateListener updateListener = null;
 
     @Inject
     public InMemoryStore(DiscoveryConfig config)
@@ -39,6 +41,11 @@ public class InMemoryStore
     InMemoryStore()
     {
         maxAgeInMs = Long.MAX_VALUE;
+    }
+
+    public void setUpdateListener(UpdateListener updateListener)
+    {
+        this.updateListener = updateListener;
     }
 
     @Override
@@ -53,30 +60,30 @@ public class InMemoryStore
 
         ByteBuffer key = ByteBuffer.wrap(entry.getKey());
 
-        boolean done = false;
-        while (!done) {
+        while (true) {
             Entry old = map.putIfAbsent(key, entry);
+            if (old == null) {
+                return true;
+            }
 
-            done = true;
-            if (old != null) {
-                entry = resolve(old, entry);
+            entry = resolve(old, entry);
+            if (entry == old) {
+                return false;
+            }
 
-                if (entry == old) {
-                    return false;
+            if (map.replace(key, old, entry)) {
+                if (updateListener != null) {
+                    updateListener.notifyUpdate(old, entry);
                 }
-                else {
-                    done = map.replace(key, old, entry);
-                }
+                return true;
             }
         }
-
-        return true;
     }
 
     @Override
     public Entry get(byte[] key)
     {
-        Preconditions.checkNotNull(key, "key is null");
+        checkNotNull(key, "key is null");
 
         return map.get(ByteBuffer.wrap(key));
     }
@@ -84,7 +91,7 @@ public class InMemoryStore
     @Override
     public boolean delete(byte[] key, long timestamp)
     {
-        Preconditions.checkNotNull(key, "key is null");
+        checkNotNull(key, "key is null");
 
         ByteBuffer wrappedKey = ByteBuffer.wrap(key);
 

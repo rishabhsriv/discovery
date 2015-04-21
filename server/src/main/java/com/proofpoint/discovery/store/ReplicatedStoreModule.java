@@ -81,10 +81,17 @@ public class ReplicatedStoreModule
         Key<LocalStore> localStoreKey = Key.get(LocalStore.class, annotation);
         Key<StoreConfig> storeConfigKey = Key.get(StoreConfig.class, annotation);
         Key<RemoteStore> remoteStoreKey = Key.get(RemoteStore.class, annotation);
+        Key<UpdateListener> updateListenerKey = null;
+
+        if (localStoreClass == InMemoryStore.class) {
+            updateListenerKey = Key.get(UpdateListener.class, annotation);
+            binder.bind(updateListenerKey).to(DynamicUpdateListener.class).in(Scopes.SINGLETON);
+            reportBinder(binder).bindReportCollection(DynamicRenewals.class).withGeneratedName();
+        }
 
         bindConfig(binder).annotatedWith(annotation).prefixedWith(name).to(StoreConfig.class);
         httpClientBinder(binder).bindHttpClient(name, annotation);
-        binder.bind(DistributedStore.class).annotatedWith(annotation).toProvider(new DistributedStoreProvider(name, localStoreKey, storeConfigKey, remoteStoreKey)).in(Scopes.SINGLETON);
+        binder.bind(DistributedStore.class).annotatedWith(annotation).toProvider(new DistributedStoreProvider(name, localStoreKey, storeConfigKey, remoteStoreKey, updateListenerKey)).in(Scopes.SINGLETON);
         binder.bind(Replicator.class).annotatedWith(annotation).toProvider(new ReplicatorProvider(name, localStoreKey, httpClientKey, storeConfigKey)).in(Scopes.SINGLETON);
         binder.bind(HttpRemoteStore.class).annotatedWith(annotation).toProvider(new RemoteHttpStoreProvider(name, httpClientKey, storeConfigKey)).in(Scopes.SINGLETON);
         binder.bind(LocalStore.class).annotatedWith(annotation).to(localStoreClass).in(Scopes.SINGLETON);
@@ -268,20 +275,23 @@ public class ReplicatedStoreModule
         private final Key<? extends LocalStore> localStoreKey;
         private final Key<StoreConfig> storeConfigKey;
         private final Key<? extends RemoteStore> remoteStoreKey;
+        private final Key<UpdateListener> updateListenerKey;
 
         private Injector injector;
         private Supplier<DateTime> timeSupplier;
         private DistributedStore store;
 
-        public DistributedStoreProvider(String name,
+        DistributedStoreProvider(String name,
                 Key<? extends LocalStore> localStoreKey,
                 Key<StoreConfig> storeConfigKey,
-                Key<? extends RemoteStore> remoteStoreKey)
+                Key<? extends RemoteStore> remoteStoreKey,
+                Key<UpdateListener> updateListenerKey)
         {
             this.name = name;
             this.localStoreKey = localStoreKey;
             this.storeConfigKey = storeConfigKey;
             this.remoteStoreKey = remoteStoreKey;
+            this.updateListenerKey = updateListenerKey;
         }
 
         @Override
@@ -291,6 +301,11 @@ public class ReplicatedStoreModule
                 LocalStore localStore = injector.getInstance(localStoreKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
                 RemoteStore remoteStore = injector.getInstance(remoteStoreKey);
+
+                if (updateListenerKey != null) {
+                    UpdateListener updateListener = injector.getInstance(updateListenerKey);
+                    ((InMemoryStore) localStore).setUpdateListener(updateListener);
+                }
 
                 store = new DistributedStore(name, localStore, remoteStore, storeConfig, timeSupplier);
                 store.start();
