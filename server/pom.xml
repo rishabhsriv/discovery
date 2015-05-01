@@ -11,7 +11,7 @@
     <parent>
         <groupId>com.proofpoint.platform</groupId>
         <artifactId>rest-server-base</artifactId>
-        <version>1.15</version>
+        <version>1.19</version>
     </parent>
 
     <properties>
@@ -19,7 +19,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <dep.leveldb.version>0.7</dep.leveldb.version>
-        <project.build.targetJdk>1.8</project.build.targetJdk>
     </properties>
 
     <inceptionYear>2010</inceptionYear>
