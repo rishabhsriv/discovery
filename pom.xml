@@ -2,12 +2,24 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.proofpoint.discovery</groupId>
-    <artifactId>discovery-root</artifactId>
+    <artifactId>discovery-server</artifactId>
     <version>1.19-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>discovery-root</name>
-    <description>Discovery</description>
+    <name>discovery-server</name>
+    <description>Discovery server</description>
     <url>https://github.com/proofpoint/discovery</url>
+
+    <parent>
+        <groupId>com.proofpoint.platform</groupId>
+        <artifactId>rest-server-base</artifactId>
+        <version>1.19</version>
+    </parent>
+
+    <properties>
+        <main-class>com.proofpoint.discovery.Main</main-class>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <dep.leveldb.version>0.7</dep.leveldb.version>
+    </properties>
 
     <inceptionYear>2010</inceptionYear>
     <organization>
@@ -29,16 +41,6 @@
     </scm>
 
     <developers>
-        <developer>
-            <id>dain</id>
-            <name>Dain Sundstrom</name>
-            <email>dain@iq80.com</email>
-        </developer>
-        <developer>
-            <id>mtraverso</id>
-            <name>Martin Traverso</name>
-            <email>mtraverso@gmail.com</email>
-        </developer>
     </developers>
 
     <prerequisites>
@@ -58,16 +60,125 @@
         </repository>
     </distributionManagement>
 
-    <modules>
-        <module>server</module>
-    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-smile</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-multibindings</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.iq80.leveldb</groupId>
+            <artifactId>leveldb-api</artifactId>
+            <version>${dep.leveldb.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.iq80.leveldb</groupId>
+            <artifactId>leveldb</artifactId>
+            <version>${dep.leveldb.version}</version>
+        </dependency>
+
+        <!-- Proofpoint platform -->
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>bootstrap</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>discovery</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>log</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>http-server</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>jaxrs</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>stats</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>jmx</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>reporting</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>reporting-client</artifactId>
+        </dependency>
+
+        <!-- for packaging -->
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>launcher</artifactId>
+            <classifier>bin</classifier>
+            <type>tar.gz</type>
+        </dependency>
+
+
+        <!-- for testing -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>testing</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.2.1</version>
                 <configuration>
                         <mavenExecutorId>forked-path</mavenExecutorId>
                         <useReleaseProfile>false</useReleaseProfile>
@@ -76,7 +187,43 @@
                         <localCheckout>true</localCheckout>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                         <tagNameFormat>@{project.version}</tagNameFormat>
-            </configuration>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <configuration>
+                    <skipExistingHeaders>true</skipExistingHeaders>
+                    <strictCheck>true</strictCheck>
+                    <header>license-header.txt</header>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                    <excludes>
+                        <exclude>**/.gitignore</exclude>
+                        <exclude>**/README.txt</exclude>
+                        <exclude>**/TODO</exclude>
+                        <exclude>**/config*.properties</exclude>
+                        <exclude>**/log.properties</exclude>
+                        <exclude>**/*.json</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -102,6 +249,10 @@
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
                     </plugin>
                 </plugins>
             </build>
