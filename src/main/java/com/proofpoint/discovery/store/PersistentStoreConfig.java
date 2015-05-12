@@ -17,14 +17,12 @@ package com.proofpoint.discovery.store;
 
 import com.proofpoint.configuration.Config;
 
-import javax.validation.constraints.NotNull;
 import java.io.File;
 
 public class PersistentStoreConfig
 {
-    private File location = new File("db");
+    private File location = new File("var/db");
 
-    @NotNull
     public File getLocation()
     {
         return location;
