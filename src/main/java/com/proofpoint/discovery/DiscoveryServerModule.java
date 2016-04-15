@@ -16,6 +16,7 @@
 package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
@@ -40,7 +41,6 @@ import com.proofpoint.http.client.balancing.HttpServiceBalancerImpl;
 import com.proofpoint.http.client.balancing.HttpServiceBalancerStats;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.reporting.ReportCollectionFactory;
-import org.weakref.jmx.ObjectNameBuilder;
 
 import javax.inject.Singleton;
 import java.util.List;
@@ -85,7 +85,7 @@ public class DiscoveryServerModule
         bindConfig(privateBinder).prefixedWith("discovery.proxy").to(BalancingHttpClientConfig.class);
         privateBinder.bind(HttpClient.class).annotatedWith(ForProxyStore.class).to(BalancingHttpClient.class).in(Scopes.SINGLETON);
         privateBinder.expose(HttpClient.class).annotatedWith(ForProxyStore.class);
-        reportBinder(binder).export(HttpClient.class).annotatedWith(ForProxyStore.class).withGeneratedName();
+        reportBinder(binder).export(HttpClient.class).annotatedWith(ForProxyStore.class);
         binder.bind(ProxyStore.class).in(Scopes.SINGLETON);
     }
 
@@ -130,12 +130,8 @@ public class DiscoveryServerModule
         @Override
         public HttpServiceBalancer get()
         {
-            String name = new ObjectNameBuilder(HttpServiceBalancerStats.class.getPackage().getName())
-                    .withProperty("type", "ServiceClient")
-                    .withProperty("serviceType", "discovery-upstream")
-                    .build();
             HttpServiceBalancerImpl proxyBalancer = new HttpServiceBalancerImpl("discovery-upstream",
-                    reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class, name));
+                    reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class, false, "ServiceClient", ImmutableMap.of("serviceType", "discovery-upstream")));
             if (discoveryConfig.getProxyUri() != null) {
                 proxyBalancer.updateHttpUris(ImmutableSet.of(discoveryConfig.getProxyUri()));
             }

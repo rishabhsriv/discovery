@@ -38,7 +38,9 @@ import com.proofpoint.json.JsonModule;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.node.testing.TestingNodeModule;
 import com.proofpoint.reporting.ReportingModule;
+import com.proofpoint.testing.Closeables;
 import org.iq80.leveldb.util.FileUtils;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -73,6 +75,8 @@ import static org.testng.Assert.assertTrue;
 
 public class TestDiscoveryServer
 {
+    private final HttpClient client = new JettyHttpClient();
+
     private TestingHttpServer server;
     private File tempDir;
     private Set<LifeCycleManager> lifeCycleManagers;
@@ -118,6 +122,12 @@ public class TestDiscoveryServer
             lifeCycleManager.stop();
         }
         FileUtils.deleteRecursively(tempDir);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void teardownClass()
+    {
+        Closeables.closeQuietly(client);
     }
 
     @Test
@@ -184,8 +194,6 @@ public class TestDiscoveryServer
                 .put("location", "/a/b/c")
                 .put("properties", ImmutableMap.of("http", "http://host"))
                 .build();
-
-        HttpClient client = new JettyHttpClient();
 
         Request request = preparePost()
                 .setUri(uriFor("/v1/announcement/static"))

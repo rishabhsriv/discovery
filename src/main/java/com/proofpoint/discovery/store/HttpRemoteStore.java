@@ -17,6 +17,8 @@ package com.proofpoint.discovery.store;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.proofpoint.discovery.client.ServiceDescriptor;
@@ -31,14 +33,12 @@ import com.proofpoint.node.NodeInfo;
 import com.proofpoint.reporting.ReportExporter;
 import com.proofpoint.units.Duration;
 import org.weakref.jmx.Managed;
-import org.weakref.jmx.ObjectNameBuilder;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -142,7 +142,7 @@ public class HttpRemoteStore
                 // schedule a task to shut down all processors and wait for it to complete. We rely on the executor
                 // having a *single* thread to guarantee the execution happens after any currently running task
                 // (in case the cancel call above didn't do its magic and the scheduled task is still running)
-                executor.submit(() -> updateProcessors(Collections.<ServiceDescriptor>emptyList())).get();
+                executor.submit(() -> updateProcessors(ImmutableList.of())).get();
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -169,7 +169,7 @@ public class HttpRemoteStore
             if (!hostPorts.contains(entry.getKey())) {
                 iterator.remove();
                 entry.getValue().stop();
-                reportExporter.unexport(nameFor(entry.getKey()));
+                reportExporter.unexportObject(entry.getValue());
             }
         }
 
@@ -186,19 +186,10 @@ public class HttpRemoteStore
 
             processor.start();
             processors.put(hostPort, processor);
-            reportExporter.export(nameFor(hostPort), processor);
+            reportExporter.export(processor, true, "BatchProcessor." + name, ImmutableMap.of("target", hostPort));
         }
 
         lastRemoteServerRefreshTimestamp.set(System.currentTimeMillis());
-    }
-
-    private String nameFor(String hostPort)
-    {
-        return new ObjectNameBuilder(BatchProcessor.class.getPackage().getName())
-                .withProperty("type", BatchProcessor.class.getSimpleName())
-                .withProperty("name", name)
-                .withProperty("target", hostPort)
-                .build();
     }
 
     @Managed

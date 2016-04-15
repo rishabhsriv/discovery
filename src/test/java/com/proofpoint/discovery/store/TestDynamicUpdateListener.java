@@ -53,15 +53,15 @@ public class TestDynamicUpdateListener
         initMocks(this);
         TestingReportCollectionFactory reportCollectionFactory = new TestingReportCollectionFactory();
         DynamicRenewals dynamicRenewals = reportCollectionFactory.createReportCollection(DynamicRenewals.class);
-        argumentVerifier = reportCollectionFactory.getArgumentVerifier(DynamicRenewals.class);
-        reportCollection = reportCollectionFactory.getReportCollection(DynamicRenewals.class);
+        argumentVerifier = reportCollectionFactory.getArgumentVerifier(dynamicRenewals);
+        reportCollection = reportCollectionFactory.getReportCollection(dynamicRenewals);
         listener = new DynamicUpdateListener(dateTimeSupplier, dynamicRenewals);
     }
 
     @Test
     public void testOldTombstone()
     {
-        Service service = new Service(Id.<Service>random(), nodeId, "type", "pool", "location", ImmutableMap.of());
+        Service service = new Service(Id.random(), nodeId, "type", "pool", "location", ImmutableMap.of());
         listener.notifyUpdate(new Entry(nodeId.getBytes(), null, 5, 5L), new Entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service)), 8, 5L));
         verifyNoMoreInteractions(argumentVerifier);
     }
@@ -69,7 +69,7 @@ public class TestDynamicUpdateListener
     @Test
     public void testNewTombstone()
     {
-        Service service = new Service(Id.<Service>random(), nodeId, "type", "pool", "location", ImmutableMap.of());
+        Service service = new Service(Id.random(), nodeId, "type", "pool", "location", ImmutableMap.of());
         listener.notifyUpdate(new Entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service)), 5, 5L), new Entry(nodeId.getBytes(), null, 8, 5L));
         verifyNoMoreInteractions(argumentVerifier);
     }
@@ -77,10 +77,10 @@ public class TestDynamicUpdateListener
     @Test
     public void testUpdated()
     {
-        Service service1 = new Service(Id.<Service>random(), nodeId, "type1", "pool", "location", ImmutableMap.of());
-        Service service2 = new Service(Id.<Service>random(), nodeId, "type2", "pool", "location", ImmutableMap.of());
-        Service service3 = new Service(Id.<Service>random(), nodeId, "type3", "pool", "location", ImmutableMap.of());
-        Service service4 = new Service(Id.<Service>random(), nodeId, "type4", "pool", "location", ImmutableMap.of());
+        Service service1 = new Service(Id.random(), nodeId, "type1", "pool", "location", ImmutableMap.of());
+        Service service2 = new Service(Id.random(), nodeId, "type2", "pool", "location", ImmutableMap.of());
+        Service service3 = new Service(Id.random(), nodeId, "type3", "pool", "location", ImmutableMap.of());
+        Service service4 = new Service(Id.random(), nodeId, "type4", "pool", "location", ImmutableMap.of());
         when(dateTimeSupplier.get()).thenReturn(new DateTime(9));
         listener.notifyUpdate(new Entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service1, service2, service3)), 5, 5L), new Entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service2, service3, service4)), 8, 5L));
         verify(argumentVerifier).renewedAfter("type2");
@@ -95,10 +95,10 @@ public class TestDynamicUpdateListener
     @Test
     public void testExpired()
     {
-        Service service1 = new Service(Id.<Service>random(), nodeId, "type1", "pool", "location", ImmutableMap.of());
-        Service service2 = new Service(Id.<Service>random(), nodeId, "type2", "pool", "location", ImmutableMap.of());
-        Service service3 = new Service(Id.<Service>random(), nodeId, "type3", "pool", "location", ImmutableMap.of());
-        Service service4 = new Service(Id.<Service>random(), nodeId, "type4", "pool", "location", ImmutableMap.of());
+        Service service1 = new Service(Id.random(), nodeId, "type1", "pool", "location", ImmutableMap.of());
+        Service service2 = new Service(Id.random(), nodeId, "type2", "pool", "location", ImmutableMap.of());
+        Service service3 = new Service(Id.random(), nodeId, "type3", "pool", "location", ImmutableMap.of());
+        Service service4 = new Service(Id.random(), nodeId, "type4", "pool", "location", ImmutableMap.of());
         when(dateTimeSupplier.get()).thenReturn(new DateTime(11));
         listener.notifyUpdate(new Entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service1, service2, service3)), 5, 5L), new Entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service2, service3, service4)), 8, 5L));
         verify(argumentVerifier).expiredFor("type2");

@@ -16,6 +16,7 @@
 package com.proofpoint.discovery.store;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -31,7 +32,6 @@ import com.proofpoint.node.NodeInfo;
 import com.proofpoint.reporting.ReportCollectionFactory;
 import com.proofpoint.reporting.ReportExporter;
 import org.joda.time.DateTime;
-import org.weakref.jmx.ObjectNameBuilder;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.GuardedBy;
@@ -86,7 +86,7 @@ public class ReplicatedStoreModule
         if (localStoreClass == InMemoryStore.class) {
             updateListenerKey = Key.get(UpdateListener.class, annotation);
             binder.bind(updateListenerKey).to(DynamicUpdateListener.class).in(Scopes.SINGLETON);
-            reportBinder(binder).bindReportCollection(DynamicRenewals.class).withGeneratedName();
+            reportBinder(binder).bindReportCollection(DynamicRenewals.class).withApplicationPrefix();
         }
 
         bindConfig(binder).annotatedWith(annotation).prefixedWith(name).to(StoreConfig.class);
@@ -98,7 +98,10 @@ public class ReplicatedStoreModule
 
         binder.bind(RemoteStore.class).annotatedWith(annotation).to(Key.get(HttpRemoteStore.class, annotation));
 
-        reportBinder(binder).export(DistributedStore.class).annotatedWith(annotation).as(generatedNameOf(DistributedStore.class, named(name)));
+        reportBinder(binder).export(DistributedStore.class)
+                .annotatedWith(annotation)
+                .withApplicationPrefix()
+                .withNamePrefix("DistributedStore." + name);
         newExporter(binder).export(HttpRemoteStore.class).annotatedWith(annotation).as(generatedNameOf(HttpRemoteStore.class, named(name)));
         newExporter(binder).export(Replicator.class).annotatedWith(annotation).as(generatedNameOf(Replicator.class, named(name)));
 
@@ -150,11 +153,12 @@ public class ReplicatedStoreModule
                 InitializationTracker initializationTracker = injector.getInstance(InitializationTracker.class);
 
                 ReportCollectionFactory reportCollectionFactory = injector.getInstance(ReportCollectionFactory.class);
-                String objectName = new ObjectNameBuilder(HttpServiceBalancerStats.class.getPackage().getName())
-                        .withProperty("type", "ServiceClient")
-                        .withProperty("serviceType", "replicator-" + name)
-                        .build();
-                HttpServiceBalancerStats httpServiceBalancerStats = reportCollectionFactory.createReportCollection(HttpServiceBalancerStats.class, objectName);
+                HttpServiceBalancerStats httpServiceBalancerStats = reportCollectionFactory.createReportCollection(
+                        HttpServiceBalancerStats.class,
+                        false,
+                        "ServiceClient",
+                        ImmutableMap.of("serviceType", "replicator-" + name)
+                );
 
                 replicator = new Replicator(name, nodeInfo, serviceSelector, httpClient, httpServiceBalancerStats, localStore, storeConfig, initializationTracker);
                 replicator.start();
