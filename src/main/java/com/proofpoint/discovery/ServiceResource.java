@@ -35,15 +35,17 @@ public class ServiceResource
 {
     private final DynamicStore dynamicStore;
     private final StaticStore staticStore;
+    private final ConfigStore configStore;
     private final ProxyStore proxyStore;
     private final NodeInfo node;
     private final InitializationTracker initializationTracker;
 
     @Inject
-    public ServiceResource(DynamicStore dynamicStore, StaticStore staticStore, ProxyStore proxyStore, NodeInfo node, InitializationTracker initializationTracker)
+    public ServiceResource(DynamicStore dynamicStore, StaticStore staticStore, ConfigStore configStore, ProxyStore proxyStore, NodeInfo node, InitializationTracker initializationTracker)
     {
         this.dynamicStore = dynamicStore;
         this.staticStore = staticStore;
+        this.configStore = configStore;
         this.proxyStore = proxyStore;
         this.node = node;
         this.initializationTracker = initializationTracker;
@@ -56,7 +58,7 @@ public class ServiceResource
     {
         ensureInitialized();
         return new Services(node.getEnvironment(), firstNonNull(proxyStore.get(type, pool),
-                union(dynamicStore.get(type, pool), staticStore.get(type, pool))));
+                union(union(staticStore.get(type, pool), configStore.get(type, pool)), dynamicStore.get(type, pool))));
     }
 
     @GET
@@ -66,7 +68,7 @@ public class ServiceResource
     {
         ensureInitialized();
         return new Services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
-                union(dynamicStore.get(type), staticStore.get(type))));
+                union(union(staticStore.get(type), configStore.get(type)), dynamicStore.get(type))));
     }
 
     @GET
@@ -74,7 +76,7 @@ public class ServiceResource
     public Services getAllServices()
     {
         ensureInitialized();
-        Set<Service> services = union(dynamicStore.getAll(), staticStore.getAll());
+        Set<Service> services = union(union(staticStore.getAll(), configStore.getAll()), dynamicStore.getAll());
         return new Services(node.getEnvironment(), proxyStore.filterAndGetAll(services));
     }
 

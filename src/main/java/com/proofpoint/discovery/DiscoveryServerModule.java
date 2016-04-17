@@ -74,6 +74,10 @@ public class DiscoveryServerModule
         binder.install(new ReplicatedStoreModule("static", ForStaticStore.class, PersistentStore.class));
         bindConfig(binder).prefixedWith("static").to(PersistentStoreConfig.class);
 
+        // config-based static announcements
+        binder.bind(ConfigStore.class).in(Scopes.SINGLETON);
+        bindConfig(binder).to(ConfigStoreConfig.class);
+
         // proxy announcements
         PrivateBinder privateBinder = binder.newPrivateBinder();
         privateBinder.bind(HttpServiceBalancer.class).annotatedWith(ForBalancingHttpClient.class).toProvider(ProxyBalancerProvider.class);

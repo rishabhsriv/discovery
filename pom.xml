@@ -99,6 +99,12 @@
             <version>${dep.leveldb.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.auto.value</groupId>
+            <artifactId>auto-value</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Proofpoint platform -->
         <dependency>
             <groupId>com.proofpoint.platform</groupId>

@@ -72,6 +72,8 @@ public class TestServiceResource
     private TestingHttpServer server;
 
     @Mock
+    private ConfigStore configStore;
+    @Mock
     private ProxyStore proxyStore;
     @Mock
     private InitializationTracker initializationTracker;
@@ -110,7 +112,7 @@ public class TestServiceResource
         greenStorageRepresentation = toServiceRepresentation(greenNodeId, green, greenStorage);
         blueStorageRepresentation = toServiceRepresentation(blueNodeId, blue, blueStorage);
 
-        ServiceResource resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), proxyStore, new NodeInfo("testing"), initializationTracker);
+        ServiceResource resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), configStore, proxyStore, new NodeInfo("testing"), initializationTracker);
 
         Bootstrap app = bootstrapApplication("test-application")
                 .doNotInitializeLogging()
@@ -151,6 +153,7 @@ public class TestServiceResource
     public void testGetByType()
     {
         when(proxyStore.get(any(String.class))).thenReturn(null);
+        when(configStore.get(any(String.class))).thenReturn(ImmutableSet.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),
@@ -187,6 +190,7 @@ public class TestServiceResource
     public void testGetByTypeAndPool()
     {
         when(proxyStore.get(any(String.class), any(String.class))).thenReturn(null);
+        when(configStore.get(any(String.class), any(String.class))).thenReturn(ImmutableSet.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
@@ -222,6 +226,7 @@ public class TestServiceResource
     public void testGetAll()
     {
         when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+        when(configStore.getAll()).thenReturn(ImmutableSet.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),
@@ -244,6 +249,7 @@ public class TestServiceResource
     {
         Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "general", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get("storage")).thenReturn(of(proxyStorageService));
+        when(configStore.get(any(String.class))).thenReturn(ImmutableSet.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),
@@ -267,6 +273,7 @@ public class TestServiceResource
     {
         Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get("storage", "alpha")).thenReturn(of(proxyStorageService));
+        when(configStore.get(any(String.class), any(String.class))).thenReturn(ImmutableSet.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
@@ -298,6 +305,92 @@ public class TestServiceResource
         final Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> union(of(proxyStorageService),
                 (Set<Service>) invocationOnMock.getArguments()[0]));
+        when(configStore.getAll()).thenReturn(ImmutableSet.of());
+
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
+        assertEquals(actual.get("environment"), "testing");
+        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+                toServiceRepresentation(proxyStorageService),
+                redStorageRepresentation,
+                redWebRepresentation,
+                greenStorageRepresentation,
+                blueStorageRepresentation
+        ));
+    }
+
+    @Test
+    public void testConfigGetByType()
+    {
+        Service configStorageService = new Service(Id.random(), Id.random(), "storage", "general", "loc", ImmutableMap.of("key", "5"));
+        when(proxyStore.get(any(String.class))).thenReturn(null);
+        when(configStore.get("storage")).thenReturn(of(configStorageService));
+
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
+        assertEquals(actual.get("environment"), "testing");
+        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+                toServiceRepresentation(configStorageService),
+                redStorageRepresentation,
+                greenStorageRepresentation,
+                blueStorageRepresentation
+        ));
+
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/web")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of(
+                        redWebRepresentation
+                )));
+    }
+
+    @Test
+    public void testConfigGetByTypeAndPool()
+    {
+        Service configStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
+        when(proxyStore.get(any(String.class), any(String.class))).thenReturn(null);
+        when(configStore.get("storage", "alpha")).thenReturn(of(configStorageService));
+
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
+        assertEquals(actual.get("environment"), "testing");
+        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+                toServiceRepresentation(configStorageService),
+                redStorageRepresentation,
+                greenStorageRepresentation
+        ));
+
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/beta")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of(
+                        blueStorageRepresentation
+                )));
+
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/unknown")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of()));
+    }
+
+    @Test
+    public void testConfigGetAll()
+    {
+        final Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
+        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+        when(configStore.getAll()).thenReturn(of(proxyStorageService));
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),
