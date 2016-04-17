@@ -15,43 +15,110 @@
  */
 package com.proofpoint.discovery;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.inject.Injector;
+import com.proofpoint.bootstrap.Bootstrap;
+import com.proofpoint.bootstrap.LifeCycleManager;
+import com.proofpoint.http.client.HttpClient;
+import com.proofpoint.http.client.StatusResponseHandler.StatusResponse;
+import com.proofpoint.http.client.jetty.JettyHttpClient;
+import com.proofpoint.http.server.testing.TestingHttpServer;
+import com.proofpoint.http.server.testing.TestingHttpServerModule;
+import com.proofpoint.json.JsonCodec;
+import com.proofpoint.json.JsonModule;
 import com.proofpoint.node.NodeInfo;
+import com.proofpoint.node.testing.TestingNodeModule;
+import com.proofpoint.reporting.ReportingModule;
+import com.proofpoint.testing.Closeables;
+import org.mockito.Mock;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.weakref.jmx.testing.TestingMBeanModule;
 
-import javax.ws.rs.WebApplicationException;
-import java.util.Collections;
+import java.net.URI;
+import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static com.google.common.collect.Sets.union;
-import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
+import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
+import static com.proofpoint.http.client.JsonResponseHandler.createJsonResponseHandler;
+import static com.proofpoint.http.client.Request.Builder.prepareGet;
+import static com.proofpoint.http.client.StatusResponseHandler.createStatusResponseHandler;
+import static com.proofpoint.jaxrs.JaxrsBinder.jaxrsBinder;
+import static com.proofpoint.jaxrs.JaxrsModule.explicitJaxrsModule;
+import static com.proofpoint.json.JsonCodec.mapJsonCodec;
+import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 @SuppressWarnings("unchecked")
 public class TestServiceResource
 {
+    private final HttpClient client = new JettyHttpClient();
+    private final JsonCodec<Map<String, Object>> mapCodec = mapJsonCodec(String.class, Object.class);
+
+    private LifeCycleManager lifeCycleManager;
+    private TestingHttpServer server;
+
     private InMemoryDynamicStore dynamicStore;
-    private ServiceResource resource;
+    @Mock
     private ProxyStore proxyStore;
+    @Mock
     private InitializationTracker initializationTracker;
 
+
     @BeforeMethod
-    protected void setUp()
+    public void setup()
+            throws Exception
     {
+        initMocks(this);
         dynamicStore = new InMemoryDynamicStore(new DiscoveryConfig(), new TestingTimeSupplier());
-        proxyStore = mock(ProxyStore.class);
-        initializationTracker = mock(InitializationTracker.class);
-        resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), proxyStore, new NodeInfo("testing"), initializationTracker);
+        ServiceResource resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), proxyStore, new NodeInfo("testing"), initializationTracker);
+
+        Bootstrap app = bootstrapApplication("test-application")
+                .doNotInitializeLogging()
+                .withModules(
+                        new TestingNodeModule(),
+                        new TestingHttpServerModule(),
+                        new JsonModule(),
+                        explicitJaxrsModule(),
+                        new ReportingModule(),
+                        new TestingMBeanModule(),
+                        binder -> jaxrsBinder(binder).bindInstance(resource)
+                )
+                .quiet();
+
+        Injector injector = app
+                .initialize();
+
+        lifeCycleManager = injector.getInstance(LifeCycleManager.class);
+        server = injector.getInstance(TestingHttpServer.class);
+    }
+
+    @AfterMethod
+    public void teardown()
+            throws Exception
+    {
+        if (lifeCycleManager != null) {
+            lifeCycleManager.stop();
+        }
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void teardownClass()
+    {
+        Closeables.closeQuietly(client);
     }
 
     @Test
@@ -76,15 +143,32 @@ public class TestServiceResource
 
         when(proxyStore.get(any(String.class))).thenReturn(null);
 
-        assertEquals(resource.getTypeServices("storage"), new Services("testing", of(
-                toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
-                toServiceWith(greenNodeId, green.getLocation(), green.getPool()).apply(greenStorage),
-                toServiceWith(blueNodeId, blue.getLocation(), blue.getPool()).apply(blueStorage))));
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
+        assertEquals(actual.get("environment"), "testing");
+        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+                toServiceRepresentation(redNodeId, red, redStorage),
+                toServiceRepresentation(greenNodeId, green, greenStorage),
+                toServiceRepresentation(blueNodeId, blue, blueStorage)
+        ));
 
-        assertEquals(resource.getTypeServices("web"), new Services("testing", ImmutableSet.of(
-                toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redWeb))));
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/web")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of(
+                        toServiceRepresentation(redNodeId, red, redWeb)
+                )));
 
-        assertEquals(resource.getTypeServices("unknown"), new Services("testing", Collections.<Service>emptySet()));
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/unknown")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of()));
 
         verify(proxyStore, times(3)).get(any(String.class));
         verifyNoMoreInteractions(proxyStore);
@@ -112,13 +196,31 @@ public class TestServiceResource
         dynamicStore.put(greenNodeId, green);
         dynamicStore.put(blueNodeId, blue);
 
-        assertEquals(resource.getServices("storage", "alpha"), new Services("testing", ImmutableSet.of(
-                toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
-                toServiceWith(greenNodeId, green.getLocation(), green.getPool()).apply(greenStorage))));
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
+        assertEquals(actual.get("environment"), "testing");
+        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+                toServiceRepresentation(redNodeId, red, redStorage),
+                toServiceRepresentation(greenNodeId, green, greenStorage)
+        ));
 
-        assertEquals(resource.getServices("storage", "beta"), new Services("testing", ImmutableSet.of(toServiceWith(blueNodeId, blue.getLocation(), blue.getPool()).apply(blueStorage))));
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/beta")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of(
+                        toServiceRepresentation(blueNodeId, blue, blueStorage)
+                )));
 
-        assertEquals(resource.getServices("storage", "unknown"), new Services("testing", Collections.<Service>emptySet()));
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/unknown")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of()));
 
         verify(proxyStore, times(3)).get(any(String.class), any(String.class));
         verifyNoMoreInteractions(proxyStore);
@@ -146,11 +248,17 @@ public class TestServiceResource
 
         when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
 
-        assertEquals(resource.getAllServices(), new Services("testing", ImmutableSet.of(
-                toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
-                toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redWeb),
-                toServiceWith(greenNodeId, green.getLocation(), green.getPool()).apply(greenStorage),
-                toServiceWith(blueNodeId, blue.getLocation(), blue.getPool()).apply(blueStorage))));
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
+        assertEquals(actual.get("environment"), "testing");
+        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+                toServiceRepresentation(redNodeId, red, redStorage),
+                toServiceRepresentation(redNodeId, red, redWeb),
+                toServiceRepresentation(greenNodeId, green, greenStorage),
+                toServiceRepresentation(blueNodeId, blue, blueStorage)
+        ));
 
         verify(proxyStore).filterAndGetAll(any(Set.class));
         verifyNoMoreInteractions(proxyStore);
@@ -179,9 +287,21 @@ public class TestServiceResource
         Service proxyStorageService = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "general", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get("storage")).thenReturn(of(proxyStorageService));
 
-        assertEquals(resource.getTypeServices("storage"), new Services("testing", of(proxyStorageService)));
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of(
+                        toServiceRepresentation(proxyStorageService)
+                )));
 
-        assertEquals(resource.getTypeServices("web"), new Services("testing", ImmutableSet.<Service>of()));
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/web")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of()));
     }
 
     @Test
@@ -207,11 +327,28 @@ public class TestServiceResource
         Service proxyStorageService = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get("storage", "alpha")).thenReturn(of(proxyStorageService));
 
-        assertEquals(resource.getServices("storage", "alpha"), new Services("testing", ImmutableSet.of(proxyStorageService)));
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of(
+                        toServiceRepresentation(proxyStorageService)
+                )));
 
-        assertEquals(resource.getServices("storage", "beta"), new Services("testing", ImmutableSet.<Service>of()));
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/beta")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of()));
 
-        assertEquals(resource.getServices("storage", "unknown"), new Services("testing", ImmutableSet.<Service>of()));
+        actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/unknown")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual, ImmutableMap.of(
+                "environment", "testing",
+                "services", ImmutableList.of()));
     }
 
     @Test
@@ -237,12 +374,19 @@ public class TestServiceResource
         final Service proxyStorageService = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> union(of(proxyStorageService),
                 (Set<Service>) invocationOnMock.getArguments()[0]));
-        assertEquals(resource.getAllServices(), new Services("testing", ImmutableSet.of(
-                proxyStorageService,
-                toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redStorage),
-                toServiceWith(redNodeId, red.getLocation(), red.getPool()).apply(redWeb),
-                toServiceWith(greenNodeId, green.getLocation(), green.getPool()).apply(greenStorage),
-                toServiceWith(blueNodeId, blue.getLocation(), blue.getPool()).apply(blueStorage))));
+
+        Map<String, Object> actual = client.execute(
+                prepareGet().setUri(uriFor("/v1/service")).build(),
+                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
+        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
+        assertEquals(actual.get("environment"), "testing");
+        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+                toServiceRepresentation(proxyStorageService),
+                toServiceRepresentation(redNodeId, red, redStorage),
+                toServiceRepresentation(redNodeId, red, redWeb),
+                toServiceRepresentation(greenNodeId, green, greenStorage),
+                toServiceRepresentation(blueNodeId, blue, blueStorage)
+        ));
     }
 
     @Test
@@ -250,13 +394,10 @@ public class TestServiceResource
     {
         when(initializationTracker.isPending()).thenReturn(true);
 
-        try {
-            resource.getTypeServices("storage");
-            fail("expected WebApplicationException(503)");
-        }
-        catch (WebApplicationException e) {
-            assertEquals(e.getResponse().getStatus(), 503);
-        }
+        StatusResponse response = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage")).build(),
+                createStatusResponseHandler());
+        assertEquals(response.getStatusCode(), 503);
     }
 
     @Test
@@ -264,13 +405,10 @@ public class TestServiceResource
     {
         when(initializationTracker.isPending()).thenReturn(true);
 
-        try {
-            resource.getServices("storage", "alpha");
-            fail("expected WebApplicationException(503)");
-        }
-        catch (WebApplicationException e) {
-            assertEquals(e.getResponse().getStatus(), 503);
-        }
+        StatusResponse response = client.execute(
+                prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
+                createStatusResponseHandler());
+        assertEquals(response.getStatusCode(), 503);
     }
 
     @Test
@@ -278,12 +416,38 @@ public class TestServiceResource
     {
         when(initializationTracker.isPending()).thenReturn(true);
 
-        try {
-            resource.getAllServices();
-            fail("expected WebApplicationException(503)");
-        }
-        catch (WebApplicationException e) {
-            assertEquals(e.getResponse().getStatus(), 503);
-        }
+        StatusResponse response = client.execute(
+                prepareGet().setUri(uriFor("/v1/service")).build(),
+                createStatusResponseHandler());
+        assertEquals(response.getStatusCode(), 503);
+    }
+
+    private Map<String, Object> toServiceRepresentation(Id<Node> nodeId, DynamicAnnouncement dynamicAnnouncement, DynamicServiceAnnouncement dynamicServiceAnnouncement)
+    {
+        return ImmutableMap.<String, Object>builder()
+                .put("id", dynamicServiceAnnouncement.getId().toString())
+                .put("nodeId", nodeId.toString())
+                .put("type", dynamicServiceAnnouncement.getType())
+                .put("pool", dynamicAnnouncement.getPool())
+                .put("location", dynamicAnnouncement.getLocation())
+                .put("properties", dynamicServiceAnnouncement.getProperties())
+                .build();
+    }
+
+    private Map<String, Object> toServiceRepresentation(Service service)
+    {
+        return ImmutableMap.<String, Object>builder()
+                .put("id", service.getId().toString())
+                .put("nodeId", service.getNodeId().toString())
+                .put("type", service.getType())
+                .put("pool", service.getPool())
+                .put("location", service.getLocation())
+                .put("properties", service.getProperties())
+                .build();
+    }
+
+    private URI uriFor(String path)
+    {
+        return server.getBaseUrl().resolve(path);
     }
 }
