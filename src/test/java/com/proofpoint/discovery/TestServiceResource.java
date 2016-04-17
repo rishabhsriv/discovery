@@ -71,11 +71,14 @@ public class TestServiceResource
     private LifeCycleManager lifeCycleManager;
     private TestingHttpServer server;
 
-    private InMemoryDynamicStore dynamicStore;
     @Mock
     private ProxyStore proxyStore;
     @Mock
     private InitializationTracker initializationTracker;
+    private Map<String, Object> redStorageRepresentation;
+    private Map<String, Object> redWebRepresentation;
+    private Map<String, Object> greenStorageRepresentation;
+    private Map<String, Object> blueStorageRepresentation;
 
 
     @BeforeMethod
@@ -83,7 +86,30 @@ public class TestServiceResource
             throws Exception
     {
         initMocks(this);
-        dynamicStore = new InMemoryDynamicStore(new DiscoveryConfig(), new TestingTimeSupplier());
+
+        InMemoryDynamicStore dynamicStore = new InMemoryDynamicStore(new DiscoveryConfig(), new TestingTimeSupplier());
+        Id<Node> redNodeId = Id.random();
+        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.random() , "storage", ImmutableMap.of("key", "1"));
+        DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.random(), "web", ImmutableMap.of("key", "2"));
+        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", of(redStorage, redWeb));
+
+        Id<Node> greenNodeId = Id.random();
+        DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "3"));
+        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", of(greenStorage));
+
+        Id<Node> blueNodeId = Id.random();
+        DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "4"));
+        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", of(blueStorage));
+
+        dynamicStore.put(redNodeId, red);
+        dynamicStore.put(greenNodeId, green);
+        dynamicStore.put(blueNodeId, blue);
+
+        redStorageRepresentation = toServiceRepresentation(redNodeId, red, redStorage);
+        redWebRepresentation = toServiceRepresentation(redNodeId, red, redWeb);
+        greenStorageRepresentation = toServiceRepresentation(greenNodeId, green, greenStorage);
+        blueStorageRepresentation = toServiceRepresentation(blueNodeId, blue, blueStorage);
+
         ServiceResource resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), proxyStore, new NodeInfo("testing"), initializationTracker);
 
         Bootstrap app = bootstrapApplication("test-application")
@@ -124,23 +150,6 @@ public class TestServiceResource
     @Test
     public void testGetByType()
     {
-        Id<Node> redNodeId = Id.random();
-        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.<Service>random() , "storage", ImmutableMap.of("key", "1"));
-        DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.<Service>random(), "web", ImmutableMap.of("key", "2"));
-        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", of(redStorage, redWeb));
-
-        Id<Node> greenNodeId = Id.random();
-        DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "3"));
-        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", of(greenStorage));
-
-        Id<Node> blueNodeId = Id.random();
-        DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "4"));
-        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", of(blueStorage));
-
-        dynamicStore.put(redNodeId, red);
-        dynamicStore.put(greenNodeId, green);
-        dynamicStore.put(blueNodeId, blue);
-
         when(proxyStore.get(any(String.class))).thenReturn(null);
 
         Map<String, Object> actual = client.execute(
@@ -149,9 +158,9 @@ public class TestServiceResource
         assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
         assertEquals(actual.get("environment"), "testing");
         assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
-                toServiceRepresentation(redNodeId, red, redStorage),
-                toServiceRepresentation(greenNodeId, green, greenStorage),
-                toServiceRepresentation(blueNodeId, blue, blueStorage)
+                redStorageRepresentation,
+                greenStorageRepresentation,
+                blueStorageRepresentation
         ));
 
         actual = client.execute(
@@ -160,7 +169,7 @@ public class TestServiceResource
         assertEquals(actual, ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of(
-                        toServiceRepresentation(redNodeId, red, redWeb)
+                        redWebRepresentation
                 )));
 
         actual = client.execute(
@@ -177,24 +186,7 @@ public class TestServiceResource
     @Test
     public void testGetByTypeAndPool()
     {
-        Id<Node> redNodeId = Id.random();
-        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "1"));
-        DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.<Service>random(), "web", ImmutableMap.of("key", "2"));
-        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", of(redStorage, redWeb));
-
-        Id<Node> greenNodeId = Id.random();
-        DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "3"));
-        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", of(greenStorage));
-
-        Id<Node> blueNodeId = Id.random();
-        DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "4"));
-        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", of(blueStorage));
-
         when(proxyStore.get(any(String.class), any(String.class))).thenReturn(null);
-
-        dynamicStore.put(redNodeId, red);
-        dynamicStore.put(greenNodeId, green);
-        dynamicStore.put(blueNodeId, blue);
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
@@ -202,8 +194,8 @@ public class TestServiceResource
         assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
         assertEquals(actual.get("environment"), "testing");
         assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
-                toServiceRepresentation(redNodeId, red, redStorage),
-                toServiceRepresentation(greenNodeId, green, greenStorage)
+                redStorageRepresentation,
+                greenStorageRepresentation
         ));
 
         actual = client.execute(
@@ -212,7 +204,7 @@ public class TestServiceResource
         assertEquals(actual, ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of(
-                        toServiceRepresentation(blueNodeId, blue, blueStorage)
+                        blueStorageRepresentation
                 )));
 
         actual = client.execute(
@@ -229,23 +221,6 @@ public class TestServiceResource
     @Test
     public void testGetAll()
     {
-        Id<Node> redNodeId = Id.random();
-        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "1"));
-        DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.<Service>random(), "web", ImmutableMap.of("key", "2"));
-        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", of(redStorage, redWeb));
-
-        Id<Node> greenNodeId = Id.random();
-        DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "3"));
-        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", of(greenStorage));
-
-        Id<Node> blueNodeId = Id.random();
-        DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "4"));
-        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", of(blueStorage));
-
-        dynamicStore.put(redNodeId, red);
-        dynamicStore.put(greenNodeId, green);
-        dynamicStore.put(blueNodeId, blue);
-
         when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
 
         Map<String, Object> actual = client.execute(
@@ -254,10 +229,10 @@ public class TestServiceResource
         assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
         assertEquals(actual.get("environment"), "testing");
         assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
-                toServiceRepresentation(redNodeId, red, redStorage),
-                toServiceRepresentation(redNodeId, red, redWeb),
-                toServiceRepresentation(greenNodeId, green, greenStorage),
-                toServiceRepresentation(blueNodeId, blue, blueStorage)
+                redStorageRepresentation,
+                redWebRepresentation,
+                greenStorageRepresentation,
+                blueStorageRepresentation
         ));
 
         verify(proxyStore).filterAndGetAll(any(Set.class));
@@ -267,24 +242,7 @@ public class TestServiceResource
     @Test
     public void testProxyGetByType()
     {
-        Id<Node> redNodeId = Id.random();
-        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.<Service>random() , "storage", ImmutableMap.of("key", "1"));
-        DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.<Service>random(), "web", ImmutableMap.of("key", "2"));
-        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", of(redStorage, redWeb));
-
-        Id<Node> greenNodeId = Id.random();
-        DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "3"));
-        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", of(greenStorage));
-
-        Id<Node> blueNodeId = Id.random();
-        DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "4"));
-        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", of(blueStorage));
-
-        dynamicStore.put(redNodeId, red);
-        dynamicStore.put(greenNodeId, green);
-        dynamicStore.put(blueNodeId, blue);
-
-        Service proxyStorageService = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "general", "loc", ImmutableMap.of("key", "5"));
+        Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "general", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get("storage")).thenReturn(of(proxyStorageService));
 
         Map<String, Object> actual = client.execute(
@@ -307,24 +265,7 @@ public class TestServiceResource
     @Test
     public void testProxyGetByTypeAndPool()
     {
-        Id<Node> redNodeId = Id.random();
-        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "1"));
-        DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.<Service>random(), "web", ImmutableMap.of("key", "2"));
-        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", of(redStorage, redWeb));
-
-        Id<Node> greenNodeId = Id.random();
-        DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "3"));
-        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", of(greenStorage));
-
-        Id<Node> blueNodeId = Id.random();
-        DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "4"));
-        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", of(blueStorage));
-
-        dynamicStore.put(redNodeId, red);
-        dynamicStore.put(greenNodeId, green);
-        dynamicStore.put(blueNodeId, blue);
-
-        Service proxyStorageService = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
+        Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get("storage", "alpha")).thenReturn(of(proxyStorageService));
 
         Map<String, Object> actual = client.execute(
@@ -354,24 +295,7 @@ public class TestServiceResource
     @Test
     public void testProxyGetAll()
     {
-        Id<Node> redNodeId = Id.random();
-        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "1"));
-        DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.<Service>random(), "web", ImmutableMap.of("key", "2"));
-        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", of(redStorage, redWeb));
-
-        Id<Node> greenNodeId = Id.random();
-        DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "3"));
-        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", of(greenStorage));
-
-        Id<Node> blueNodeId = Id.random();
-        DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "4"));
-        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", of(blueStorage));
-
-        dynamicStore.put(redNodeId, red);
-        dynamicStore.put(greenNodeId, green);
-        dynamicStore.put(blueNodeId, blue);
-
-        final Service proxyStorageService = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
+        final Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> union(of(proxyStorageService),
                 (Set<Service>) invocationOnMock.getArguments()[0]));
 
@@ -382,10 +306,10 @@ public class TestServiceResource
         assertEquals(actual.get("environment"), "testing");
         assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
                 toServiceRepresentation(proxyStorageService),
-                toServiceRepresentation(redNodeId, red, redStorage),
-                toServiceRepresentation(redNodeId, red, redWeb),
-                toServiceRepresentation(greenNodeId, green, greenStorage),
-                toServiceRepresentation(blueNodeId, blue, blueStorage)
+                redStorageRepresentation,
+                redWebRepresentation,
+                greenStorageRepresentation,
+                blueStorageRepresentation
         ));
     }
 
