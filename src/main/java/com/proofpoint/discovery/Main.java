@@ -55,7 +55,6 @@ public class Main
                     .withApplicationDefaults(ImmutableMap.of(
                             "http-server.admin.port", "4121",
                             "http-server.http.port", "4111",
-                            "http-server.log.retention-time", "7d",
                             "http-server.threads.max", "20",
                             "jmx.rmiregistry.port", "4101"
                     ));
