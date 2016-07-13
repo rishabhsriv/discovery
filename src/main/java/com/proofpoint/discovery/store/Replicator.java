@@ -140,6 +140,7 @@ public class Replicator
             // TODO: build URI from resource class
             Request request = Request.Builder.prepareGet()
                     .setUri(URI.create(uri + "/v1/store/" + name))
+                    .addHeader("Accept", "application/x-jackson-smile")
                     .build();
 
             try {
