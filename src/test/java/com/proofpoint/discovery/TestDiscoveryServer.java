@@ -17,7 +17,6 @@ package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.proofpoint.bootstrap.LifeCycleManager;
@@ -36,7 +35,6 @@ import com.proofpoint.node.NodeInfo;
 import com.proofpoint.node.testing.TestingNodeModule;
 import com.proofpoint.reporting.ReportingModule;
 import com.proofpoint.testing.Closeables;
-import org.iq80.leveldb.util.FileUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -44,7 +42,6 @@ import org.testng.annotations.Test;
 import org.weakref.jmx.guice.MBeanModule;
 import org.weakref.jmx.testing.TestingMBeanModule;
 
-import java.io.File;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
@@ -64,20 +61,13 @@ public class TestDiscoveryServer
     private final HttpClient client = new JettyHttpClient();
 
     private TestingHttpServer server;
-    private File tempDir;
     private Set<LifeCycleManager> lifeCycleManagers;
 
     @BeforeMethod
     public void setup()
             throws Exception
     {
-        tempDir = Files.createTempDir();
-
         // start server
-        Map<String, String> serverProperties = ImmutableMap.<String, String>builder()
-                .put("static.db.location", tempDir.getAbsolutePath())
-                .build();
-
         Injector serverInjector = bootstrapTest()
                 .withModules(
                         new MBeanModule(),
@@ -90,7 +80,6 @@ public class TestDiscoveryServer
                         new DiscoveryServerModule(),
                         new DiscoveryModule(),
                         new ReportingModule())
-                .setRequiredConfigurationProperties(serverProperties)
                 .initialize();
 
         lifeCycleManagers = new HashSet<>();
@@ -105,7 +94,6 @@ public class TestDiscoveryServer
         for (LifeCycleManager lifeCycleManager : lifeCycleManagers) {
             lifeCycleManager.stop();
         }
-        FileUtils.deleteRecursively(tempDir);
     }
 
     @AfterClass(alwaysRun = true)

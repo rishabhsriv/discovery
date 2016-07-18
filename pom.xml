@@ -16,9 +16,6 @@
 
     <properties>
         <main-class>com.proofpoint.discovery.Main</main-class>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <dep.leveldb.version>0.7</dep.leveldb.version>
     </properties>
 
     <inceptionYear>2010</inceptionYear>
@@ -85,18 +82,6 @@
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-multibindings</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.iq80.leveldb</groupId>
-            <artifactId>leveldb-api</artifactId>
-            <version>${dep.leveldb.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.iq80.leveldb</groupId>
-            <artifactId>leveldb</artifactId>
-            <version>${dep.leveldb.version}</version>
         </dependency>
 
         <dependency>

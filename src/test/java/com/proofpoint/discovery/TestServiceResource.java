@@ -112,7 +112,7 @@ public class TestServiceResource
         greenStorageRepresentation = toServiceRepresentation(greenNodeId, green, greenStorage);
         blueStorageRepresentation = toServiceRepresentation(blueNodeId, blue, blueStorage);
 
-        ServiceResource resource = new ServiceResource(dynamicStore, new InMemoryStaticStore(), configStore, proxyStore, new NodeInfo("testing"), initializationTracker);
+        ServiceResource resource = new ServiceResource(dynamicStore, configStore, proxyStore, new NodeInfo("testing"), initializationTracker);
 
         Bootstrap app = bootstrapApplication("test-application")
                 .doNotInitializeLogging()

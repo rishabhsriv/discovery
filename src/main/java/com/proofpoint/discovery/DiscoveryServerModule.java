@@ -24,8 +24,6 @@ import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceInventory;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.store.InMemoryStore;
-import com.proofpoint.discovery.store.PersistentStore;
-import com.proofpoint.discovery.store.PersistentStoreConfig;
 import com.proofpoint.discovery.store.ReplicatedStoreModule;
 import com.proofpoint.node.NodeInfo;
 
@@ -53,11 +51,6 @@ public class DiscoveryServerModule
         jaxrsBinder(binder).bind(DynamicAnnouncementResource.class).withApplicationPrefix();
         binder.bind(DynamicStore.class).to(ReplicatedDynamicStore.class).in(Scopes.SINGLETON);
         binder.install(new ReplicatedStoreModule("dynamic", ForDynamicStore.class, InMemoryStore.class));
-
-        // static announcements
-        binder.bind(StaticStore.class).to(ReplicatedStaticStore.class).in(Scopes.SINGLETON);
-        binder.install(new ReplicatedStoreModule("static", ForStaticStore.class, PersistentStore.class));
-        bindConfig(binder).prefixedWith("static").to(PersistentStoreConfig.class);
 
         // config-based static announcements
         binder.bind(ConfigStore.class).in(Scopes.SINGLETON);
