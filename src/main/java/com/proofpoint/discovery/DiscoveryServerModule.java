@@ -55,7 +55,6 @@ public class DiscoveryServerModule
         binder.install(new ReplicatedStoreModule("dynamic", ForDynamicStore.class, InMemoryStore.class));
 
         // static announcements
-        jaxrsBinder(binder).bind(StaticAnnouncementResource.class).withApplicationPrefix();
         binder.bind(StaticStore.class).to(ReplicatedStaticStore.class).in(Scopes.SINGLETON);
         binder.install(new ReplicatedStoreModule("static", ForStaticStore.class, PersistentStore.class));
         bindConfig(binder).prefixedWith("static").to(PersistentStoreConfig.class);

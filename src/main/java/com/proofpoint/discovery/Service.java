@@ -141,45 +141,4 @@ public class Service
                 ", properties=" + properties +
                 '}';
     }
-
-    public static Builder copyOf(StaticAnnouncement announcement)
-    {
-        return new Builder().copyOf(announcement);
-    }
-
-    public static class Builder
-    {
-        private Id<Service> id;
-        private String type;
-        private String pool;
-        private String location;
-        private Map<String, String> properties;
-
-        public Builder copyOf(StaticAnnouncement announcement)
-        {
-            type = announcement.getType();
-            pool = announcement.getPool();
-            properties = ImmutableMap.copyOf(announcement.getProperties());
-
-            return this;
-        }
-
-        public Builder setId(Id<Service> id)
-        {
-            this.id = id;
-            return this;
-        }
-
-        public Builder setLocation(String location)
-        {
-            this.location = location;
-            return this;
-        }
-
-        public Service build()
-        {
-            // TODO: validate state
-            return new Service(id, null, type, pool, location, properties);
-        }
-    }
 }

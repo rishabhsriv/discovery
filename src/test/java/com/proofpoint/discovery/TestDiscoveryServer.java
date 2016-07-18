@@ -27,10 +27,7 @@ import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient;
 import com.proofpoint.discovery.client.announce.ServiceAnnouncement;
 import com.proofpoint.event.client.InMemoryEventModule;
-import com.proofpoint.http.client.FullJsonResponseHandler.JsonResponse;
 import com.proofpoint.http.client.HttpClient;
-import com.proofpoint.http.client.Request;
-import com.proofpoint.http.client.StatusResponseHandler.StatusResponse;
 import com.proofpoint.http.client.jetty.JettyHttpClient;
 import com.proofpoint.http.server.testing.TestingHttpServer;
 import com.proofpoint.http.server.testing.TestingHttpServerModule;
@@ -47,8 +44,6 @@ import org.testng.annotations.Test;
 import org.weakref.jmx.guice.MBeanModule;
 import org.weakref.jmx.testing.TestingMBeanModule;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.net.URI;
 import java.util.HashSet;
@@ -59,18 +54,9 @@ import java.util.Set;
 import static com.proofpoint.bootstrap.Bootstrap.bootstrapTest;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.discovery.client.ServiceTypes.serviceType;
-import static com.proofpoint.http.client.FullJsonResponseHandler.createFullJsonResponseHandler;
-import static com.proofpoint.http.client.JsonBodyGenerator.jsonBodyGenerator;
-import static com.proofpoint.http.client.Request.Builder.prepareDelete;
-import static com.proofpoint.http.client.Request.Builder.preparePost;
-import static com.proofpoint.http.client.StatusResponseHandler.createStatusResponseHandler;
 import static com.proofpoint.jaxrs.JaxrsModule.explicitJaxrsModule;
-import static com.proofpoint.json.JsonCodec.jsonCodec;
-import static com.proofpoint.json.JsonCodec.mapJsonCodec;
-import static javax.ws.rs.core.Response.Status;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 public class TestDiscoveryServer
@@ -174,50 +160,6 @@ public class TestDiscoveryServer
         // ensure that service is no longer visible
         client.unannounce().get();
 
-        assertTrue(selectorFor("apple", "red").selectAllServices().isEmpty());
-    }
-
-
-    @Test
-    public void testStaticAnnouncement()
-            throws Exception
-    {
-        // create static announcement
-        Map<String, Object> announcement = ImmutableMap.<String, Object>builder()
-                .put("environment", "testing")
-                .put("type", "apple")
-                .put("pool", "red")
-                .put("location", "/a/b/c")
-                .put("properties", ImmutableMap.of("http", "http://host"))
-                .build();
-
-        Request request = preparePost()
-                .setUri(uriFor("/v1/announcement/static"))
-                .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                .setBodySource(jsonBodyGenerator(jsonCodec(Object.class), announcement))
-                .build();
-        JsonResponse<Map<String, Object>> createResponse = client.execute(request, createFullJsonResponseHandler(mapJsonCodec(String.class, Object.class)));
-
-        assertEquals(createResponse.getStatusCode(), Status.CREATED.getStatusCode());
-        String id = createResponse.getValue().get("id").toString();
-
-        List<ServiceDescriptor> services = selectorFor("apple", "red").selectAllServices();
-        assertEquals(services.size(), 1);
-
-        ServiceDescriptor service = services.get(0);
-        assertEquals(service.getId().toString(), id);
-        assertNull(service.getNodeId());
-        assertEquals(service.getLocation(), announcement.get("location"));
-        assertEquals(service.getPool(), announcement.get("pool"));
-        assertEquals(service.getProperties(), announcement.get("properties"));
-
-        // remove announcement
-        request = prepareDelete().setUri(uriFor("/v1/announcement/static/" + id)).build();
-        StatusResponse deleteResponse = client.execute(request, createStatusResponseHandler());
-
-        assertEquals(deleteResponse.getStatusCode(), Status.NO_CONTENT.getStatusCode());
-
-        // ensure announcement is gone
         assertTrue(selectorFor("apple", "red").selectAllServices().isEmpty());
     }
 
