@@ -163,8 +163,8 @@ public class ProxyStore
                     Builder<Service> builder = ImmutableSet.builder();
                     for (ServiceDescriptor descriptor : descriptors.getServiceDescriptors()) {
                         builder.add(new Service(
-                                Id.<Service>valueOf(descriptor.getId()),
-                                Id.<Node>valueOf(descriptor.getNodeId()),
+                                Id.valueOf(descriptor.getId()),
+                                Id.valueOf(descriptor.getNodeId()),
                                 descriptor.getType(),
                                 descriptor.getPool(),
                                 descriptor.getLocation(),
@@ -189,7 +189,7 @@ public class ProxyStore
                 }
                 finally {
                     if (!poolExecutor.isShutdown()) {
-                        poolExecutor.schedule((Runnable) this::refresh, (long) delay.toMillis(), TimeUnit.MILLISECONDS);
+                        poolExecutor.schedule((Runnable) this::refresh, delay.toMillis(), TimeUnit.MILLISECONDS);
                     }
                 }
             }, poolExecutor);

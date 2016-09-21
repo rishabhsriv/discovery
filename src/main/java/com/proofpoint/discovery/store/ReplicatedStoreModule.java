@@ -226,6 +226,7 @@ public class ReplicatedStoreModule
             this.storeConfigKey = storeConfigKey;
         }
 
+        @Override
         public synchronized HttpRemoteStore get()
         {
             if (remoteStore == null) {

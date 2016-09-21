@@ -145,7 +145,7 @@ public class BatchProcessor<T>
         }
     }
 
-    public static interface BatchHandler<T>
+    public interface BatchHandler<T>
     {
         void processBatch(Collection<T> entries)
                 throws Exception;

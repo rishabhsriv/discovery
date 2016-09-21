@@ -87,7 +87,7 @@ public class StaticAnnouncementConfig
         return false;
     }
 
-    private boolean checkUri(String uriString, String scheme)
+    private static boolean checkUri(String uriString, String scheme)
     {
         URI uri;
 

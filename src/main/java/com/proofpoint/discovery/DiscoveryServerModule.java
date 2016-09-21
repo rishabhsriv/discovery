@@ -55,6 +55,7 @@ import static com.proofpoint.reporting.ReportBinder.reportBinder;
 public class DiscoveryServerModule
         implements Module
 {
+    @Override
     public void configure(Binder binder)
     {
         bindConfig(binder).to(DiscoveryConfig.class);
@@ -91,7 +92,7 @@ public class DiscoveryServerModule
 
     @Singleton
     @Provides
-    public ServiceSelector getServiceInventory(final ServiceInventory inventory, final NodeInfo nodeInfo)
+    public static ServiceSelector getServiceInventory(final ServiceInventory inventory, final NodeInfo nodeInfo)
     {
         return new ServiceSelector()
         {

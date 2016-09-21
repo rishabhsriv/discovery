@@ -75,7 +75,7 @@ public class DistributedStore
     @PostConstruct
     public void start()
     {
-        garbageCollector.scheduleAtFixedRate((Runnable) this::removeExpiredEntries, 0, garbageCollectionInterval.toMillis(), TimeUnit.MILLISECONDS);
+        garbageCollector.scheduleAtFixedRate(this::removeExpiredEntries, 0, garbageCollectionInterval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Managed

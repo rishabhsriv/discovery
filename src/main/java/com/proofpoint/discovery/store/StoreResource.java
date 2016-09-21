@@ -73,7 +73,7 @@ public class StoreResource
         return Response.ok(store.getAll()).build();
     }
 
-    private boolean isExpired(Duration tombstoneMaxAge, Entry entry)
+    private static boolean isExpired(Duration tombstoneMaxAge, Entry entry)
     {
         long ageInMs = System.currentTimeMillis() - entry.getTimestamp();
 

@@ -439,7 +439,7 @@ public class TestServiceResource
         assertEquals(response.getStatusCode(), 503);
     }
 
-    private Map<String, Object> toServiceRepresentation(Id<Node> nodeId, DynamicAnnouncement dynamicAnnouncement, DynamicServiceAnnouncement dynamicServiceAnnouncement)
+    private static Map<String, Object> toServiceRepresentation(Id<Node> nodeId, DynamicAnnouncement dynamicAnnouncement, DynamicServiceAnnouncement dynamicServiceAnnouncement)
     {
         return ImmutableMap.<String, Object>builder()
                 .put("id", dynamicServiceAnnouncement.getId().toString())
@@ -451,7 +451,7 @@ public class TestServiceResource
                 .build();
     }
 
-    private Map<String, Object> toServiceRepresentation(Service service)
+    private static Map<String, Object> toServiceRepresentation(Service service)
     {
         return ImmutableMap.<String, Object>builder()
                 .put("id", service.getId().toString())
