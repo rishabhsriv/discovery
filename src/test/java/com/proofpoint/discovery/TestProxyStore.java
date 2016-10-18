@@ -9,6 +9,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.proofpoint.discovery.DiscoveryConfig.StringSet;
 import com.proofpoint.discovery.client.DiscoveryException;
+import com.proofpoint.http.client.HeaderName;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
 import com.proofpoint.http.client.RequestStats;
@@ -108,7 +109,7 @@ public class TestProxyStore
         private final DiscoveryConfig config;
         private final ImmutableSet<Service> services;
 
-        public TestingDiscoveryHttpClient(DiscoveryConfig config, Service[] services)
+        TestingDiscoveryHttpClient(DiscoveryConfig config, Service[] services)
         {
             this.config = config;
             this.services = ImmutableSet.copyOf(services);
@@ -159,7 +160,7 @@ public class TestProxyStore
                 extends AbstractFuture<T>
                 implements HttpResponseFuture<T>
         {
-            public TestingResponseFuture(Request request, ResponseHandler<T, E> responseHandler, final Services filteredServices)
+            TestingResponseFuture(Request request, ResponseHandler<T, E> responseHandler, final Services filteredServices)
             {
                 try {
                     T result = responseHandler.handle(request, new Response()
@@ -183,7 +184,7 @@ public class TestProxyStore
                         }
 
                         @Override
-                        public ListMultimap<String, String> getHeaders()
+                        public ListMultimap<HeaderName, String> getHeaders()
                         {
                             throw new UnsupportedOperationException();
                         }
