@@ -59,18 +59,18 @@ public class DiscoveryServerModule
     public void configure(Binder binder)
     {
         bindConfig(binder).to(DiscoveryConfig.class);
-        jaxrsBinder(binder).bind(ServiceResource.class);
+        jaxrsBinder(binder).bind(ServiceResource.class).withApplicationPrefix();
         binder.bind(InitializationTracker.class).in(Scopes.SINGLETON);
 
         discoveryBinder(binder).bindHttpAnnouncement("discovery");
 
         // dynamic announcements
-        jaxrsBinder(binder).bind(DynamicAnnouncementResource.class);
+        jaxrsBinder(binder).bind(DynamicAnnouncementResource.class).withApplicationPrefix();
         binder.bind(DynamicStore.class).to(ReplicatedDynamicStore.class).in(Scopes.SINGLETON);
         binder.install(new ReplicatedStoreModule("dynamic", ForDynamicStore.class, InMemoryStore.class));
 
         // static announcements
-        jaxrsBinder(binder).bind(StaticAnnouncementResource.class);
+        jaxrsBinder(binder).bind(StaticAnnouncementResource.class).withApplicationPrefix();
         binder.bind(StaticStore.class).to(ReplicatedStaticStore.class).in(Scopes.SINGLETON);
         binder.install(new ReplicatedStoreModule("static", ForStaticStore.class, PersistentStore.class));
         bindConfig(binder).prefixedWith("static").to(PersistentStoreConfig.class);

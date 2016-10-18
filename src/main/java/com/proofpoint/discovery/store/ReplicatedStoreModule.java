@@ -73,7 +73,7 @@ public class ReplicatedStoreModule
         binder.disableCircularProxies();
 
         // global
-        jaxrsBinder(binder).bind(StoreResource.class);
+        jaxrsBinder(binder).bind(StoreResource.class).withApplicationPrefix();
         binder.bind(new TypeLiteral<Supplier<DateTime>>() {}).to(RealTimeSupplier.class).in(Scopes.SINGLETON);
 
         // per store
