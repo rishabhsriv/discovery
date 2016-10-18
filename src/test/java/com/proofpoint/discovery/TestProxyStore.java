@@ -3,27 +3,21 @@ package com.proofpoint.discovery;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
-import com.google.common.collect.ListMultimap;
-import com.google.common.util.concurrent.AbstractFuture;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.proofpoint.discovery.DiscoveryConfig.StringSet;
 import com.proofpoint.discovery.client.DiscoveryException;
-import com.proofpoint.http.client.HeaderName;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
-import com.proofpoint.http.client.RequestStats;
 import com.proofpoint.http.client.Response;
-import com.proofpoint.http.client.ResponseHandler;
+import com.proofpoint.http.client.testing.TestingHttpClient;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.Set;
 
-import static com.proofpoint.json.JsonCodec.jsonCodec;
+import static com.proofpoint.http.client.testing.TestingResponse.mockResponse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -37,7 +31,7 @@ public class TestProxyStore
     {
         Injector injector = mock(Injector.class);
         ProxyStore proxyStore = new ProxyStore(new DiscoveryConfig(), injector);
-        Set<Service> services = ImmutableSet.of(new Service(Id.<Service>random(), Id.<Node>random(), "type", "pool", "/location", ImmutableMap.of("key", "value")));
+        Set<Service> services = ImmutableSet.of(new Service(Id.random(), Id.random(), "type", "pool", "/location", ImmutableMap.of("key", "value")));
 
         assertEquals(proxyStore.filterAndGetAll(services), services);
         assertEquals(proxyStore.get("foo"), null);
@@ -49,23 +43,23 @@ public class TestProxyStore
     public void testProxy()
             throws InterruptedException
     {
-        Service service1 = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "pool1", "/location/1", ImmutableMap.of("key", "value"));
-        Service service2 = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "pool2", "/location/2", ImmutableMap.of("key2", "value2"));
-        Service service3 = new Service(Id.<Service>random(), Id.<Node>random(), "customer", "general", "/location/3", ImmutableMap.of("key3", "value3"));
+        Service service1 = new Service(Id.random(), Id.random(), "storage", "pool1", "/location/1", ImmutableMap.of("key", "value"));
+        Service service2 = new Service(Id.random(), Id.random(), "storage", "pool2", "/location/2", ImmutableMap.of("key2", "value2"));
+        Service service3 = new Service(Id.random(), Id.random(), "customer", "general", "/location/3", ImmutableMap.of("key3", "value3"));
 
         DiscoveryConfig config = new DiscoveryConfig()
                 .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
                 .setProxyEnvironment("upstream")
                 .setProxyUri(URI.create("http://discovery.example.com"));
         Injector injector = mock(Injector.class);
-        HttpClient httpClient = new TestingDiscoveryHttpClient(config, new Service[]{service1, service2, service3});
+        HttpClient httpClient = new TestingHttpClient(new DiscoveryProcessor(config, new Service[]{service1, service2, service3}));
         when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
         ProxyStore proxyStore = new ProxyStore(config, injector);
         Thread.sleep(100);
 
-        Service service4 = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "pool1", "/location/4", ImmutableMap.of("key4", "value4"));
-        Service service5 = new Service(Id.<Service>random(), Id.<Node>random(), "auth", "pool3", "/location/5", ImmutableMap.of("key5", "value5"));
-        Service service6 = new Service(Id.<Service>random(), Id.<Node>random(), "event", "general", "/location/6", ImmutableMap.of("key6", "value6"));
+        Service service4 = new Service(Id.random(), Id.random(), "storage", "pool1", "/location/4", ImmutableMap.of("key4", "value4"));
+        Service service5 = new Service(Id.random(), Id.random(), "auth", "pool3", "/location/5", ImmutableMap.of("key5", "value5"));
+        Service service6 = new Service(Id.random(), Id.random(), "event", "general", "/location/6", ImmutableMap.of("key6", "value6"));
 
         assertEquals(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
                 ImmutableSet.of(service1, service2, service3, service6));
@@ -87,15 +81,15 @@ public class TestProxyStore
             expectedExceptionsMessageRegExp = "Expected environment to be upstream, but was mismatch")
     public void testEnvironmentMismatch()
     {
-        Service service1 = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "pool1", "/location/1", ImmutableMap.of("key", "value"));
-        Service service2 = new Service(Id.<Service>random(), Id.<Node>random(), "storage", "pool2", "/location/2", ImmutableMap.of("key2", "value2"));
-        Service service3 = new Service(Id.<Service>random(), Id.<Node>random(), "customer", "general", "/location/3", ImmutableMap.of("key3", "value3"));
+        Service service1 = new Service(Id.random(), Id.random(), "storage", "pool1", "/location/1", ImmutableMap.of("key", "value"));
+        Service service2 = new Service(Id.random(), Id.random(), "storage", "pool2", "/location/2", ImmutableMap.of("key2", "value2"));
+        Service service3 = new Service(Id.random(), Id.random(), "customer", "general", "/location/3", ImmutableMap.of("key3", "value3"));
 
         Injector injector = mock(Injector.class);
-        HttpClient httpClient = new TestingDiscoveryHttpClient(new DiscoveryConfig()
-                .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
-                .setProxyEnvironment("mismatch")
-                .setProxyUri(URI.create("http://discovery.example.com")), new Service[]{service1, service2, service3});
+        HttpClient httpClient = new TestingHttpClient(new DiscoveryProcessor(new DiscoveryConfig()
+                        .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
+                        .setProxyEnvironment("mismatch")
+                        .setProxyUri(URI.create("http://discovery.example.com")), new Service[]{service1, service2, service3}));
         when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
         new ProxyStore(new DiscoveryConfig()
                 .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
@@ -103,20 +97,22 @@ public class TestProxyStore
                 .setProxyUri(URI.create("http://discovery.example.com")), injector);
     }
 
-    private static class TestingDiscoveryHttpClient
-            implements HttpClient
+    private static class DiscoveryProcessor
+            implements TestingHttpClient.Processor
     {
         private final DiscoveryConfig config;
         private final ImmutableSet<Service> services;
 
-        TestingDiscoveryHttpClient(DiscoveryConfig config, Service[] services)
+        DiscoveryProcessor(DiscoveryConfig config, Service[] services)
         {
             this.config = config;
             this.services = ImmutableSet.copyOf(services);
         }
 
+        @Nonnull
         @Override
-        public <T, E extends Exception> HttpResponseFuture<T> executeAsync(Request request, ResponseHandler<T, E> responseHandler)
+        public Response handle(Request request)
+                throws Exception
         {
             assertEquals(request.getMethod(), "GET");
             URI uri = request.getUri();
@@ -135,85 +131,9 @@ public class TestProxyStore
             }
             final Services filteredServices = new Services(config.getProxyEnvironment(), builder.build());
 
-            return new TestingResponseFuture<>(request, responseHandler, filteredServices);
-        }
-
-        @Override
-        public <T, E extends Exception> T execute(Request request, ResponseHandler<T, E> responseHandler)
-                throws E
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public RequestStats getStats()
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void close()
-        {
-        }
-
-        private static class TestingResponseFuture<T, E extends Exception>
-                extends AbstractFuture<T>
-                implements HttpResponseFuture<T>
-        {
-            TestingResponseFuture(Request request, ResponseHandler<T, E> responseHandler, final Services filteredServices)
-            {
-                try {
-                    T result = responseHandler.handle(request, new Response()
-                    {
-                        @Override
-                        public int getStatusCode()
-                        {
-                            return 200;
-                        }
-
-                        @Override
-                        public String getStatusMessage()
-                        {
-                            throw new UnsupportedOperationException();
-                        }
-
-                        @Override
-                        public String getHeader(String name)
-                        {
-                            return null;
-                        }
-
-                        @Override
-                        public ListMultimap<HeaderName, String> getHeaders()
-                        {
-                            throw new UnsupportedOperationException();
-                        }
-
-                        @Override
-                        public long getBytesRead()
-                        {
-                            throw new UnsupportedOperationException();
-                        }
-
-                        @Override
-                        public InputStream getInputStream()
-                                throws IOException
-                        {
-                            return new ByteArrayInputStream(jsonCodec(Services.class).toJson(filteredServices).getBytes("UTF-8"));
-                        }
-                    });
-                    set(result);
-                }
-                catch (Exception e) {
-                    setException(e);
-                }
-            }
-
-            @Override
-            public String getState()
-            {
-                return "done";
-            }
+            return mockResponse()
+                    .jsonBody(filteredServices)
+                    .build();
         }
     }
 }
