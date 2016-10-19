@@ -39,7 +39,7 @@ public class TestDiscoveryConfig
                 .setMaxAge(new Duration(90, TimeUnit.SECONDS))
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of())
                 .setProxyEnvironment(null)
-                .setProxyUri(null));
+                .setProxyUris(DiscoveryConfig.UriSet.of()));
     }
 
     @Test
@@ -49,14 +49,14 @@ public class TestDiscoveryConfig
                 .put("discovery.max-age", "1m")
                 .put("discovery.proxy.proxied-types", "foo  ,  bar")
                 .put("discovery.proxy.environment", "pre-release")
-                .put("discovery.proxy.uri", "http://10.20.30.40:4111")
+                .put("discovery.proxy.uri", "http://10.20.30.40:4111,http://50.60.70.80:9125")
                 .build();
 
         DiscoveryConfig expected = new DiscoveryConfig()
                 .setMaxAge(new Duration(1, TimeUnit.MINUTES))
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of("foo", "bar"))
                 .setProxyEnvironment("pre-release")
-                .setProxyUri(URI.create("http://10.20.30.40:4111"));
+                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://10.20.30.40:4111"), URI.create("http://50.60.70.80:9125")));
 
         ConfigAssertions.assertFullMapping(properties, expected);
     }
@@ -65,7 +65,7 @@ public class TestDiscoveryConfig
     public void testLegacyProperties()
     {
         assertLegacyEquivalence(DiscoveryConfig.class,
-                ImmutableMap.<String, String>of());
+                ImmutableMap.of());
     }
 
     @Test
@@ -79,7 +79,9 @@ public class TestDiscoveryConfig
     @Test
     public void testProxyMissingEnvironment()
     {
-        DiscoveryConfig config = new DiscoveryConfig().setProxyProxiedTypes(StringSet.of("foo")).setProxyUri(URI.create("http://10.20.30.40:4111"));
+        DiscoveryConfig config = new DiscoveryConfig()
+                .setProxyProxiedTypes(StringSet.of("foo"))
+                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://10.20.30.40:4111")));
         assertFailsValidation(config, "proxyTypeAndEnvironment", "discovery.proxy.environment specified if and only if any proxy types",
                 AssertTrue.class);
     }
@@ -103,7 +105,7 @@ public class TestDiscoveryConfig
     @Test
     public void testProxyUri()
     {
-        DiscoveryConfig config = new DiscoveryConfig().setProxyUri(URI.create("http://10.20.30.40:4111"));
+        DiscoveryConfig config = new DiscoveryConfig().setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://10.20.30.40:4111")));
         assertFailsValidation(config, "proxyTypeAndUri", "discovery.proxy.uri specified if and only if any proxy types",
                 AssertTrue.class);
     }

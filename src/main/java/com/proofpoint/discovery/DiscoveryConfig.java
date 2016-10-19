@@ -24,15 +24,18 @@ import com.proofpoint.units.Duration;
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotNull;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class DiscoveryConfig
 {
     private Duration maxAge = new Duration(90, TimeUnit.SECONDS);
     private StringSet proxyProxiedTypes = StringSet.of();
     private String proxyEnvironment = null;
-    private URI proxyUri = null;
+    private UriSet proxyUris = UriSet.of();
 
     @NotNull
     public Duration getMaxAge()
@@ -74,16 +77,16 @@ public class DiscoveryConfig
         return this;
     }
 
-    public URI getProxyUri()
+    public UriSet getProxyUris()
     {
-        return proxyUri;
+        return proxyUris;
     }
 
     @Config("discovery.proxy.uri")
-    @ConfigDescription("Discovery server to proxy to (test environments only)")
-    public DiscoveryConfig setProxyUri(URI proxyUri)
+    @ConfigDescription("Discovery servers to proxy to (test environments only)")
+    public DiscoveryConfig setProxyUris(UriSet proxyUris)
     {
-        this.proxyUri = proxyUri;
+        this.proxyUris = proxyUris;
         return this;
     }
 
@@ -96,7 +99,7 @@ public class DiscoveryConfig
     @AssertTrue(message = "discovery.proxy.uri specified if and only if any proxy types")
     public boolean isProxyTypeAndUri()
     {
-        return proxyProxiedTypes.isEmpty() == (proxyUri == null);
+        return proxyProxiedTypes.isEmpty() == proxyUris.isEmpty();
     }
 
     public static final class StringSet extends ForwardingSet<String>
@@ -120,6 +123,35 @@ public class DiscoveryConfig
 
         @Override
         protected Set<String> delegate()
+        {
+            return delegate;
+        }
+    }
+
+    public static final class UriSet extends ForwardingSet<URI>
+    {
+        private final Set<URI> delegate;
+
+        private UriSet(Set<URI> delegate)
+        {
+            this.delegate = ImmutableSet.copyOf(delegate);
+        }
+
+        public static UriSet of(URI... uris)
+        {
+            return new UriSet(ImmutableSet.copyOf(uris));
+        }
+
+        public static UriSet valueOf(String string)
+        {
+            List<URI> uris = Arrays.stream(string.split("\\s*,\\s*"))
+                    .map(URI::create)
+                    .collect(Collectors.toList());
+            return new UriSet(ImmutableSet.copyOf(uris));
+        }
+
+        @Override
+        protected Set<URI> delegate()
         {
             return delegate;
         }

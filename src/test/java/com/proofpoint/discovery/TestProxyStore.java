@@ -50,7 +50,7 @@ public class TestProxyStore
         DiscoveryConfig config = new DiscoveryConfig()
                 .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
                 .setProxyEnvironment("upstream")
-                .setProxyUri(URI.create("http://discovery.example.com"));
+                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://discovery.example.com")));
         Injector injector = mock(Injector.class);
         HttpClient httpClient = new TestingHttpClient(new DiscoveryProcessor(config, new Service[]{service1, service2, service3}));
         when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
@@ -89,12 +89,12 @@ public class TestProxyStore
         HttpClient httpClient = new TestingHttpClient(new DiscoveryProcessor(new DiscoveryConfig()
                         .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
                         .setProxyEnvironment("mismatch")
-                        .setProxyUri(URI.create("http://discovery.example.com")), new Service[]{service1, service2, service3}));
+                        .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://discovery.example.com"))), new Service[]{service1, service2, service3}));
         when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
         new ProxyStore(new DiscoveryConfig()
                 .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
                 .setProxyEnvironment("upstream")
-                .setProxyUri(URI.create("http://discovery.example.com")), injector);
+                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://discovery.example.com"))), injector);
     }
 
     private static class DiscoveryProcessor
