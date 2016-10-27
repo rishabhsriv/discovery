@@ -43,7 +43,7 @@ import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 public class DistributedStore
 {
     private final String name;
-    private final LocalStore localStore;
+    private final InMemoryStore localStore;
     private final RemoteStore remoteStore;
     private final Supplier<DateTime> timeSupplier;
     private final Duration tombstoneMaxAge;
@@ -55,7 +55,7 @@ public class DistributedStore
     @Inject
     public DistributedStore(
             String name,
-            LocalStore localStore,
+            InMemoryStore localStore,
             RemoteStore remoteStore,
             StoreConfig config,
             Supplier<DateTime> timeSupplier)

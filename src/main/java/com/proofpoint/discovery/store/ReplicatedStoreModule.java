@@ -59,9 +59,9 @@ public class ReplicatedStoreModule
 {
     private final String name;
     private final Class<? extends Annotation> annotation;
-    private final Class<? extends LocalStore> localStoreClass;
+    private final Class<? extends InMemoryStore> localStoreClass;
 
-    public ReplicatedStoreModule(String name, Class<? extends Annotation> annotation, Class<? extends LocalStore> localStoreClass)
+    public ReplicatedStoreModule(String name, Class<? extends Annotation> annotation, Class<? extends InMemoryStore> localStoreClass)
     {
         this.name = name;
         this.annotation = annotation;
@@ -80,7 +80,7 @@ public class ReplicatedStoreModule
 
         // per store
         Key<HttpClient> httpClientKey = Key.get(HttpClient.class, annotation);
-        Key<LocalStore> localStoreKey = Key.get(LocalStore.class, annotation);
+        Key<InMemoryStore> localStoreKey = Key.get(InMemoryStore.class, annotation);
         Key<StoreConfig> storeConfigKey = Key.get(StoreConfig.class, annotation);
         Key<RemoteStore> remoteStoreKey = Key.get(RemoteStore.class, annotation);
         Key<UpdateListener> updateListenerKey = null;
@@ -96,7 +96,7 @@ public class ReplicatedStoreModule
         binder.bind(DistributedStore.class).annotatedWith(annotation).toProvider(new DistributedStoreProvider(name, localStoreKey, storeConfigKey, remoteStoreKey, updateListenerKey)).in(Scopes.SINGLETON);
         binder.bind(Replicator.class).annotatedWith(annotation).toProvider(new ReplicatorProvider(name, localStoreKey, httpClientKey, storeConfigKey)).in(Scopes.SINGLETON);
         binder.bind(HttpRemoteStore.class).annotatedWith(annotation).toProvider(new RemoteHttpStoreProvider(name, httpClientKey, storeConfigKey)).in(Scopes.SINGLETON);
-        binder.bind(LocalStore.class).annotatedWith(annotation).to(localStoreClass).in(Scopes.SINGLETON);
+        binder.bind(InMemoryStore.class).annotatedWith(annotation).to(localStoreClass).in(Scopes.SINGLETON);
 
         binder.bind(RemoteStore.class).annotatedWith(annotation).to(Key.get(HttpRemoteStore.class, annotation));
 
@@ -107,7 +107,7 @@ public class ReplicatedStoreModule
         newExporter(binder).export(HttpRemoteStore.class).annotatedWith(annotation).as(generatedNameOf(HttpRemoteStore.class, named(name)));
         newExporter(binder).export(Replicator.class).annotatedWith(annotation).as(generatedNameOf(Replicator.class, named(name)));
 
-        newMapBinder(binder, String.class, LocalStore.class)
+        newMapBinder(binder, String.class, InMemoryStore.class)
             .addBinding(name)
             .to(localStoreKey);
 
@@ -121,7 +121,7 @@ public class ReplicatedStoreModule
         implements Provider<Replicator>
     {
         private final String name;
-        private final Key<? extends LocalStore> localStoreKey;
+        private final Key<? extends InMemoryStore> localStoreKey;
         private final Key<? extends HttpClient> httpClientKey;
         private final Key<StoreConfig> storeConfigKey;
 
@@ -137,7 +137,7 @@ public class ReplicatedStoreModule
         @GuardedBy("this")
         private Replicator replicator;
 
-        private ReplicatorProvider(String name, Key<? extends LocalStore> localStoreKey, Key<? extends HttpClient> httpClientKey, Key<StoreConfig> storeConfigKey)
+        private ReplicatorProvider(String name, Key<? extends InMemoryStore> localStoreKey, Key<? extends HttpClient> httpClientKey, Key<StoreConfig> storeConfigKey)
         {
             this.name = name;
             this.localStoreKey = localStoreKey;
@@ -149,7 +149,7 @@ public class ReplicatedStoreModule
         public synchronized Replicator get()
         {
             if (replicator == null) {
-                LocalStore localStore = injector.getInstance(localStoreKey);
+                InMemoryStore localStore = injector.getInstance(localStoreKey);
                 HttpClient httpClient = injector.getInstance(httpClientKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
                 InitializationTracker initializationTracker = injector.getInstance(InitializationTracker.class);
@@ -281,7 +281,7 @@ public class ReplicatedStoreModule
             implements Provider<DistributedStore>
     {
         private final String name;
-        private final Key<? extends LocalStore> localStoreKey;
+        private final Key<? extends InMemoryStore> localStoreKey;
         private final Key<StoreConfig> storeConfigKey;
         private final Key<? extends RemoteStore> remoteStoreKey;
         private final Key<UpdateListener> updateListenerKey;
@@ -291,7 +291,7 @@ public class ReplicatedStoreModule
         private DistributedStore store;
 
         DistributedStoreProvider(String name,
-                Key<? extends LocalStore> localStoreKey,
+                Key<? extends InMemoryStore> localStoreKey,
                 Key<StoreConfig> storeConfigKey,
                 Key<? extends RemoteStore> remoteStoreKey,
                 Key<UpdateListener> updateListenerKey)
@@ -307,7 +307,7 @@ public class ReplicatedStoreModule
         public synchronized DistributedStore get()
         {
             if (store == null) {
-                LocalStore localStore = injector.getInstance(localStoreKey);
+                InMemoryStore localStore = injector.getInstance(localStoreKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
                 RemoteStore remoteStore = injector.getInstance(remoteStoreKey);
 

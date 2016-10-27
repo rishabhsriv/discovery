@@ -51,7 +51,7 @@ public class Replicator
     private final ServiceSelector selector;
     private final HttpClient httpClient;
     private final HttpServiceBalancerStats httpServiceBalancerStats;
-    private final LocalStore localStore;
+    private final InMemoryStore localStore;
     private final Duration replicationInterval;
     private final CompletionNotifier completionNotifier;
     private final ScheduledExecutorService executor;
@@ -66,7 +66,7 @@ public class Replicator
             ServiceSelector selector,
             HttpClient httpClient,
             HttpServiceBalancerStats httpServiceBalancerStats,
-            LocalStore localStore,
+            InMemoryStore localStore,
             StoreConfig config,
             InitializationTracker initializationTracker,
             ScheduledExecutorService executor)

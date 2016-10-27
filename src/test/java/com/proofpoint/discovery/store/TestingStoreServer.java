@@ -61,7 +61,7 @@ public class TestingStoreServer
                             binder -> {
                                 binder.bind(StoreConfig.class).toInstance(storeConfig);
                                 jaxrsBinder(binder).bind(StoreResource.class);
-                                binder.bind(new TypeLiteral<Map<String, LocalStore>>() {})
+                                binder.bind(new TypeLiteral<Map<String, InMemoryStore>>() {})
                                         .toInstance(ImmutableMap.of("dynamic", inMemoryStore));
                                 binder.bind(new TypeLiteral<Map<String, StoreConfig>>() {})
                                         .toInstance(ImmutableMap.of("dynamic", storeConfig));

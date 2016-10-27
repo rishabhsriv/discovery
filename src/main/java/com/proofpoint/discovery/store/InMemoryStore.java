@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentMap;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class InMemoryStore
-        implements LocalStore
 {
     private final ConcurrentMap<ByteBuffer, Entry> map = new ConcurrentHashMap<>();
     private final long maxAgeInMs;
@@ -48,7 +47,6 @@ public class InMemoryStore
         this.updateListener = updateListener;
     }
 
-    @Override
     public boolean put(Entry entry)
     {
         if (maxAgeInMs != Long.MAX_VALUE && entry.getMaxAgeInMs() == null) {
@@ -80,7 +78,6 @@ public class InMemoryStore
         }
     }
 
-    @Override
     public Entry get(byte[] key)
     {
         checkNotNull(key, "key is null");
@@ -88,7 +85,6 @@ public class InMemoryStore
         return map.get(ByteBuffer.wrap(key));
     }
 
-    @Override
     public boolean delete(byte[] key, long timestamp)
     {
         checkNotNull(key, "key is null");
@@ -109,7 +105,6 @@ public class InMemoryStore
         return true;
     }
 
-    @Override
     public Iterable<Entry> getAll()
     {
         return map.values();

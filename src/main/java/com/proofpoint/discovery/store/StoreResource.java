@@ -34,11 +34,11 @@ import java.util.Map;
 @Path("/v1/store/{store}")
 public class StoreResource
 {
-    private final Map<String, LocalStore> localStores;
+    private final Map<String, InMemoryStore> localStores;
     private final Map<String, Duration> tombstoneMaxAges;
 
     @Inject
-    public StoreResource(Map<String, LocalStore> localStores, Map<String, StoreConfig> configs)
+    public StoreResource(Map<String, InMemoryStore> localStores, Map<String, StoreConfig> configs)
     {
         this.localStores = ImmutableMap.copyOf(localStores);
         this.tombstoneMaxAges = ImmutableMap.copyOf(Maps.transformValues(configs, StoreConfig::getTombstoneMaxAge));
@@ -48,7 +48,7 @@ public class StoreResource
     @Consumes({"application/x-jackson-smile", "application/json"})
     public Response setMultipleEntries(@PathParam("store") String storeName, List<Entry> entries)
     {
-        LocalStore store = localStores.get(storeName);
+        InMemoryStore store = localStores.get(storeName);
         Duration tombstoneMaxAge = tombstoneMaxAges.get(storeName);
         if (store == null || tombstoneMaxAge == null) {
             return Response.status(Status.NOT_FOUND).build();
@@ -66,7 +66,7 @@ public class StoreResource
     @Produces({"application/x-jackson-smile", "application/json"})
     public Response getAll(@PathParam("store") String storeName)
     {
-        LocalStore store = localStores.get(storeName);
+        InMemoryStore store = localStores.get(storeName);
         if (store == null) {
             return Response.status(Status.NOT_FOUND).build();
         }
