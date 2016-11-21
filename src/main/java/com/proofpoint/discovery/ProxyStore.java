@@ -162,9 +162,10 @@ public class ProxyStore
                     delay = descriptors.getMaxAge();
                     Builder<Service> builder = ImmutableSet.builder();
                     for (ServiceDescriptor descriptor : descriptors.getServiceDescriptors()) {
+                        String nodeId = descriptor.getNodeId();
                         builder.add(new Service(
                                 Id.valueOf(descriptor.getId()),
-                                Id.valueOf(descriptor.getNodeId()),
+                                nodeId == null ? null : Id.valueOf(nodeId),
                                 descriptor.getType(),
                                 descriptor.getPool(),
                                 descriptor.getLocation(),

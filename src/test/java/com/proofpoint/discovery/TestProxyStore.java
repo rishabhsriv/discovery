@@ -77,6 +77,44 @@ public class TestProxyStore
         assertEquals(proxyStore.get("event", "general"), null);
     }
 
+    @Test
+    public void testProxyStatic()
+            throws InterruptedException
+    {
+        Service service1 = new Service(Id.random(), null, "storage", "pool1", "/location/1", ImmutableMap.of("key", "value"));
+        Service service2 = new Service(Id.random(), null, "storage", "pool2", "/location/2", ImmutableMap.of("key2", "value2"));
+        Service service3 = new Service(Id.random(), null, "customer", "general", "/location/3", ImmutableMap.of("key3", "value3"));
+
+        DiscoveryConfig config = new DiscoveryConfig()
+                .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
+                .setProxyEnvironment("upstream")
+                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://discovery.example.com")));
+        Injector injector = mock(Injector.class);
+        HttpClient httpClient = new TestingHttpClient(new DiscoveryProcessor(config, new Service[]{service1, service2, service3}));
+        when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
+        ProxyStore proxyStore = new ProxyStore(config, injector);
+        Thread.sleep(100);
+
+        Service service4 = new Service(Id.random(), null, "storage", "pool1", "/location/4", ImmutableMap.of("key4", "value4"));
+        Service service5 = new Service(Id.random(), null, "auth", "pool3", "/location/5", ImmutableMap.of("key5", "value5"));
+        Service service6 = new Service(Id.random(), null, "event", "general", "/location/6", ImmutableMap.of("key6", "value6"));
+
+        assertEquals(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
+                ImmutableSet.of(service1, service2, service3, service6));
+
+        assertEquals(proxyStore.get("storage"), ImmutableSet.of(service1, service2));
+        assertEquals(proxyStore.get("customer"), ImmutableSet.of(service3));
+        assertEquals(proxyStore.get("auth"), ImmutableSet.<Service>of());
+        assertEquals(proxyStore.get("event"), null);
+
+        assertEquals(proxyStore.get("storage", "pool1"), ImmutableSet.of(service1));
+        assertEquals(proxyStore.get("storage", "pool2"), ImmutableSet.of(service2));
+        assertEquals(proxyStore.get("customer", "general"), ImmutableSet.of(service3));
+        assertEquals(proxyStore.get("customer", "pool3"), ImmutableSet.<Service>of());
+        assertEquals(proxyStore.get("auth", "pool3"), ImmutableSet.<Service>of());
+        assertEquals(proxyStore.get("event", "general"), null);
+    }
+
     @Test(expectedExceptions = DiscoveryException.class,
             expectedExceptionsMessageRegExp = "Expected environment to be upstream, but was mismatch")
     public void testEnvironmentMismatch()
