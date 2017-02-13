@@ -56,7 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
+import static com.proofpoint.bootstrap.Bootstrap.bootstrapTest;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.discovery.client.ServiceTypes.serviceType;
 import static com.proofpoint.http.client.FullJsonResponseHandler.createFullJsonResponseHandler;
@@ -92,8 +92,7 @@ public class TestDiscoveryServer
                 .put("static.db.location", tempDir.getAbsolutePath())
                 .build();
 
-        Injector serverInjector = bootstrapApplication("test-application")
-                .doNotInitializeLogging()
+        Injector serverInjector = bootstrapTest()
                 .withModules(
                         new MBeanModule(),
                         new TestingNodeModule("testing"),
@@ -106,7 +105,6 @@ public class TestDiscoveryServer
                         new DiscoveryModule(),
                         new ReportingModule())
                 .setRequiredConfigurationProperties(serverProperties)
-                .quiet()
                 .initialize();
 
         lifeCycleManagers = new HashSet<>();
@@ -139,8 +137,7 @@ public class TestDiscoveryServer
             .put("testing.discovery.uri", server.getBaseUrl().toString())
             .build();
 
-        Injector announcerInjector = bootstrapApplication("test-application")
-                .doNotInitializeLogging()
+        Injector announcerInjector = bootstrapTest()
                 .withModules(
                         new TestingNodeModule("testing", "red"),
                         new ReportingModule(),
@@ -150,7 +147,6 @@ public class TestDiscoveryServer
                         new DiscoveryModule()
                 )
                 .setRequiredConfigurationProperties(announcerProperties)
-                .quiet()
                 .initialize();
 
         lifeCycleManagers.add(announcerInjector.getInstance(LifeCycleManager.class));
@@ -233,8 +229,7 @@ public class TestDiscoveryServer
             .put("discovery.apple.pool", pool)
             .build();
 
-        Injector clientInjector = bootstrapApplication("test-application")
-                .doNotInitializeLogging()
+        Injector clientInjector = bootstrapTest()
                 .withModules(
                         new TestingNodeModule("testing"),
                         new ReportingModule(),
@@ -245,7 +240,6 @@ public class TestDiscoveryServer
                         binder -> discoveryBinder(binder).bindSelector(type)
                 )
                 .setRequiredConfigurationProperties(clientProperties)
-                .quiet()
                 .initialize();
 
         lifeCycleManagers.add(clientInjector.getInstance(LifeCycleManager.class));
