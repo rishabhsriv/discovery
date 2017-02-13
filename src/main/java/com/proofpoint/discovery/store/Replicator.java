@@ -170,8 +170,7 @@ public class Replicator
                                 List<Entry> entries = mapper.readValue(response.getInputStream(), new TypeReference<List<Entry>>() {});
                                 entries.forEach(localStore::put);
                             }
-                            catch (EOFException e) {
-                                // ignore
+                            catch (EOFException | NullPointerException ignored) {
                             }
                         }
                         else {
