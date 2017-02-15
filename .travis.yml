@@ -9,6 +9,7 @@ addons:
   apt:
     packages:
       - rpm
+      - oracle-java8-installer
 
 script:
   - mvn test -B javadoc:javadoc
