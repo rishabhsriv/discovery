@@ -34,8 +34,6 @@ import com.proofpoint.node.NodeInfo;
 import com.proofpoint.units.Duration;
 import org.weakref.jmx.Managed;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.EOFException;
 import java.net.URI;
 import java.util.List;
@@ -43,9 +41,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
 public class Replicator
 {
@@ -59,9 +54,9 @@ public class Replicator
     private final LocalStore localStore;
     private final Duration replicationInterval;
     private final CompletionNotifier completionNotifier;
+    private final ScheduledExecutorService executor;
 
     private ScheduledFuture<?> future;
-    private ScheduledExecutorService executor;
 
     private final ObjectMapper mapper = new ObjectMapper(new SmileFactory()).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     private final AtomicLong lastReplicationTimestamp = new AtomicLong();
@@ -73,7 +68,8 @@ public class Replicator
             HttpServiceBalancerStats httpServiceBalancerStats,
             LocalStore localStore,
             StoreConfig config,
-            InitializationTracker initializationTracker)
+            InitializationTracker initializationTracker,
+            ScheduledExecutorService executor)
     {
         this.name = name;
         this.node = node;
@@ -81,17 +77,14 @@ public class Replicator
         this.httpClient = httpClient;
         this.httpServiceBalancerStats = httpServiceBalancerStats;
         this.localStore = localStore;
-
         this.replicationInterval = config.getReplicationInterval();
         completionNotifier = initializationTracker.createTask();
+        this.executor = executor;
     }
 
-    @PostConstruct
     public synchronized void start()
     {
         if (future == null) {
-            executor = newSingleThreadScheduledExecutor(daemonThreadsNamed("replicator-" + name));
-
             future = executor.scheduleAtFixedRate(() -> {
                 try {
                     synchronize();
@@ -105,15 +98,11 @@ public class Replicator
         // TODO: need fail-safe recurrent scheduler with variable delay
     }
 
-    @PreDestroy
     public synchronized void shutdown()
     {
         if (future != null) {
             future.cancel(true);
             executor.shutdownNow();
-
-            executor = null;
-            future = null;
         }
     }
 
@@ -185,8 +174,7 @@ public class Replicator
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            catch (Exception e) {
-                // ignore
+            catch (Exception ignored) {
             }
         }
 

@@ -41,10 +41,12 @@ import java.lang.annotation.Annotation;
 
 import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.name.Names.named;
+import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
 import static com.proofpoint.jaxrs.JaxrsBinder.jaxrsBinder;
 import static com.proofpoint.reporting.ReportBinder.reportBinder;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static org.weakref.jmx.ObjectNames.generatedNameOf;
 import static org.weakref.jmx.guice.ExportBinder.newExporter;
 
@@ -160,7 +162,8 @@ public class ReplicatedStoreModule
                         ImmutableMap.of("serviceType", "replicator-" + name)
                 );
 
-                replicator = new Replicator(name, nodeInfo, serviceSelector, httpClient, httpServiceBalancerStats, localStore, storeConfig, initializationTracker);
+                replicator = new Replicator(name, nodeInfo, serviceSelector, httpClient, httpServiceBalancerStats, localStore, storeConfig, initializationTracker,
+                        newSingleThreadScheduledExecutor(daemonThreadsNamed("replicator-" + name)));
                 replicator.start();
             }
 
