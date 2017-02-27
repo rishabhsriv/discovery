@@ -236,7 +236,8 @@ public class ReplicatedStoreModule
                 HttpClient httpClient = injector.getInstance(httpClientKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
 
-                remoteStore = new HttpRemoteStore(name, nodeInfo, serviceSelector, storeConfig, httpClient, reportExporter);
+                remoteStore = new HttpRemoteStore(name, nodeInfo, serviceSelector, storeConfig, httpClient, reportExporter,
+                        newSingleThreadScheduledExecutor(daemonThreadsNamed("http-remote-store-" + name)));
                 remoteStore.start();
             }
 

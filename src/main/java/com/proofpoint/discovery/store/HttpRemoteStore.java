@@ -34,9 +34,6 @@ import com.proofpoint.reporting.ReportExporter;
 import com.proofpoint.units.Duration;
 import org.weakref.jmx.Managed;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
@@ -52,20 +49,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.compose;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
-import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.http.client.SmileBodyGenerator.smileBodyGenerator;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import static java.util.Objects.requireNonNull;
 
-public class HttpRemoteStore
+class HttpRemoteStore
         implements RemoteStore
 {
     private static final Logger log = Logger.get(HttpRemoteStore.class);
@@ -79,34 +73,35 @@ public class HttpRemoteStore
     private final String name;
     private final ServiceSelector selector;
     private final HttpClient httpClient;
+    private final ReportExporter reportExporter;
+    private final ScheduledExecutorService executor;
 
     private Future<?> future;
-    private ScheduledExecutorService executor;
 
     private final AtomicLong lastRemoteServerRefreshTimestamp = new AtomicLong();
-    private final ReportExporter reportExporter;
     private final Predicate<ServiceDescriptor> ourNodeIdPredicate;
 
-
-    @Inject
     public HttpRemoteStore(String name,
             final NodeInfo node,
             ServiceSelector selector,
             StoreConfig config,
             HttpClient httpClient,
-            ReportExporter reportExporter)
+            ReportExporter reportExporter,
+            ScheduledExecutorService executor)
     {
-        checkNotNull(name, "name is null");
-        checkNotNull(node, "node is null");
-        checkNotNull(selector, "selector is null");
-        checkNotNull(httpClient, "httpClient is null");
-        checkNotNull(config, "config is null");
-        checkNotNull(reportExporter, "reportExporter is null");
+        requireNonNull(name, "name is null");
+        requireNonNull(node, "node is null");
+        requireNonNull(selector, "selector is null");
+        requireNonNull(httpClient, "httpClient is null");
+        requireNonNull(config, "config is null");
+        requireNonNull(reportExporter, "reportExporter is null");
 
         this.name = name;
         this.selector = selector;
         this.httpClient = httpClient;
         this.reportExporter = reportExporter;
+        // note: this *must* be single threaded for the shutdown logic to work correctly
+        this.executor = executor;
 
         maxBatchSize = config.getMaxBatchSize();
         queueSize = config.getQueueSize();
@@ -114,13 +109,9 @@ public class HttpRemoteStore
         ourNodeIdPredicate = input -> node.getNodeId().equals(input.getNodeId());
     }
 
-    @PostConstruct
-    public synchronized void start()
+    synchronized void start()
     {
         if (future == null) {
-            // note: this *must* be single threaded for the shutdown logic to work correctly
-            executor = newSingleThreadScheduledExecutor(daemonThreadsNamed("http-remote-store-" + name));
-
             future = executor.scheduleWithFixedDelay(() -> {
                 try {
                     updateProcessors(selector.selectAllServices());
@@ -132,8 +123,7 @@ public class HttpRemoteStore
         }
     }
 
-    @PreDestroy
-    public synchronized void shutdown()
+    synchronized void shutdown()
     {
         if (future != null) {
             future.cancel(true);
@@ -148,7 +138,7 @@ public class HttpRemoteStore
                 Thread.currentThread().interrupt();
             }
             catch (ExecutionException e) {
-                throw propagate(e);
+                throw new RuntimeException(e);
             }
 
             executor.shutdownNow();
@@ -226,7 +216,7 @@ public class HttpRemoteStore
         private final URI uri;
         private final HttpClient httpClient;
 
-        public MyBatchHandler(String name, ServiceDescriptor descriptor, HttpClient httpClient)
+        MyBatchHandler(String name, ServiceDescriptor descriptor, HttpClient httpClient)
         {
             this.httpClient = httpClient;
 
