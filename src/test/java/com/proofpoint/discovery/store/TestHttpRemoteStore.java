@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
@@ -63,15 +64,6 @@ public class TestHttpRemoteStore
     public void setup()
     {
         server.reset();
-        executor = new SerialScheduledExecutorService();
-        store = new HttpRemoteStore("dynamic",
-                new NodeInfo("test_environment"),
-                server.getServiceSelector(),
-                new StoreConfig().setRemoteUpdateInterval(new Duration(5, SECONDS)),
-                client,
-                mock(ReportExporter.class),
-                executor);
-        store.start();
     }
 
     @AfterMethod(alwaysRun = true)
@@ -94,9 +86,59 @@ public class TestHttpRemoteStore
     public void testReplication()
             throws InterruptedException
     {
+        createStore();
         store.put(TESTING_ENTRY);
         Thread.sleep(1000);
 
         assertEquals(serverStore.getAll(), ImmutableList.of(TESTING_ENTRY));
+    }
+
+    @Test
+    public void testReplicationToAddedServer()
+            throws InterruptedException
+    {
+        server.setServerInSelector(false);
+        createStore();
+
+        executor.elapseTimeNanosecondBefore(5, SECONDS);
+        store.put(TESTING_ENTRY);
+        Thread.sleep(1000);
+
+        assertEquals(serverStore.getAll(), ImmutableList.of());
+
+        server.setServerInSelector(true);
+        executor.elapseTime(1, NANOSECONDS);
+        store.put(TESTING_ENTRY);
+        Thread.sleep(1000);
+
+        assertEquals(serverStore.getAll(), ImmutableList.of(TESTING_ENTRY));
+    }
+
+    @Test
+    public void testNoReplicationToRemovedServer()
+            throws InterruptedException
+    {
+        createStore();
+
+        executor.elapseTimeNanosecondBefore(5, SECONDS);
+        server.setServerInSelector(false);
+        executor.elapseTime(1, NANOSECONDS);
+        store.put(TESTING_ENTRY);
+        Thread.sleep(1000);
+
+        assertEquals(serverStore.getAll(), ImmutableList.of());
+    }
+
+    private void createStore()
+    {
+        executor = new SerialScheduledExecutorService();
+        store = new HttpRemoteStore("dynamic",
+                new NodeInfo("test_environment"),
+                server.getServiceSelector(),
+                new StoreConfig().setRemoteUpdateInterval(new Duration(5, SECONDS)),
+                client,
+                mock(ReportExporter.class),
+                executor);
+        store.start();
     }
 }

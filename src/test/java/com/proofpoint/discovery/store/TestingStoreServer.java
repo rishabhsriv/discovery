@@ -15,6 +15,7 @@
  */
 package com.proofpoint.discovery.store;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
@@ -29,8 +30,10 @@ import com.proofpoint.json.JsonModule;
 import com.proofpoint.node.testing.TestingNodeModule;
 import com.proofpoint.reporting.ReportingModule;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.proofpoint.bootstrap.Bootstrap.bootstrapTest;
@@ -41,7 +44,8 @@ public class TestingStoreServer
 {
     private final LifeCycleManager lifeCycleManager;
     private final InMemoryStore inMemoryStore = new InMemoryStore();
-    private StaticServiceSelector serviceSelector;
+    private final AtomicBoolean serverInSelector = new AtomicBoolean(true);
+    private ServiceSelector serviceSelector;
 
     public TestingStoreServer(StoreConfig storeConfig)
     {
@@ -71,7 +75,7 @@ public class TestingStoreServer
         }
 
         lifeCycleManager = injector.getInstance(LifeCycleManager.class);
-        serviceSelector = new StaticServiceSelector(new ServiceDescriptor(
+        serviceSelector = new SwitchableServiceSelector(new StaticServiceSelector(new ServiceDescriptor(
                 UUID.randomUUID(),
                 UUID.randomUUID().toString(),
                 "discovery",
@@ -79,7 +83,7 @@ public class TestingStoreServer
                 "/location",
                 ServiceState.RUNNING,
                 ImmutableMap.of("http", injector.getInstance(TestingHttpServer.class).getBaseUrl().toString())
-        ));
+        )));
     }
 
     public InMemoryStore getInMemoryStore()
@@ -89,6 +93,7 @@ public class TestingStoreServer
 
     public void reset()
     {
+        serverInSelector.set(true);
         for (Entry entry : inMemoryStore.getAll()) {
             inMemoryStore.delete(entry.getKey(), entry.getTimestamp());
         }
@@ -105,8 +110,45 @@ public class TestingStoreServer
         }
     }
 
+    public void setServerInSelector(boolean serverInSelector)
+    {
+        this.serverInSelector.set(serverInSelector);
+    }
+
     public ServiceSelector getServiceSelector()
     {
         return serviceSelector;
+    }
+
+    private class SwitchableServiceSelector
+        implements ServiceSelector
+    {
+        private final ServiceSelector delegate;
+
+        SwitchableServiceSelector(ServiceSelector delegate)
+        {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public String getType()
+        {
+            return delegate.getType();
+        }
+
+        @Override
+        public String getPool()
+        {
+            return delegate.getPool();
+        }
+
+        @Override
+        public List<ServiceDescriptor> selectAllServices()
+        {
+            if (serverInSelector.get()) {
+                return delegate.selectAllServices();
+            }
+            return ImmutableList.of();
+        }
     }
 }

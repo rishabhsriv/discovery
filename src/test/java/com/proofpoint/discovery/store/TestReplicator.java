@@ -113,6 +113,37 @@ public class TestReplicator
         assertEquals(inMemoryStore.getAll(), ImmutableList.of(TESTING_ENTRY));
     }
 
+    @Test
+    public void testReplicationToAddedServer()
+    {
+        server.setServerInSelector(false);
+        replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
+
+        executor.elapseTimeNanosecondBefore(1, SECONDS);
+        assertEquals(inMemoryStore.getAll(), ImmutableList.of());
+
+        server.setServerInSelector(true);
+        serverStore.put(TESTING_ENTRY);
+
+        executor.elapseTime(1, NANOSECONDS);
+        assertEquals(inMemoryStore.getAll(), ImmutableList.of(TESTING_ENTRY));
+    }
+
+    @Test
+    public void testNoReplicationToRemovedServer()
+    {
+        replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
+
+        executor.elapseTimeNanosecondBefore(1, SECONDS);
+        assertEquals(inMemoryStore.getAll(), ImmutableList.of());
+
+        server.setServerInSelector(false);
+        serverStore.put(TESTING_ENTRY);
+
+        executor.elapseTime(1, NANOSECONDS);
+        assertEquals(inMemoryStore.getAll(), ImmutableList.of());
+    }
+
     private Replicator createReplicator(StoreConfig storeConfig)
     {
         Replicator replicator = new Replicator(
