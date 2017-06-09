@@ -21,6 +21,7 @@ import com.proofpoint.bootstrap.Bootstrap;
 import com.proofpoint.discovery.client.DiscoveryModule;
 import com.proofpoint.discovery.client.announce.Announcer;
 import com.proofpoint.http.server.HttpServerModule;
+import com.proofpoint.jmx.JmxHttpModule;
 import com.proofpoint.jmx.JmxModule;
 import com.proofpoint.json.JsonModule;
 import com.proofpoint.log.Logger;
@@ -47,6 +48,7 @@ public class Main
                             explicitJaxrsModule(),
                             new JsonModule(),
                             new JmxModule(),
+                            new JmxHttpModule(),
                             new DiscoveryServerModule(),
                             new ReportingModule(),
                             new ReportingClientModule(),
