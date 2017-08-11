@@ -144,10 +144,7 @@ public class ProxyStore
                 Thread.currentThread().interrupt();
             }
             catch (ExecutionException e) {
-                if (e.getCause() instanceof DiscoveryException) {
-                    throw (DiscoveryException) e.getCause();
-                }
-                throw propagate(e);
+                log.error(e, "Exception upon initial refresh of proxied service %s", type);
             }
         }
 

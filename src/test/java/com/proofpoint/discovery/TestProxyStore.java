@@ -115,26 +115,6 @@ public class TestProxyStore
         assertEquals(proxyStore.get("event", "general"), null);
     }
 
-    @Test(expectedExceptions = DiscoveryException.class,
-            expectedExceptionsMessageRegExp = "Expected environment to be upstream, but was mismatch")
-    public void testEnvironmentMismatch()
-    {
-        Service service1 = new Service(Id.random(), Id.random(), "storage", "pool1", "/location/1", ImmutableMap.of("key", "value"));
-        Service service2 = new Service(Id.random(), Id.random(), "storage", "pool2", "/location/2", ImmutableMap.of("key2", "value2"));
-        Service service3 = new Service(Id.random(), Id.random(), "customer", "general", "/location/3", ImmutableMap.of("key3", "value3"));
-
-        Injector injector = mock(Injector.class);
-        HttpClient httpClient = new TestingHttpClient(new DiscoveryProcessor(new DiscoveryConfig()
-                        .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
-                        .setProxyEnvironment("mismatch")
-                        .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://discovery.example.com"))), new Service[]{service1, service2, service3}));
-        when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
-        new ProxyStore(new DiscoveryConfig()
-                .setProxyProxiedTypes(StringSet.of("storage", "customer", "auth"))
-                .setProxyEnvironment("upstream")
-                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://discovery.example.com"))), injector);
-    }
-
     private static class DiscoveryProcessor
             implements TestingHttpClient.Processor
     {
