@@ -94,6 +94,7 @@ public class BatchProcessor<T>
                     // TODO: expose timestamp of last execution via jmx
                 }
             });
+            log.info("Adding discovery peer %s", name);
         }
     }
 
@@ -127,6 +128,7 @@ public class BatchProcessor<T>
         if (future != null) {
             future.cancel(true);
             executor.shutdownNow();
+            log.info("Removing discovery peer %s", name);
 
             future = null;
         }
