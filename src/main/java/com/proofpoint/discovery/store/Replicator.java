@@ -115,7 +115,7 @@ public class Replicator
     private void synchronize()
     {
         for (ServiceDescriptor descriptor : selector.selectAllServices()) {
-            if (descriptor.getNodeId().equals(node.getNodeId())) {
+            if (node.getNodeId().equals(descriptor.getNodeId())) {
                 // don't write to ourselves
                 continue;
             }
