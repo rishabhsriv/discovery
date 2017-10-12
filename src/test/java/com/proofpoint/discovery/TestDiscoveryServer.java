@@ -17,6 +17,7 @@ package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Resources;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.proofpoint.bootstrap.LifeCycleManager;
@@ -80,6 +81,7 @@ public class TestDiscoveryServer
                         new DiscoveryServerModule(),
                         new DiscoveryModule(),
                         new ReportingModule())
+                .setRequiredConfigurationProperty("service-inventory.uri", Resources.getResource("empty-service-inventory.json").toString())
                 .initialize();
 
         lifeCycleManagers = new HashSet<>();
