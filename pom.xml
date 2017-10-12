@@ -16,6 +16,7 @@
 
     <properties>
         <main-class>com.proofpoint.discovery.Main</main-class>
+        <project.docker.name>discovery</project.docker.name>
     </properties>
 
     <inceptionYear>2010</inceptionYear>
