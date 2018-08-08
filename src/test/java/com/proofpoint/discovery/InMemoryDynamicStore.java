@@ -15,17 +15,17 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.proofpoint.units.Duration;
 import org.joda.time.DateTime;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
@@ -39,7 +39,7 @@ import static com.proofpoint.discovery.Service.matchesType;
 public class InMemoryDynamicStore
         implements DynamicStore
 {
-    private final Map<Id<Node>, Entry> descriptors = Maps.newHashMap();
+    private final Map<Id<Node>, Entry> descriptors = new HashMap<>();
     private final Duration maxAge;
     private final Supplier<DateTime> currentTime;
 

@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.discovery.Service;
 import com.proofpoint.json.JsonCodec;
@@ -24,6 +23,7 @@ import org.joda.time.DateTime;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;

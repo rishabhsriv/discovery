@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.base.Charsets;
 import com.proofpoint.discovery.DiscoveryConfig;
 import com.proofpoint.units.Duration;
 import org.testng.annotations.BeforeMethod;
@@ -23,7 +22,7 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Charsets.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -53,7 +52,7 @@ public class TestInMemoryStore
         Entry entry = entryOf("blue", "apple", 1);
         assertTrue(store.put(entry));
 
-        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -64,14 +63,14 @@ public class TestInMemoryStore
         assertTrue(store.put(entry));
         assertFalse(store.put(entryOf("blue", "apple", 1)));
 
-        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
     @Test
     public void testDelete()
     {
-        byte[] key = "blue".getBytes(Charsets.UTF_8);
+        byte[] key = "blue".getBytes(UTF_8);
         Entry entry = entryOf("blue", "apple", 1);
         store.put(entry);
 
@@ -84,7 +83,7 @@ public class TestInMemoryStore
     @Test
     public void testDeleteMissingEntry()
     {
-        byte[] key = "blue".getBytes(Charsets.UTF_8);
+        byte[] key = "blue".getBytes(UTF_8);
 
         assertFalse(store.delete(key, 1));
 
@@ -95,13 +94,13 @@ public class TestInMemoryStore
     @Test
     public void testDeleteOlderVersion()
     {
-        byte[] key = "blue".getBytes(Charsets.UTF_8);
+        byte[] key = "blue".getBytes(UTF_8);
         Entry entry = entryOf("blue", "apple", 5);
         store.put(entry);
 
         assertFalse(store.delete(key, 2));
 
-        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -114,7 +113,7 @@ public class TestInMemoryStore
         Entry entry2 = entryOf("blue", "apple", 2);
         assertTrue(store.put(entry2));
 
-        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
+        assertEquals(store.get("blue".getBytes(UTF_8)), entry2);
         verify(updateListener).notifyUpdate(entry1, entry2);
         verifyNoMoreInteractions(updateListener);
     }
@@ -129,7 +128,7 @@ public class TestInMemoryStore
         Entry entry2 = entryOf("blue", "apple", 2);
         assertTrue(store.put(entry2));
 
-        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
+        assertEquals(store.get("blue".getBytes(UTF_8)), entry2);
     }
 
     @Test
@@ -141,7 +140,7 @@ public class TestInMemoryStore
         Entry entry1 = entryOf("blue", "banana", 1);
         assertFalse(store.put(entry1));
 
-        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry2);
+        assertEquals(store.get("blue".getBytes(UTF_8)), entry2);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -151,7 +150,7 @@ public class TestInMemoryStore
         Entry entry = entryOf("blue", "apple", 1);
         store.put(new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null));
 
-        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -164,12 +163,12 @@ public class TestInMemoryStore
         entry = new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null);
         store.put(entry);
 
-        assertEquals(store.get("blue".getBytes(Charsets.UTF_8)), entry);
+        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
     private static Entry entryOf(String key, String value, long timestamp)
     {
-        return new Entry(key.getBytes(UTF_8), value.getBytes(Charsets.UTF_8), timestamp, 60_000L);
+        return new Entry(key.getBytes(UTF_8), value.getBytes(UTF_8), timestamp, 60_000L);
     }
 }

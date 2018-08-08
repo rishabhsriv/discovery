@@ -15,12 +15,13 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.base.Supplier;
 import com.proofpoint.discovery.store.DistributedStore;
 import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.RemoteStore;
 import com.proofpoint.discovery.store.StoreConfig;
 import org.joda.time.DateTime;
+
+import java.util.function.Supplier;
 
 public class TestReplicatedDynamicStore
     extends TestDynamicStore

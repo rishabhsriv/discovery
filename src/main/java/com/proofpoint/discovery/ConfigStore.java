@@ -16,7 +16,6 @@
 package com.proofpoint.discovery;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Charsets;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
@@ -32,6 +31,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ConfigStore
 {
@@ -43,7 +43,7 @@ public class ConfigStore
         Multimap<TypeAndPool, Service> multimap = HashMultimap.create();
         for (Entry<String, StaticAnnouncementConfig> entry : config.getAnnouncements().entrySet()) {
             Service service = new Service(
-                    Id.valueOf(UUID.nameUUIDFromBytes(entry.getKey().getBytes(Charsets.UTF_8))),
+                    Id.valueOf(UUID.nameUUIDFromBytes(entry.getKey().getBytes(UTF_8))),
                     null,
                     entry.getValue().getType(),
                     entry.getValue().getPool(),

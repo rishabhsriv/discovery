@@ -16,11 +16,11 @@
 package com.proofpoint.discovery.store;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.proofpoint.json.JsonCodec;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.proofpoint.json.JsonCodec.jsonCodec;
@@ -43,7 +43,7 @@ public class TestEntry
     @BeforeMethod
     public void setup()
     {
-        jsonStructure = Maps.newHashMap(ImmutableMap.<String, Object>of(
+        jsonStructure = new HashMap<>(ImmutableMap.<String, Object>of(
                 "key", "AAEC",
                 "value", "AwQF",
                 "version", ImmutableMap.of("sequence", 6789),

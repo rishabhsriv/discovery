@@ -15,9 +15,7 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import com.proofpoint.json.JsonCodec;
 import org.testng.annotations.Test;
@@ -25,11 +23,13 @@ import org.testng.annotations.Test;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.proofpoint.testing.Assertions.assertNotEquals;
 import static com.proofpoint.testing.EquivalenceTester.equivalenceTester;
 import static com.proofpoint.testing.ValidationAssertions.assertFailsValidation;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -62,7 +62,7 @@ public class TestDynamicServiceAnnouncement
     {
         JsonCodec<DynamicServiceAnnouncement> codec = JsonCodec.jsonCodec(DynamicServiceAnnouncement.class);
 
-        DynamicServiceAnnouncement parsed = codec.fromJson(Resources.toString(Resources.getResource("dynamic-announcement.json"), Charsets.UTF_8));
+        DynamicServiceAnnouncement parsed = codec.fromJson(Resources.toString(Resources.getResource("dynamic-announcement.json"), UTF_8));
         DynamicServiceAnnouncement expected = new DynamicServiceAnnouncement(Id.<Service>valueOf("ff824508-b6a6-4dfc-8f0b-85028465534d"), "blue", ImmutableMap.of("key", "valueA"));
 
         assertEquals(parsed, expected);
@@ -98,7 +98,7 @@ public class TestDynamicServiceAnnouncement
     @Test
     public void testCreatesDefensiveCopyOfProperties()
     {
-        Map<String, String> properties = Maps.newHashMap();
+        Map<String, String> properties = new HashMap<>();
         properties.put("key", "value");
         DynamicServiceAnnouncement announcement = new DynamicServiceAnnouncement(Id.<Service>random(), "type", properties);
 

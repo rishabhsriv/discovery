@@ -15,8 +15,9 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.base.Supplier;
 import org.joda.time.DateTime;
+
+import java.util.function.Supplier;
 
 public class RealTimeSupplier
     implements Supplier<DateTime>

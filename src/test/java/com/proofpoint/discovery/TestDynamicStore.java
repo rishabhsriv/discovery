@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.units.Duration;
@@ -25,6 +24,7 @@ import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Iterables.concat;

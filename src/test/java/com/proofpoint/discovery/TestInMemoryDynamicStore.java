@@ -15,8 +15,9 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.base.Supplier;
 import org.joda.time.DateTime;
+
+import java.util.function.Supplier;
 
 public class TestInMemoryDynamicStore
         extends TestDynamicStore

@@ -15,18 +15,18 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import com.proofpoint.json.JsonCodec;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.proofpoint.testing.Assertions.assertNotEquals;
 import static com.proofpoint.testing.EquivalenceTester.equivalenceTester;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 
 public class TestService
@@ -49,7 +49,7 @@ public class TestService
     @Test
     public void testCreatesDefensiveCopyOfProperties()
     {
-        Map<String, String> properties = Maps.newHashMap();
+        Map<String, String> properties = new HashMap<>();
         properties.put("key", "value");
         Service service = new Service(Id.<Service>random(), Id.<Node>random(), "type", "pool", "/location", properties);
 
@@ -85,7 +85,7 @@ public class TestService
 
         JsonCodec<Object> codec = JsonCodec.jsonCodec(Object.class);
         Object parsed = codec.fromJson(json);
-        Object expected = codec.fromJson(Resources.toString(Resources.getResource("service.json"), Charsets.UTF_8));
+        Object expected = codec.fromJson(Resources.toString(Resources.getResource("service.json"), UTF_8));
 
         assertEquals(parsed, expected);
     }
@@ -95,7 +95,7 @@ public class TestService
             throws IOException
     {
         JsonCodec<Service> codec = JsonCodec.jsonCodec(Service.class);
-        Service parsed = codec.fromJson(Resources.toString(Resources.getResource("service.json"), Charsets.UTF_8));
+        Service parsed = codec.fromJson(Resources.toString(Resources.getResource("service.json"), UTF_8));
 
         Service expected = new Service(Id.<Service>valueOf("c0c5be5f-b298-4cfa-922a-3e5954208444"), Id.<Node>valueOf("3ff52f57-04e0-46c3-b606-7497b09dd5c7"), "type", "pool", "/location", ImmutableMap.of("key", "value"));
 

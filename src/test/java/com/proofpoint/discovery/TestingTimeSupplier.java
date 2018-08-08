@@ -15,11 +15,11 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.base.Supplier;
 import com.proofpoint.units.Duration;
 import org.joda.time.DateTime;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 class TestingTimeSupplier
         implements Supplier<DateTime>

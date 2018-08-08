@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.primitives.Longs;
 import com.proofpoint.discovery.DiscoveryConfig;
 
 import javax.inject.Inject;
@@ -121,6 +120,6 @@ public class InMemoryStore
     }
 
     private static boolean isNewer(Entry entry, long timestamp) {
-        return (Longs.compare(entry.getTimestamp(), timestamp) > 0);
+        return (entry.getTimestamp() > timestamp);
     }
 }
