@@ -56,8 +56,7 @@ public class Main
                     )
                     .withApplicationDefaults(ImmutableMap.of(
                             "http-server.admin.port", "4121",
-                            "http-server.http.port", "4111",
-                            "http-server.threads.max", "20"
+                            "http-server.http.port", "4111"
                     ));
 
             Injector injector = app.initialize();
