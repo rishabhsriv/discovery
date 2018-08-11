@@ -17,6 +17,7 @@ package com.proofpoint.discovery.store;
 
 import com.proofpoint.discovery.DiscoveryConfig;
 import com.proofpoint.discovery.DynamicAnnouncement;
+import com.proofpoint.discovery.DynamicStore;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.Node;
 import com.proofpoint.discovery.Service;
@@ -40,6 +41,8 @@ import java.util.stream.Stream;
 
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
+import static com.proofpoint.discovery.Service.matchesPool;
+import static com.proofpoint.discovery.Service.matchesType;
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
@@ -48,6 +51,7 @@ import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
  * A simple, eventually consistent, fully replicated, distributed key-value store.
  */
 public class DistributedStore
+    implements DynamicStore
 {
     private static final JsonCodec<List<Service>> CODEC = JsonCodec.listJsonCodec(Service.class);
 
@@ -141,6 +145,7 @@ public class DistributedStore
         garbageCollector.shutdownNow();
     }
 
+    @Override
     public void put(Id<Node> nodeId, DynamicAnnouncement announcement)
     {
         requireNonNull(nodeId, "nodeId is null");
@@ -158,6 +163,7 @@ public class DistributedStore
         remoteStore.put(entry);
     }
 
+    @Override
     public void delete(Id<Node> nodeId)
     {
         requireNonNull(nodeId, "nodeId is null");
@@ -170,6 +176,21 @@ public class DistributedStore
         remoteStore.put(entry);
     }
 
+    @Override
+    public Stream<Service> get(String type)
+    {
+        return getAll()
+                .filter(matchesType(type));
+    }
+
+    @Override
+    public Stream<Service> get(String type, String pool)
+    {
+        return getAll()
+                .filter(matchesType(type).and(matchesPool(pool)));
+    }
+
+    @Override
     public Stream<Service> getAll()
     {
         return localStore.getAll().stream()

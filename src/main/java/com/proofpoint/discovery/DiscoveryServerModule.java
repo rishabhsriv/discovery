@@ -17,12 +17,14 @@ package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Binder;
+import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.proofpoint.configuration.AbstractConfigurationAwareModule;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceInventory;
 import com.proofpoint.discovery.client.ServiceSelector;
+import com.proofpoint.discovery.store.DistributedStore;
 import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.ReplicatedStoreModule;
 import com.proofpoint.node.NodeInfo;
@@ -49,7 +51,7 @@ public class DiscoveryServerModule
 
         // dynamic announcements
         jaxrsBinder(binder).bind(DynamicAnnouncementResource.class).withApplicationPrefix();
-        binder.bind(DynamicStore.class).to(ReplicatedDynamicStore.class).in(Scopes.SINGLETON);
+        binder.bind(DynamicStore.class).to(Key.get(DistributedStore.class, ForDynamicStore.class)).in(Scopes.SINGLETON);
         binder.install(new ReplicatedStoreModule("dynamic", ForDynamicStore.class, InMemoryStore.class));
 
         // config-based static announcements

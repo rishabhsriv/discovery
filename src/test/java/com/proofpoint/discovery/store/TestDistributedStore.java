@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.proofpoint.discovery;
+package com.proofpoint.discovery.store;
 
-import com.proofpoint.discovery.store.DistributedStore;
-import com.proofpoint.discovery.store.InMemoryStore;
-import com.proofpoint.discovery.store.RemoteStore;
-import com.proofpoint.discovery.store.StoreConfig;
+import com.proofpoint.discovery.DiscoveryConfig;
+import com.proofpoint.discovery.DynamicStore;
+import com.proofpoint.discovery.TestDynamicStore;
 
 import java.time.Instant;
 import java.util.function.Supplier;
 
-public class TestReplicatedDynamicStore
+public class TestDistributedStore
     extends TestDynamicStore
 {
     @Override
@@ -31,8 +30,6 @@ public class TestReplicatedDynamicStore
     {
         RemoteStore dummy = entry -> { };
 
-        DistributedStore distributedStore = new DistributedStore("dynamic", new InMemoryStore(config), dummy, new StoreConfig(), config, timeSupplier);
-
-        return new ReplicatedDynamicStore(distributedStore, config);
+        return new DistributedStore("dynamic", new InMemoryStore(config), dummy, new StoreConfig(), config, timeSupplier);
     }
 }
