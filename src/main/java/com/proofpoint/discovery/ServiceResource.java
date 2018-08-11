@@ -15,6 +15,7 @@
  */
 package com.proofpoint.discovery;
 
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.proofpoint.node.NodeInfo;
 
@@ -24,12 +25,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import java.util.Set;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
-import static com.google.common.collect.Sets.union;
 import static com.proofpoint.discovery.Services.services;
-
 
 @Path("/v1/service")
 public class ServiceResource
@@ -57,7 +55,7 @@ public class ServiceResource
     {
         ensureInitialized();
         return services(node.getEnvironment(), firstNonNull(proxyStore.get(type, pool),
-                union(configStore.get(type, pool), dynamicStore.get(type, pool))));
+                Iterables.concat(configStore.get(type, pool), dynamicStore.get(type, pool))));
     }
 
     @GET
@@ -67,7 +65,7 @@ public class ServiceResource
     {
         ensureInitialized();
         return services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
-                union(configStore.get(type), dynamicStore.get(type))));
+                Iterables.concat(configStore.get(type), dynamicStore.get(type))));
     }
 
     @GET
@@ -75,7 +73,7 @@ public class ServiceResource
     public Services getAllServices()
     {
         ensureInitialized();
-        Set<Service> services = union(configStore.getAll(), dynamicStore.getAll());
+        Iterable<Service> services = Iterables.concat(configStore.getAll(), dynamicStore.getAll());
         return services(node.getEnvironment(), proxyStore.filterAndGetAll(services));
     }
 

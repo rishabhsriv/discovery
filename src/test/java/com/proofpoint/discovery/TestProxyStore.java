@@ -18,6 +18,7 @@ import java.util.Set;
 
 import static com.proofpoint.discovery.Services.services;
 import static com.proofpoint.http.client.testing.TestingResponse.mockResponse;
+import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -61,7 +62,7 @@ public class TestProxyStore
         Service service5 = new Service(Id.random(), Id.random(), "auth", "pool3", "/location/5", ImmutableMap.of("key5", "value5"));
         Service service6 = new Service(Id.random(), Id.random(), "event", "general", "/location/6", ImmutableMap.of("key6", "value6"));
 
-        assertEquals(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
+        assertEqualsIgnoreOrder(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
                 ImmutableSet.of(service1, service2, service3, service6));
 
         assertEquals(proxyStore.get("storage"), ImmutableSet.of(service1, service2));
@@ -99,7 +100,7 @@ public class TestProxyStore
         Service service5 = new Service(Id.random(), null, "auth", "pool3", "/location/5", ImmutableMap.of("key5", "value5"));
         Service service6 = new Service(Id.random(), null, "event", "general", "/location/6", ImmutableMap.of("key6", "value6"));
 
-        assertEquals(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
+        assertEqualsIgnoreOrder(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
                 ImmutableSet.of(service1, service2, service3, service6));
 
         assertEquals(proxyStore.get("storage"), ImmutableSet.of(service1, service2));

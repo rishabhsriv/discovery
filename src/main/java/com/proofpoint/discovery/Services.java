@@ -17,24 +17,24 @@ package com.proofpoint.discovery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
-import java.util.Set;
+import java.util.Collection;
 
 import static java.util.Objects.requireNonNull;
 
 @AutoValue
 public abstract class Services
 {
-    public static Services services(String environment, Set<Service> services)
+    public static Services services(String environment, Iterable<Service> services)
     {
         requireNonNull(services, "services is null");
-        return new AutoValue_Services(environment, ImmutableSet.copyOf(services));
+        return new AutoValue_Services(environment, ImmutableList.copyOf(services));
     }
 
     @JsonProperty
     public abstract String getEnvironment();
 
     @JsonProperty
-    public abstract Set<Service> getServices();
+    public abstract Collection<Service> getServices();
 }

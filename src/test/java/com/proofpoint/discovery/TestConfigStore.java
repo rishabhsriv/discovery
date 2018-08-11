@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.testng.annotations.Test;
 
+import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
 import static org.testng.Assert.assertEquals;
 
 public class TestConfigStore
@@ -38,7 +39,7 @@ public class TestConfigStore
     @Test
     public void testGetAll()
     {
-        assertEquals(store.getAll(), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3, EXPECTED_SERVICE_4));
+        assertEqualsIgnoreOrder(store.getAll(), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3, EXPECTED_SERVICE_4));
         assertEquals(new ConfigStore(new ConfigStoreConfig()).getAll(), ImmutableSet.of());
     }
 

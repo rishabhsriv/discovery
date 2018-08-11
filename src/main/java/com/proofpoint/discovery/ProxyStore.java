@@ -15,8 +15,8 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -50,7 +50,7 @@ import static com.proofpoint.json.JsonCodec.jsonCodec;
 public class ProxyStore
 {
     private final Set<String> proxyTypes;
-    private final Map<String, Set<Service>> map;
+    private final Map<String, Iterable<Service>> map;
 
     private static final Logger log = Logger.get(ProxyStore.class);
 
@@ -79,13 +79,13 @@ public class ProxyStore
         }
     }
 
-    public Set<Service> filterAndGetAll(Set<Service> services)
+    public Iterable<Service> filterAndGetAll(Iterable<Service> services)
     {
         if (proxyTypes.isEmpty()) {
             return services;
         }
 
-        Builder<Service> builder = ImmutableSet.builder();
+        Builder<Service> builder = ImmutableList.builder();
         for (Service service : services) {
             if (!proxyTypes.contains(service.getType())) {
                 builder.add(service);
@@ -96,7 +96,7 @@ public class ProxyStore
     }
 
     @Nullable
-    public Set<Service> get(String type)
+    public Iterable<Service> get(String type)
     {
         if (!proxyTypes.contains(type)) {
             return null;
@@ -105,12 +105,12 @@ public class ProxyStore
     }
 
     @Nullable
-    public Set<Service> get(String type, final String pool)
+    public Iterable<Service> get(String type, final String pool)
     {
         if (!proxyTypes.contains(type)) {
             return null;
         }
-        Builder<Service> builder = ImmutableSet.builder();
+        Builder<Service> builder = ImmutableList.builder();
         for (Service service : map.get(type)) {
             if (pool.equals(service.getPool())) {
                 builder.add(service);
@@ -157,7 +157,7 @@ public class ProxyStore
                 try {
                     ServiceDescriptors descriptors = future.get();
                     delay = descriptors.getMaxAge();
-                    Builder<Service> builder = ImmutableSet.builder();
+                    Builder<Service> builder = ImmutableList.builder();
                     for (ServiceDescriptor descriptor : descriptors.getServiceDescriptors()) {
                         String nodeId = descriptor.getNodeId();
                         builder.add(new Service(

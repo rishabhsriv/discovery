@@ -18,6 +18,7 @@ package com.proofpoint.discovery;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.inject.Injector;
 import com.proofpoint.bootstrap.Bootstrap;
 import com.proofpoint.bootstrap.LifeCycleManager;
@@ -41,10 +42,8 @@ import org.weakref.jmx.testing.TestingMBeanModule;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
-import static com.google.common.collect.Sets.union;
 import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
 import static com.proofpoint.http.client.JsonResponseHandler.createJsonResponseHandler;
 import static com.proofpoint.http.client.Request.Builder.prepareGet;
@@ -225,7 +224,7 @@ public class TestServiceResource
     @Test
     public void testGetAll()
     {
-        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+        when(proxyStore.filterAndGetAll(any(Iterable.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
         when(configStore.getAll()).thenReturn(ImmutableSet.of());
 
         Map<String, Object> actual = client.execute(
@@ -240,7 +239,7 @@ public class TestServiceResource
                 blueStorageRepresentation
         ));
 
-        verify(proxyStore).filterAndGetAll(any(Set.class));
+        verify(proxyStore).filterAndGetAll(any(Iterable.class));
         verifyNoMoreInteractions(proxyStore);
     }
 
@@ -303,8 +302,8 @@ public class TestServiceResource
     public void testProxyGetAll()
     {
         final Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
-        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> union(of(proxyStorageService),
-                (Set<Service>) invocationOnMock.getArguments()[0]));
+        when(proxyStore.filterAndGetAll(any(Iterable.class))).thenAnswer(invocationOnMock -> Iterables.concat(of(proxyStorageService),
+                (Iterable<Service>) invocationOnMock.getArguments()[0]));
         when(configStore.getAll()).thenReturn(ImmutableSet.of());
 
         Map<String, Object> actual = client.execute(
@@ -389,7 +388,7 @@ public class TestServiceResource
     public void testConfigGetAll()
     {
         final Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
-        when(proxyStore.filterAndGetAll(any(Set.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
+        when(proxyStore.filterAndGetAll(any(Iterable.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
         when(configStore.getAll()).thenReturn(of(proxyStorageService));
 
         Map<String, Object> actual = client.execute(
