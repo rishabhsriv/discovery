@@ -15,20 +15,19 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.proofpoint.discovery.store.DistributedStore;
 import com.proofpoint.discovery.store.Entry;
 import com.proofpoint.json.JsonCodec;
 import com.proofpoint.units.Duration;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.google.common.base.Predicates.and;
-import static com.google.common.collect.Iterables.filter;
 import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
 import static com.proofpoint.discovery.Service.matchesPool;
 import static com.proofpoint.discovery.Service.matchesType;
@@ -52,9 +51,9 @@ public class ReplicatedDynamicStore
     @Override
     public void put(Id<Node> nodeId, DynamicAnnouncement announcement)
     {
-        List<Service> services = FluentIterable.from(announcement.getServiceAnnouncements())
-                .transform(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
-                .toList();
+        List<Service> services = announcement.getServiceAnnouncements().stream()
+                .map(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
+                .collect(Collectors.toList());
 
         byte[] key = nodeId.getBytes();
         byte[] value = codec.toJsonBytes(services);
@@ -69,9 +68,9 @@ public class ReplicatedDynamicStore
     }
 
     @Override
-    public Set<Service> getAll()
+    public Collection<Service> getAll()
     {
-        ImmutableSet.Builder<Service> builder = ImmutableSet.builder();
+        Builder<Service> builder = ImmutableList.builder();
         for (Entry entry : store.getAll()) {
             builder.addAll(codec.fromJson(entry.getValue()));
         }
@@ -80,14 +79,18 @@ public class ReplicatedDynamicStore
     }
 
     @Override
-    public Set<Service> get(String type)
+    public Collection<Service> get(String type)
     {
-        return ImmutableSet.copyOf(filter(getAll(), matchesType(type)));
+        return getAll().stream()
+                .filter(matchesType(type))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Set<Service> get(String type, String pool)
+    public Collection<Service> get(String type, String pool)
     {
-        return ImmutableSet.copyOf(filter(getAll(), and(matchesType(type), matchesPool(pool))));
+        return getAll().stream()
+                .filter(matchesType(type).and(matchesPool(pool)))
+                .collect(Collectors.toList());
     }
 }

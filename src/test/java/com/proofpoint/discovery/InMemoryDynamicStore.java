@@ -15,21 +15,22 @@
  */
 package com.proofpoint.discovery;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.units.Duration;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.Iterables.filter;
 import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
 import static com.proofpoint.discovery.Service.matchesPool;
 import static com.proofpoint.discovery.Service.matchesType;
@@ -71,11 +72,11 @@ public class InMemoryDynamicStore
     }
 
     @Override
-    public synchronized Set<Service> getAll()
+    public synchronized Collection<Service> getAll()
     {
         removeExpired();
 
-        ImmutableSet.Builder<Service> builder = ImmutableSet.builder();
+        ImmutableList.Builder<Service> builder = ImmutableList.builder();
         for (Entry entry : descriptors.values()) {
             builder.addAll(entry.getServices());
         }
@@ -83,20 +84,24 @@ public class InMemoryDynamicStore
     }
 
     @Override
-    public synchronized Set<Service> get(String type)
+    public synchronized Collection<Service> get(String type)
     {
         requireNonNull(type, "type is null");
 
-        return ImmutableSet.copyOf(filter(getAll(), matchesType(type)));
+        return getAll().stream()
+                .filter(matchesType(type))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public synchronized Set<Service> get(String type, String pool)
+    public synchronized Collection<Service> get(String type, String pool)
     {
         requireNonNull(type, "type is null");
         requireNonNull(pool, "pool is null");
 
-        return ImmutableSet.copyOf(filter(getAll(), and(matchesType(type), matchesPool(pool))));
+        return getAll().stream()
+                .filter(matchesType(type).and(matchesPool(pool)))
+                .collect(Collectors.toList());
     }
 
     private synchronized void removeExpired()

@@ -15,14 +15,14 @@
  */
 package com.proofpoint.discovery;
 
-import java.util.Set;
+import java.util.Collection;
 
 public interface DynamicStore
 {
     void put(Id<Node> nodeId, DynamicAnnouncement announcement);
     void delete(Id<Node> nodeId);
 
-    Set<Service> getAll();
-    Set<Service> get(String type);
-    Set<Service> get(String type, String pool);
+    Collection<Service> getAll();
+    Collection<Service> get(String type);
+    Collection<Service> get(String type, String pool);
 }
