@@ -15,10 +15,7 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.proofpoint.discovery.store.DistributedStore;
-import com.proofpoint.discovery.store.Entry;
 import com.proofpoint.json.JsonCodec;
 import com.proofpoint.units.Duration;
 
@@ -70,12 +67,10 @@ public class ReplicatedDynamicStore
     @Override
     public Collection<Service> getAll()
     {
-        Builder<Service> builder = ImmutableList.builder();
-        for (Entry entry : store.getAll()) {
-            builder.addAll(codec.fromJson(entry.getValue()));
-        }
-
-        return builder.build();
+        return store.getAll()
+                .map(entry -> codec.fromJson(entry.getValue()))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -15,8 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.proofpoint.reporting.Gauge;
 import com.proofpoint.units.Duration;
 import org.weakref.jmx.Managed;
@@ -29,10 +27,10 @@ import java.util.Arrays;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.not;
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.Objects.requireNonNull;
@@ -182,9 +180,10 @@ public class DistributedStore
         remoteStore.put(entry);
     }
 
-    public Iterable<Entry> getAll()
+    public Stream<Entry> getAll()
     {
-        return Iterables.filter(localStore.getAll(), and(not(expired()), not(tombstone())));
+        return localStore.getAll().stream()
+                .filter(expired().negate().and(tombstone().negate()));
     }
 
     private Predicate<Entry> expired()

@@ -19,6 +19,7 @@ import com.proofpoint.discovery.DiscoveryConfig;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -105,7 +106,7 @@ public class InMemoryStore
         return true;
     }
 
-    public Iterable<Entry> getAll()
+    public Collection<Entry> getAll()
     {
         return map.values();
     }
