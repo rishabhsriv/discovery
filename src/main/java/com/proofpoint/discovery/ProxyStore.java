@@ -33,6 +33,7 @@ import com.proofpoint.units.Duration;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +42,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
@@ -50,7 +52,7 @@ import static com.proofpoint.json.JsonCodec.jsonCodec;
 public class ProxyStore
 {
     private final Set<String> proxyTypes;
-    private final Map<String, Iterable<Service>> map;
+    private final Map<String, Collection<Service>> map;
 
     private static final Logger log = Logger.get(ProxyStore.class);
 
@@ -105,18 +107,13 @@ public class ProxyStore
     }
 
     @Nullable
-    public Iterable<Service> get(String type, final String pool)
+    public Stream<Service> get(String type, final String pool)
     {
         if (!proxyTypes.contains(type)) {
             return null;
         }
-        Builder<Service> builder = ImmutableList.builder();
-        for (Service service : map.get(type)) {
-            if (pool.equals(service.getPool())) {
-                builder.add(service);
-            }
-        }
-        return builder.build();
+        return map.get(type).stream()
+                .filter(service -> pool.equals(service.getPool()));
     }
 
     private class ServiceUpdater

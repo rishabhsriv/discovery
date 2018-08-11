@@ -16,6 +16,7 @@
 package com.proofpoint.discovery;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
 public interface DynamicStore
 {
@@ -24,5 +25,5 @@ public interface DynamicStore
 
     Collection<Service> getAll();
     Collection<Service> get(String type);
-    Collection<Service> get(String type, String pool);
+    Stream<Service> get(String type, String pool);
 }

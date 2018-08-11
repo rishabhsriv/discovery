@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.proofpoint.discovery.Services.services;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
@@ -91,6 +92,12 @@ public class TestServices
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "services.*")
     public void testValidatesServicesNotNull()
     {
-        services("testing", null);
+        services("testing", (Iterable<Service>) null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "services.*")
+    public void testValidatesServicesStreamNotNull()
+    {
+        services("testing", (Stream<Service>) null);
     }
 }

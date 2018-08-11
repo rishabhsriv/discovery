@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.testng.annotations.Test;
 
+import java.util.stream.Collectors;
+
 import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
 import static org.testng.Assert.assertEquals;
 
@@ -54,9 +56,9 @@ public class TestConfigStore
     @Test
     public void testGetTypeAndPool()
     {
-        assertEquals(store.get("type1", "general"), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2));
-        assertEquals(store.get("type1", "alternate"), ImmutableSet.of(EXPECTED_SERVICE_3));
-        assertEquals(store.get("type1", "unknown"), ImmutableSet.of());
+        assertEquals(store.get("type1", "general").collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2));
+        assertEquals(store.get("type1", "alternate").collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_3));
+        assertEquals(store.get("type1", "unknown").collect(Collectors.toList()), ImmutableSet.of());
     }
 
     private static StaticAnnouncementConfig staticAnnouncementConfig(String type, String pool, String uri)

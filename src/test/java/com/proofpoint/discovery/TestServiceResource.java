@@ -34,6 +34,7 @@ import com.proofpoint.node.testing.TestingNodeModule;
 import com.proofpoint.reporting.ReportingModule;
 import com.proofpoint.testing.Closeables;
 import org.mockito.Mock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -42,6 +43,7 @@ import org.weakref.jmx.testing.TestingMBeanModule;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
@@ -189,7 +191,7 @@ public class TestServiceResource
     public void testGetByTypeAndPool()
     {
         when(proxyStore.get(any(String.class), any(String.class))).thenReturn(null);
-        when(configStore.get(any(String.class), any(String.class))).thenReturn(ImmutableSet.of());
+        when(configStore.get(any(String.class), any(String.class))).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
@@ -271,8 +273,8 @@ public class TestServiceResource
     public void testProxyGetByTypeAndPool()
     {
         Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
-        when(proxyStore.get("storage", "alpha")).thenReturn(of(proxyStorageService));
-        when(configStore.get(any(String.class), any(String.class))).thenReturn(ImmutableSet.of());
+        when(proxyStore.get("storage", "alpha")).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of(proxyStorageService));
+        when(configStore.get(any(String.class), any(String.class))).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
@@ -354,7 +356,7 @@ public class TestServiceResource
     {
         Service configStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get(any(String.class), any(String.class))).thenReturn(null);
-        when(configStore.get("storage", "alpha")).thenReturn(of(configStorageService));
+        when(configStore.get("storage", "alpha")).thenReturn(Stream.of(configStorageService));
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),

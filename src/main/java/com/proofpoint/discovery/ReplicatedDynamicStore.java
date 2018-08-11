@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
 import static com.proofpoint.discovery.Service.matchesPool;
@@ -82,10 +83,9 @@ public class ReplicatedDynamicStore
     }
 
     @Override
-    public Collection<Service> get(String type, String pool)
+    public Stream<Service> get(String type, String pool)
     {
         return getAll().stream()
-                .filter(matchesType(type).and(matchesPool(pool)))
-                .collect(Collectors.toList());
+                .filter(matchesType(type).and(matchesPool(pool)));
     }
 }

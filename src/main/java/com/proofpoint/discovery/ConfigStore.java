@@ -27,13 +27,14 @@ import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ConfigStore
 {
-    private final Table<String, String, Iterable<Service>> table;
+    private final Table<String, String, Collection<Service>> table;
 
     @Inject
     public ConfigStore(final ConfigStoreConfig config)
@@ -50,7 +51,7 @@ public class ConfigStore
             multimap.put(new AutoValue_ConfigStore_TypeAndPool(entry.getValue().getType(), entry.getValue().getPool()), service);
         }
 
-        ImmutableTable.Builder<String, String, Iterable<Service>> builder = ImmutableTable.builder();
+        ImmutableTable.Builder<String, String, Collection<Service>> builder = ImmutableTable.builder();
         for (Entry<TypeAndPool, Collection<Service>> entry : multimap.asMap().entrySet()) {
             builder.put(entry.getKey().getType(), entry.getKey().getPool(), ImmutableList.copyOf(entry.getValue()));
         }
@@ -72,9 +73,9 @@ public class ConfigStore
         return builder.build();
     }
 
-    public Iterable<Service> get(String type, final String pool)
+    public Stream<Service> get(String type, final String pool)
     {
-        return firstNonNull(table.get(type, pool), ImmutableList.of());
+        return firstNonNull(table.get(type, pool), ImmutableList.<Service>of()).stream();
     }
 
     @AutoValue

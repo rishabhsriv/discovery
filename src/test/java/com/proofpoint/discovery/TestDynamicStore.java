@@ -18,7 +18,6 @@ package com.proofpoint.discovery;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.units.Duration;
-import org.joda.time.DateTime;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -26,6 +25,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Iterables.concat;
@@ -223,14 +223,14 @@ public abstract class TestDynamicStore
         store.put(greenNodeId, green);
         store.put(yellowNodeId, yellow);
 
-        assertEqualsIgnoreOrder(store.get("storage", "poolA"), concat(
+        assertEqualsIgnoreOrder(store.get("storage", "poolA").collect(Collectors.toList()), concat(
                 transform(blue.getServiceAnnouncements(), toServiceWith(blueNodeId, blue.getLocation(), blue.getPool())),
                 transform(red.getServiceAnnouncements(), toServiceWith(redNodeId, red.getLocation(), red.getPool()))));
 
-        assertEqualsIgnoreOrder(store.get("monitoring", "poolA"),
+        assertEqualsIgnoreOrder(store.get("monitoring", "poolA").collect(Collectors.toList()),
                 transform(green.getServiceAnnouncements(), toServiceWith(greenNodeId, red.getLocation(), red.getPool())));
 
-        assertEqualsIgnoreOrder(store.get("storage", "poolB"),
+        assertEqualsIgnoreOrder(store.get("storage", "poolB").collect(Collectors.toList()),
                 transform(yellow.getServiceAnnouncements(), toServiceWith(yellowNodeId, red.getLocation(), red.getPool())));
     }
 
@@ -262,7 +262,7 @@ public abstract class TestDynamicStore
         assertEqualsIgnoreOrder(store.getAll(), transform(red.getServiceAnnouncements(), toServiceWith(redNodeId, red.getLocation(), red.getPool())));
 
         assertTrue(store.get("storage").isEmpty());
-        assertTrue(store.get("web", "poolA").isEmpty());
+        assertEquals(store.get("web", "poolA").count(), 0);
     }
 
     @Test

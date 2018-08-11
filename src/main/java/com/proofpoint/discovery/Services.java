@@ -20,7 +20,9 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
 @AutoValue
@@ -30,6 +32,12 @@ public abstract class Services
     {
         requireNonNull(services, "services is null");
         return new AutoValue_Services(environment, ImmutableList.copyOf(services));
+    }
+
+    public static Services services(String environment, Stream<Service> services)
+    {
+        requireNonNull(services, "services is null");
+        return new AutoValue_Services(environment, services.collect(toImmutableList()));
     }
 
     @JsonProperty

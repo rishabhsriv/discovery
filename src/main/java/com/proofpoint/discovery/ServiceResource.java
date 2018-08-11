@@ -25,6 +25,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import java.util.stream.Stream;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.proofpoint.discovery.Services.services;
@@ -55,7 +56,7 @@ public class ServiceResource
     {
         ensureInitialized();
         return services(node.getEnvironment(), firstNonNull(proxyStore.get(type, pool),
-                Iterables.concat(configStore.get(type, pool), dynamicStore.get(type, pool))));
+                Stream.concat(configStore.get(type, pool), dynamicStore.get(type, pool))));
     }
 
     @GET

@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.Collections2.transform;
 import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
@@ -94,14 +95,13 @@ public class InMemoryDynamicStore
     }
 
     @Override
-    public synchronized Collection<Service> get(String type, String pool)
+    public synchronized Stream<Service> get(String type, String pool)
     {
         requireNonNull(type, "type is null");
         requireNonNull(pool, "pool is null");
 
         return getAll().stream()
-                .filter(matchesType(type).and(matchesPool(pool)))
-                .collect(Collectors.toList());
+                .filter(matchesType(type).and(matchesPool(pool)));
     }
 
     private synchronized void removeExpired()
