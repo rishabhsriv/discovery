@@ -24,14 +24,15 @@ import com.proofpoint.units.Duration;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Iterables.filter;
 import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
 import static com.proofpoint.discovery.Service.matchesPool;
 import static com.proofpoint.discovery.Service.matchesType;
+import static java.util.Objects.requireNonNull;
 
 public class ReplicatedDynamicStore
         implements DynamicStore
@@ -44,8 +45,8 @@ public class ReplicatedDynamicStore
     @Inject
     public ReplicatedDynamicStore(@ForDynamicStore DistributedStore store, DiscoveryConfig config)
     {
-        this.store = checkNotNull(store, "store is null");
-        this.maxAge = checkNotNull(config, "config is null").getMaxAge();
+        this.store = requireNonNull(store, "store is null");
+        this.maxAge = Objects.requireNonNull(config, "config is null").getMaxAge();
     }
 
     @Override

@@ -17,12 +17,13 @@ package com.proofpoint.discovery;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.Map;
+
+import static java.util.Objects.requireNonNull;
 
 @Immutable
 public class Service
@@ -43,11 +44,11 @@ public class Service
             @JsonProperty("location") String location,
             @JsonProperty("properties") Map<String, String> properties)
     {
-        Preconditions.checkNotNull(id, "id is null");
-        Preconditions.checkNotNull(type, "type is null");
-        Preconditions.checkNotNull(pool, "pool is null");
-        Preconditions.checkNotNull(location, "location is null");
-        Preconditions.checkNotNull(properties, "properties is null");
+        requireNonNull(id, "id is null");
+        requireNonNull(type, "type is null");
+        requireNonNull(pool, "pool is null");
+        requireNonNull(location, "location is null");
+        requireNonNull(properties, "properties is null");
 
         this.id = id;
         this.nodeId = nodeId;

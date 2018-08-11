@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class InMemoryStore
 {
@@ -79,14 +79,14 @@ public class InMemoryStore
 
     public Entry get(byte[] key)
     {
-        checkNotNull(key, "key is null");
+        requireNonNull(key, "key is null");
 
         return map.get(ByteBuffer.wrap(key));
     }
 
     public boolean delete(byte[] key, long timestamp)
     {
-        checkNotNull(key, "key is null");
+        requireNonNull(key, "key is null");
 
         ByteBuffer wrappedKey = ByteBuffer.wrap(key);
 

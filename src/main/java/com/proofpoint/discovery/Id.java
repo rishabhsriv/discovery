@@ -17,13 +17,12 @@ package com.proofpoint.discovery;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.base.Preconditions;
 
 import javax.annotation.concurrent.Immutable;
-
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNull;
 
 @Immutable
 public class Id<T>
@@ -33,13 +32,13 @@ public class Id<T>
     @JsonCreator
     public static <T> Id<T> valueOf(UUID id)
     {
-        Preconditions.checkNotNull(id, "id is null");
+        requireNonNull(id, "id is null");
         return new Id<>(id);
     }
 
     public static <T> Id<T> valueOf(String id)
     {
-        Preconditions.checkNotNull(id, "id is null");
+        requireNonNull(id, "id is null");
         return new Id<>(UUID.fromString(id));
     }
 

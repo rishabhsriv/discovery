@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import static com.proofpoint.concurrent.Threads.threadsNamed;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 public class BatchProcessor<T>
@@ -53,8 +54,8 @@ public class BatchProcessor<T>
 
     public BatchProcessor(String name, BatchHandler<T> handler, int maxBatchSize, int queueSize)
     {
-        Preconditions.checkNotNull(name, "name is null");
-        Preconditions.checkNotNull(handler, "handler is null");
+        requireNonNull(name, "name is null");
+        requireNonNull(handler, "handler is null");
         Preconditions.checkArgument(queueSize > 0, "queue size needs to be a positive integer");
         Preconditions.checkArgument(maxBatchSize > 0, "max batch size needs to be a positive integer");
 
@@ -137,7 +138,7 @@ public class BatchProcessor<T>
     public void put(T entry)
     {
         Preconditions.checkState(!future.isCancelled(), "Processor is not running");
-        Preconditions.checkNotNull(entry, "entry is null");
+        requireNonNull(entry, "entry is null");
 
         while (!queue.offer(entry)) {
             // throw away oldest and try again

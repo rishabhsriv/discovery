@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Sets.intersection;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class DynamicUpdateListener
@@ -41,8 +41,8 @@ public class DynamicUpdateListener
     @Inject
     public DynamicUpdateListener(Supplier<DateTime> timeSupplier, DynamicRenewals dynamicRenewals)
     {
-        this.timeSupplier = checkNotNull(timeSupplier, "timeSupplier is null");
-        this.dynamicRenewals = checkNotNull(dynamicRenewals, "dynamicRenewals is null");
+        this.timeSupplier = requireNonNull(timeSupplier, "timeSupplier is null");
+        this.dynamicRenewals = requireNonNull(dynamicRenewals, "dynamicRenewals is null");
     }
 
     @Override

@@ -31,10 +31,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
 /**
@@ -60,12 +60,12 @@ public class DistributedStore
             StoreConfig config,
             Supplier<DateTime> timeSupplier)
     {
-        this.name = checkNotNull(name, "name is null");
-        this.localStore = checkNotNull(localStore, "localStore is null");
-        this.remoteStore = checkNotNull(remoteStore, "remoteStore is null");
-        this.timeSupplier = checkNotNull(timeSupplier, "timeSupplier is null");
+        this.name = requireNonNull(name, "name is null");
+        this.localStore = requireNonNull(localStore, "localStore is null");
+        this.remoteStore = requireNonNull(remoteStore, "remoteStore is null");
+        this.timeSupplier = requireNonNull(timeSupplier, "timeSupplier is null");
 
-        checkNotNull(config, "config is null");
+        requireNonNull(config, "config is null");
         tombstoneMaxAge = config.getTombstoneMaxAge();
         garbageCollectionInterval = config.getGarbageCollectionInterval();
         
@@ -130,8 +130,8 @@ public class DistributedStore
 
     public void put(byte[] key, byte[] value)
     {
-        checkNotNull(key, "key is null");
-        checkNotNull(value, "value is null");
+        requireNonNull(key, "key is null");
+        requireNonNull(value, "value is null");
 
         long now = timeSupplier.get().getMillis();
 
@@ -143,9 +143,9 @@ public class DistributedStore
     
     public void put(byte[] key, byte[] value, Duration maxAge)
     {
-        checkNotNull(key, "key is null");
-        checkNotNull(value, "value is null");
-        checkNotNull(maxAge, "maxAge is null");
+        requireNonNull(key, "key is null");
+        requireNonNull(value, "value is null");
+        requireNonNull(maxAge, "maxAge is null");
 
         long now = timeSupplier.get().getMillis();
 
@@ -157,7 +157,7 @@ public class DistributedStore
 
     public byte[] get(byte[] key)
     {
-        checkNotNull(key, "key is null");
+        requireNonNull(key, "key is null");
 
         Entry entry = localStore.get(key);
         
@@ -171,7 +171,7 @@ public class DistributedStore
 
     public void delete(byte[] key)
     {
-        checkNotNull(key, "key is null");
+        requireNonNull(key, "key is null");
 
         long now = timeSupplier.get().getMillis();
 

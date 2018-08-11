@@ -16,11 +16,12 @@
 package com.proofpoint.discovery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.Set;
+
+import static java.util.Objects.requireNonNull;
 
 @Immutable
 public class Services
@@ -30,8 +31,8 @@ public class Services
 
     public Services(String environment, Set<Service> services)
     {
-        Preconditions.checkNotNull(environment, "environment is null");
-        Preconditions.checkNotNull(services, "services is null");
+        requireNonNull(environment, "environment is null");
+        requireNonNull(services, "services is null");
 
         this.environment = environment;
         this.services = ImmutableSet.copyOf(services);
