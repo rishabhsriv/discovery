@@ -16,76 +16,25 @@
 package com.proofpoint.discovery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 
-import javax.annotation.concurrent.Immutable;
 import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
-@Immutable
-public class Services
+@AutoValue
+public abstract class Services
 {
-    private final String environment;
-    private final Set<Service> services;
-
-    public Services(String environment, Set<Service> services)
+    public static Services services(String environment, Set<Service> services)
     {
-        requireNonNull(environment, "environment is null");
         requireNonNull(services, "services is null");
-
-        this.environment = environment;
-        this.services = ImmutableSet.copyOf(services);
+        return new AutoValue_Services(environment, ImmutableSet.copyOf(services));
     }
 
     @JsonProperty
-    public String getEnvironment()
-    {
-        return environment;
-    }
+    public abstract String getEnvironment();
 
     @JsonProperty
-    public Set<Service> getServices()
-    {
-        return services;
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        Services services1 = (Services) o;
-
-        if (!environment.equals(services1.environment)) {
-            return false;
-        }
-        if (!services.equals(services1.services)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        int result = environment.hashCode();
-        result = 31 * result + services.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString()
-    {
-        return "Services{" +
-                "environment='" + environment + '\'' +
-                ", services=" + services +
-                '}';
-    }
+    public abstract Set<Service> getServices();
 }

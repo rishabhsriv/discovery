@@ -28,6 +28,7 @@ import java.util.Set;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.collect.Sets.union;
+import static com.proofpoint.discovery.Services.services;
 
 
 @Path("/v1/service")
@@ -55,7 +56,7 @@ public class ServiceResource
     public Services getServices(@PathParam("type") String type, @PathParam("pool") String pool)
     {
         ensureInitialized();
-        return new Services(node.getEnvironment(), firstNonNull(proxyStore.get(type, pool),
+        return services(node.getEnvironment(), firstNonNull(proxyStore.get(type, pool),
                 union(configStore.get(type, pool), dynamicStore.get(type, pool))));
     }
 
@@ -65,7 +66,7 @@ public class ServiceResource
     public Services getTypeServices(@PathParam("type") String type)
     {
         ensureInitialized();
-        return new Services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
+        return services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
                 union(configStore.get(type), dynamicStore.get(type))));
     }
 
@@ -75,7 +76,7 @@ public class ServiceResource
     {
         ensureInitialized();
         Set<Service> services = union(configStore.getAll(), dynamicStore.getAll());
-        return new Services(node.getEnvironment(), proxyStore.filterAndGetAll(services));
+        return services(node.getEnvironment(), proxyStore.filterAndGetAll(services));
     }
 
     private void ensureInitialized()

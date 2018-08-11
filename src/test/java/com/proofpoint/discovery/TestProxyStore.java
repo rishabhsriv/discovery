@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableSet.Builder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.proofpoint.discovery.DiscoveryConfig.StringSet;
-import com.proofpoint.discovery.client.DiscoveryException;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
 import com.proofpoint.http.client.Response;
@@ -17,6 +16,7 @@ import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.Set;
 
+import static com.proofpoint.discovery.Services.services;
 import static com.proofpoint.http.client.testing.TestingResponse.mockResponse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -147,7 +147,7 @@ public class TestProxyStore
                     builder.add(service);
                 }
             }
-            final Services filteredServices = new Services(config.getProxyEnvironment(), builder.build());
+            final Services filteredServices = services(config.getProxyEnvironment(), builder.build());
 
             return mockResponse()
                     .jsonBody(filteredServices)
