@@ -16,15 +16,10 @@
 package com.proofpoint.discovery;
 
 import com.proofpoint.discovery.store.DistributedStore;
-import com.proofpoint.units.Duration;
 
 import javax.inject.Inject;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
 import static com.proofpoint.discovery.Service.matchesPool;
 import static com.proofpoint.discovery.Service.matchesType;
 import static java.util.Objects.requireNonNull;
@@ -33,23 +28,17 @@ public class ReplicatedDynamicStore
         implements DynamicStore
 {
     private final DistributedStore store;
-    private final Duration maxAge;
 
     @Inject
     public ReplicatedDynamicStore(@ForDynamicStore DistributedStore store, DiscoveryConfig config)
     {
         this.store = requireNonNull(store, "store is null");
-        this.maxAge = Objects.requireNonNull(config, "config is null").getMaxAge();
     }
 
     @Override
     public void put(Id<Node> nodeId, DynamicAnnouncement announcement)
     {
-        List<Service> services = announcement.getServiceAnnouncements().stream()
-                .map(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
-                .collect(Collectors.toList());
-
-        store.put(nodeId, services, maxAge);
+        store.put(nodeId, announcement);
     }
 
     @Override

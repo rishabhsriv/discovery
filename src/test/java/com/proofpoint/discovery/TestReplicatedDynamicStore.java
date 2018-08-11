@@ -19,7 +19,6 @@ import com.proofpoint.discovery.store.DistributedStore;
 import com.proofpoint.discovery.store.InMemoryStore;
 import com.proofpoint.discovery.store.RemoteStore;
 import com.proofpoint.discovery.store.StoreConfig;
-import org.joda.time.DateTime;
 
 import java.time.Instant;
 import java.util.function.Supplier;
@@ -32,7 +31,7 @@ public class TestReplicatedDynamicStore
     {
         RemoteStore dummy = entry -> { };
 
-        DistributedStore distributedStore = new DistributedStore("dynamic", new InMemoryStore(config), dummy, new StoreConfig(), timeSupplier);
+        DistributedStore distributedStore = new DistributedStore("dynamic", new InMemoryStore(config), dummy, new StoreConfig(), config, timeSupplier);
 
         return new ReplicatedDynamicStore(distributedStore, config);
     }

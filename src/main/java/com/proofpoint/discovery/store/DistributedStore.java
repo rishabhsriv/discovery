@@ -15,6 +15,8 @@
  */
 package com.proofpoint.discovery.store;
 
+import com.proofpoint.discovery.DiscoveryConfig;
+import com.proofpoint.discovery.DynamicAnnouncement;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.Node;
 import com.proofpoint.discovery.Service;
@@ -27,16 +29,17 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
+import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
@@ -54,6 +57,7 @@ public class DistributedStore
     private final Supplier<Instant> timeSupplier;
     private final Duration tombstoneMaxAge;
     private final Duration garbageCollectionInterval;
+    private final Duration maxAge;
 
     private final ScheduledExecutorService garbageCollector;
     private final AtomicLong lastGcTimestamp = new AtomicLong();
@@ -64,6 +68,7 @@ public class DistributedStore
             InMemoryStore localStore,
             RemoteStore remoteStore,
             StoreConfig config,
+            DiscoveryConfig discoveryConfig,
             Supplier<Instant> timeSupplier)
     {
         this.name = requireNonNull(name, "name is null");
@@ -74,7 +79,9 @@ public class DistributedStore
         requireNonNull(config, "config is null");
         tombstoneMaxAge = config.getTombstoneMaxAge();
         garbageCollectionInterval = config.getGarbageCollectionInterval();
-        
+
+        maxAge = requireNonNull(discoveryConfig, "discoveryConfig is null").getMaxAge();
+
         garbageCollector = newSingleThreadScheduledExecutor(daemonThreadsNamed("distributed-store-gc-" + name));
     }
 
@@ -134,14 +141,16 @@ public class DistributedStore
         garbageCollector.shutdownNow();
     }
 
-    public void put(Id<Node> nodeId, List<Service> services, Duration maxAge)
+    public void put(Id<Node> nodeId, DynamicAnnouncement announcement)
     {
         requireNonNull(nodeId, "nodeId is null");
-        requireNonNull(services, "services is null");
-        requireNonNull(maxAge, "maxAge is null");
+        requireNonNull(announcement, "announcement is null");
 
         long now = timeSupplier.get().toEpochMilli();
 
+        List<Service> services = announcement.getServiceAnnouncements().stream()
+                .map(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
+                .collect(Collectors.toList());
         byte[] value = CODEC.toJsonBytes(services);
         Entry entry = entry(nodeId.getBytes(), value, now, maxAge.toMillis());
 

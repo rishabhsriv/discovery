@@ -22,6 +22,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
+import com.proofpoint.discovery.DiscoveryConfig;
 import com.proofpoint.discovery.InitializationTracker;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
@@ -310,13 +311,14 @@ public class ReplicatedStoreModule
                 InMemoryStore localStore = injector.getInstance(localStoreKey);
                 StoreConfig storeConfig = injector.getInstance(storeConfigKey);
                 RemoteStore remoteStore = injector.getInstance(remoteStoreKey);
+                DiscoveryConfig discoveryConfig = injector.getInstance(DiscoveryConfig.class);
 
                 if (updateListenerKey != null) {
                     UpdateListener updateListener = injector.getInstance(updateListenerKey);
-                    ((InMemoryStore) localStore).setUpdateListener(updateListener);
+                    localStore.setUpdateListener(updateListener);
                 }
 
-                store = new DistributedStore(name, localStore, remoteStore, storeConfig, timeSupplier);
+                store = new DistributedStore(name, localStore, remoteStore, storeConfig, discoveryConfig, timeSupplier);
                 store.start();
             }
 
