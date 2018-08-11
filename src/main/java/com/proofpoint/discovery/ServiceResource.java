@@ -66,7 +66,7 @@ public class ServiceResource
     {
         ensureInitialized();
         return services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
-                Iterables.concat(configStore.get(type), dynamicStore.get(type))));
+                Stream.concat(configStore.get(type), dynamicStore.get(type))));
     }
 
     @GET

@@ -98,12 +98,12 @@ public class ProxyStore
     }
 
     @Nullable
-    public Iterable<Service> get(String type)
+    public Stream<Service> get(String type)
     {
         if (!proxyTypes.contains(type)) {
             return null;
         }
-        return map.get(type);
+        return map.get(type).stream();
     }
 
     @Nullable

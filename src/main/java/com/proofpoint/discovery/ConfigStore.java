@@ -66,11 +66,10 @@ public class ConfigStore
         return builder.build();
     }
 
-    public Iterable<Service> get(String type)
+    public Stream<Service> get(String type)
     {
-        Builder<Service> builder = ImmutableList.builder();
-        table.row(type).values().forEach(builder::addAll);
-        return builder.build();
+        return table.row(type).values().stream()
+                .flatMap(Collection::stream);
     }
 
     public Stream<Service> get(String type, final String pool)

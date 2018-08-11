@@ -154,7 +154,7 @@ public class TestServiceResource
     public void testGetByType()
     {
         when(proxyStore.get(any(String.class))).thenReturn(null);
-        when(configStore.get(any(String.class))).thenReturn(ImmutableSet.of());
+        when(configStore.get(any(String.class))).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),
@@ -249,8 +249,8 @@ public class TestServiceResource
     public void testProxyGetByType()
     {
         Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "general", "loc", ImmutableMap.of("key", "5"));
-        when(proxyStore.get("storage")).thenReturn(of(proxyStorageService));
-        when(configStore.get(any(String.class))).thenReturn(ImmutableSet.of());
+        when(proxyStore.get("storage")).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of(proxyStorageService));
+        when(configStore.get(any(String.class))).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),
@@ -327,7 +327,7 @@ public class TestServiceResource
     {
         Service configStorageService = new Service(Id.random(), Id.random(), "storage", "general", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.get(any(String.class))).thenReturn(null);
-        when(configStore.get("storage")).thenReturn(of(configStorageService));
+        when(configStore.get("storage")).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of(configStorageService));
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),

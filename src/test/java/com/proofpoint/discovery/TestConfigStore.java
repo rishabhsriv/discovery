@@ -48,9 +48,9 @@ public class TestConfigStore
     @Test
     public void testGetType()
     {
-        assertEquals(store.get("type1"), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3));
-        assertEquals(store.get("type2"), ImmutableSet.of(EXPECTED_SERVICE_4));
-        assertEquals(store.get("unknown"), ImmutableSet.of());
+        assertEqualsIgnoreOrder(store.get("type1").collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3));
+        assertEqualsIgnoreOrder(store.get("type2").collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_4));
+        assertEqualsIgnoreOrder(store.get("unknown").collect(Collectors.toList()), ImmutableSet.of());
     }
 
     @Test

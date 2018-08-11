@@ -188,11 +188,11 @@ public abstract class TestDynamicStore
         store.put(redNodeId, red);
         store.put(greenNodeId, green);
 
-        assertEqualsIgnoreOrder(store.get("storage"), concat(
+        assertEqualsIgnoreOrder(store.get("storage").collect(Collectors.toList()), concat(
                 transform(blue.getServiceAnnouncements(), toServiceWith(blueNodeId, blue.getLocation(), blue.getPool())),
                 transform(red.getServiceAnnouncements(), toServiceWith(redNodeId, red.getLocation(), red.getPool()))));
 
-        assertEqualsIgnoreOrder(store.get("monitoring"), transform(green.getServiceAnnouncements(), toServiceWith(greenNodeId, green.getLocation(), green.getPool())));
+        assertEqualsIgnoreOrder(store.get("monitoring").collect(Collectors.toList()), transform(green.getServiceAnnouncements(), toServiceWith(greenNodeId, green.getLocation(), green.getPool())));
     }
 
     @Test
@@ -261,7 +261,7 @@ public abstract class TestDynamicStore
 
         assertEqualsIgnoreOrder(store.getAll(), transform(red.getServiceAnnouncements(), toServiceWith(redNodeId, red.getLocation(), red.getPool())));
 
-        assertTrue(store.get("storage").isEmpty());
+        assertEquals(store.get("storage").count(), 0);
         assertEquals(store.get("web", "poolA").count(), 0);
     }
 

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 public class TestProxyStore
@@ -66,17 +67,17 @@ public class TestProxyStore
         assertEqualsIgnoreOrder(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
                 ImmutableSet.of(service1, service2, service3, service6));
 
-        assertEquals(proxyStore.get("storage"), ImmutableSet.of(service1, service2));
-        assertEquals(proxyStore.get("customer"), ImmutableSet.of(service3));
-        assertEquals(proxyStore.get("auth"), ImmutableSet.<Service>of());
-        assertEquals(proxyStore.get("event"), null);
+        assertEqualsIgnoreOrder(proxyStore.get("storage").collect(Collectors.toList()), ImmutableSet.of(service1, service2));
+        assertEqualsIgnoreOrder(proxyStore.get("customer").collect(Collectors.toList()), ImmutableSet.of(service3));
+        assertEqualsIgnoreOrder(proxyStore.get("auth").collect(Collectors.toList()), ImmutableSet.<Service>of());
+        assertNull(proxyStore.get("event"));
 
         assertEquals(proxyStore.get("storage", "pool1").collect(Collectors.toList()), ImmutableSet.of(service1));
         assertEquals(proxyStore.get("storage", "pool2").collect(Collectors.toList()), ImmutableSet.of(service2));
         assertEquals(proxyStore.get("customer", "general").collect(Collectors.toList()), ImmutableSet.of(service3));
         assertEquals(proxyStore.get("customer", "pool3").collect(Collectors.toList()), ImmutableSet.<Service>of());
         assertEquals(proxyStore.get("auth", "pool3").collect(Collectors.toList()), ImmutableSet.<Service>of());
-        assertEquals(proxyStore.get("event", "general"), null);
+        assertNull(proxyStore.get("event", "general"));
     }
 
     @Test
@@ -104,17 +105,17 @@ public class TestProxyStore
         assertEqualsIgnoreOrder(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
                 ImmutableSet.of(service1, service2, service3, service6));
 
-        assertEquals(proxyStore.get("storage"), ImmutableSet.of(service1, service2));
-        assertEquals(proxyStore.get("customer"), ImmutableSet.of(service3));
-        assertEquals(proxyStore.get("auth"), ImmutableSet.<Service>of());
-        assertEquals(proxyStore.get("event"), null);
+        assertEqualsIgnoreOrder(proxyStore.get("storage").collect(Collectors.toList()), ImmutableSet.of(service1, service2));
+        assertEqualsIgnoreOrder(proxyStore.get("customer").collect(Collectors.toList()), ImmutableSet.of(service3));
+        assertEqualsIgnoreOrder(proxyStore.get("auth").collect(Collectors.toList()), ImmutableSet.<Service>of());
+        assertNull(proxyStore.get("event"));
 
         assertEquals(proxyStore.get("storage", "pool1").collect(Collectors.toList()), ImmutableSet.of(service1));
         assertEquals(proxyStore.get("storage", "pool2").collect(Collectors.toList()), ImmutableSet.of(service2));
         assertEquals(proxyStore.get("customer", "general").collect(Collectors.toList()), ImmutableSet.of(service3));
         assertEquals(proxyStore.get("customer", "pool3").collect(Collectors.toList()), ImmutableSet.<Service>of());
         assertEquals(proxyStore.get("auth", "pool3").collect(Collectors.toList()), ImmutableSet.<Service>of());
-        assertEquals(proxyStore.get("event", "general"), null);
+        assertNull(proxyStore.get("event", "general"));
     }
 
     private static class DiscoveryProcessor

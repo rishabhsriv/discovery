@@ -75,11 +75,10 @@ public class ReplicatedDynamicStore
     }
 
     @Override
-    public Collection<Service> get(String type)
+    public Stream<Service> get(String type)
     {
         return getAll().stream()
-                .filter(matchesType(type))
-                .collect(Collectors.toList());
+                .filter(matchesType(type));
     }
 
     @Override

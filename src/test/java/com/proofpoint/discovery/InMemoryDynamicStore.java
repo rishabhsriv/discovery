@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Collections2.transform;
@@ -85,13 +84,12 @@ public class InMemoryDynamicStore
     }
 
     @Override
-    public synchronized Collection<Service> get(String type)
+    public synchronized Stream<Service> get(String type)
     {
         requireNonNull(type, "type is null");
 
         return getAll().stream()
-                .filter(matchesType(type))
-                .collect(Collectors.toList());
+                .filter(matchesType(type));
     }
 
     @Override

@@ -24,6 +24,6 @@ public interface DynamicStore
     void delete(Id<Node> nodeId);
 
     Collection<Service> getAll();
-    Collection<Service> get(String type);
+    Stream<Service> get(String type);
     Stream<Service> get(String type, String pool);
 }
