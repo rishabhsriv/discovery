@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.Objects.requireNonNull;
 
 public class InMemoryStore
@@ -49,7 +50,7 @@ public class InMemoryStore
     public boolean put(Entry entry)
     {
         if (maxAgeInMs != Long.MAX_VALUE && entry.getMaxAgeInMs() == null) {
-            entry = new Entry(entry.getKey(),
+            entry = entry(entry.getKey(),
                     entry.getValue(),
                     entry.getTimestamp(),
                     maxAgeInMs);

@@ -34,6 +34,7 @@ import java.util.function.Supplier;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
+import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
@@ -135,7 +136,7 @@ public class DistributedStore
 
         long now = timeSupplier.get().getMillis();
 
-        Entry entry = new Entry(key, value, now, null);
+        Entry entry = entry(key, value, now, null);
 
         localStore.put(entry);
         remoteStore.put(entry);
@@ -149,7 +150,7 @@ public class DistributedStore
 
         long now = timeSupplier.get().getMillis();
 
-        Entry entry = new Entry(key, value, now, maxAge.toMillis());
+        Entry entry = entry(key, value, now, maxAge.toMillis());
 
         localStore.put(entry);
         remoteStore.put(entry);
@@ -175,7 +176,7 @@ public class DistributedStore
 
         long now = timeSupplier.get().getMillis();
 
-        Entry entry = new Entry(key, null, now, null);
+        Entry entry = entry(key, null, now, null);
 
         localStore.put(entry);
         remoteStore.put(entry);

@@ -17,84 +17,43 @@ package com.proofpoint.discovery.store;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
+import com.google.auto.value.AutoValue;
 
-import javax.annotation.concurrent.Immutable;
-import java.util.Arrays;
+import javax.annotation.Nullable;
 
-import static java.util.Objects.requireNonNull;
+import static com.google.common.base.Preconditions.checkArgument;
 
-@Immutable
-public class Entry
+@AutoValue
+public abstract class Entry
 {
-    private final byte[] key;
-    private final byte[] value;
-    private final long timestamp;
-    private final Long maxAgeInMs;
-
     @JsonCreator
-    public Entry(@JsonProperty("key") byte[] key,
-            @JsonProperty("value") byte[] value,
+    public static Entry entry(@JsonProperty("key") byte[] key,
+            @Nullable @JsonProperty("value") byte[] value,
             @JsonProperty("timestamp") long timestamp,
-            @JsonProperty("maxAgeInMs") Long maxAgeInMs)
+            @Nullable @JsonProperty("maxAgeInMs") Long maxAgeInMs)
     {
-        requireNonNull(key, "key is null");
-        Preconditions.checkArgument(maxAgeInMs == null || maxAgeInMs > 0, "maxAgeInMs must be greater than 0");
-
-        this.value = value;
-        this.key = key;
-        this.timestamp = timestamp;
-        this.maxAgeInMs = maxAgeInMs;
+        checkArgument(maxAgeInMs == null || maxAgeInMs > 0, "maxAgeInMs must be greater than 0");
+        return new AutoValue_Entry(key, value, timestamp, maxAgeInMs);
     }
 
     @JsonProperty
-    public byte[] getKey()
-    {
-        return key;
-    }
+    public abstract byte[] getKey();
 
+    @Nullable
     @JsonProperty
-    public byte[] getValue()
-    {
-        return value;
-    }
+    public abstract byte[] getValue();
 
     @Deprecated
     @JsonProperty
     public Version getVersion()
     {
-        return new Version(timestamp);
+        return new Version(getTimestamp());
     }
 
     @JsonProperty
-    public long getTimestamp()
-    {
-        return timestamp;
-    }
+    public abstract long getTimestamp();
 
+    @Nullable
     @JsonProperty
-    public Long getMaxAgeInMs()
-    {
-        return maxAgeInMs;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hashCode(key, value, timestamp, maxAgeInMs);
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        final Entry other = (Entry) obj;
-        return Arrays.equals(this.key, other.key) && Arrays.equals(this.value, other.value) && Objects.equal(this.timestamp, other.timestamp) && Objects.equal(this.maxAgeInMs, other.maxAgeInMs);
-    }
+    public abstract Long getMaxAgeInMs();
 }
