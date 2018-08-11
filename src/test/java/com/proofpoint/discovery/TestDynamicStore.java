@@ -22,6 +22,7 @@ import org.joda.time.DateTime;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -40,7 +41,7 @@ public abstract class TestDynamicStore
     protected TestingTimeSupplier currentTime;
     protected DynamicStore store;
 
-    protected abstract DynamicStore initializeStore(DiscoveryConfig config, Supplier<DateTime> timeSupplier);
+    protected abstract DynamicStore initializeStore(DiscoveryConfig config, Supplier<Instant> timeSupplier);
 
     @BeforeMethod
     public void setup()

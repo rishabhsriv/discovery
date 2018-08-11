@@ -29,7 +29,6 @@ import com.proofpoint.http.client.balancing.HttpServiceBalancerStats;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.reporting.ReportCollectionFactory;
 import com.proofpoint.reporting.ReportExporter;
-import org.joda.time.DateTime;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.GuardedBy;
@@ -37,6 +36,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.lang.annotation.Annotation;
+import java.time.Instant;
 import java.util.function.Supplier;
 
 import static com.google.inject.multibindings.MapBinder.newMapBinder;
@@ -76,7 +76,7 @@ public class ReplicatedStoreModule
 
         // global
         jaxrsBinder(binder).bind(StoreResource.class).withApplicationPrefix();
-        binder.bind(new TypeLiteral<Supplier<DateTime>>() {}).to(RealTimeSupplier.class).in(Scopes.SINGLETON);
+        binder.bind(new TypeLiteral<Supplier<Instant>>() {}).to(RealTimeSupplier.class).in(Scopes.SINGLETON);
 
         // per store
         Key<HttpClient> httpClientKey = Key.get(HttpClient.class, annotation);
@@ -287,7 +287,7 @@ public class ReplicatedStoreModule
         private final Key<UpdateListener> updateListenerKey;
 
         private Injector injector;
-        private Supplier<DateTime> timeSupplier;
+        private Supplier<Instant> timeSupplier;
         private DistributedStore store;
 
         DistributedStoreProvider(String name,
@@ -338,7 +338,7 @@ public class ReplicatedStoreModule
         }
 
         @Inject
-        public synchronized void setTimeSupplier(Supplier<DateTime> timeSupplier)
+        public synchronized void setTimeSupplier(Supplier<Instant> timeSupplier)
         {
             this.timeSupplier = timeSupplier;
         }

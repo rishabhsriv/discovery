@@ -16,13 +16,13 @@
 package com.proofpoint.discovery;
 
 import com.proofpoint.units.Duration;
-import org.joda.time.DateTime;
 
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 class TestingTimeSupplier
-        implements Supplier<DateTime>
+        implements Supplier<Instant>
 {
     private final AtomicLong currentTime = new AtomicLong(System.currentTimeMillis());
 
@@ -31,9 +31,9 @@ class TestingTimeSupplier
         currentTime.addAndGet(interval.toMillis());
     }
 
-    public void set(DateTime currentTime)
+    public void set(Instant currentTime)
     {
-        this.currentTime.set(currentTime.getMillis());
+        this.currentTime.set(currentTime.toEpochMilli());
     }
 
     public void increment()
@@ -42,8 +42,8 @@ class TestingTimeSupplier
     }
 
     @Override
-    public DateTime get()
+    public Instant get()
     {
-        return new DateTime(currentTime.get());
+        return Instant.ofEpochMilli(currentTime.get());
     }
 }

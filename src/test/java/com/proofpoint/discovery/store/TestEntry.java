@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.proofpoint.discovery.store.Entry.entry;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static com.proofpoint.json.testing.JsonTester.assertJsonEncode;
 import static com.proofpoint.json.testing.JsonTester.decodeJson;
@@ -32,7 +33,7 @@ import static org.testng.Assert.assertEquals;
 public class TestEntry
 {
     private final JsonCodec<Entry> codec = jsonCodec(Entry.class);
-    private final Entry entry = new Entry(
+    private final Entry entry = entry(
             new byte[] { 0, 1, 2},
             new byte[] { 3, 4, 5},
             6789L,

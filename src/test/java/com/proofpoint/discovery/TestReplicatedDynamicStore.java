@@ -21,13 +21,14 @@ import com.proofpoint.discovery.store.RemoteStore;
 import com.proofpoint.discovery.store.StoreConfig;
 import org.joda.time.DateTime;
 
+import java.time.Instant;
 import java.util.function.Supplier;
 
 public class TestReplicatedDynamicStore
     extends TestDynamicStore
 {
     @Override
-    protected DynamicStore initializeStore(DiscoveryConfig config, Supplier<DateTime> timeSupplier)
+    protected DynamicStore initializeStore(DiscoveryConfig config, Supplier<Instant> timeSupplier)
     {
         RemoteStore dummy = entry -> { };
 

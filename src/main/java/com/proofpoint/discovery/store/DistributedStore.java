@@ -19,12 +19,12 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.proofpoint.reporting.Gauge;
 import com.proofpoint.units.Duration;
-import org.joda.time.DateTime;
 import org.weakref.jmx.Managed;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +46,7 @@ public class DistributedStore
     private final String name;
     private final InMemoryStore localStore;
     private final RemoteStore remoteStore;
-    private final Supplier<DateTime> timeSupplier;
+    private final Supplier<Instant> timeSupplier;
     private final Duration tombstoneMaxAge;
     private final Duration garbageCollectionInterval;
 
@@ -59,7 +59,7 @@ public class DistributedStore
             InMemoryStore localStore,
             RemoteStore remoteStore,
             StoreConfig config,
-            Supplier<DateTime> timeSupplier)
+            Supplier<Instant> timeSupplier)
     {
         this.name = requireNonNull(name, "name is null");
         this.localStore = requireNonNull(localStore, "localStore is null");
@@ -117,7 +117,7 @@ public class DistributedStore
 
     private boolean isExpired(Entry entry)
     {
-        long ageInMs = timeSupplier.get().getMillis() - entry.getTimestamp();
+        long ageInMs = timeSupplier.get().toEpochMilli() - entry.getTimestamp();
 
         return entry.getValue() == null && ageInMs > tombstoneMaxAge.toMillis() ||  // TODO: this is repeated in StoreResource
                 entry.getMaxAgeInMs() != null && ageInMs > entry.getMaxAgeInMs();
@@ -134,7 +134,7 @@ public class DistributedStore
         requireNonNull(key, "key is null");
         requireNonNull(value, "value is null");
 
-        long now = timeSupplier.get().getMillis();
+        long now = timeSupplier.get().toEpochMilli();
 
         Entry entry = entry(key, value, now, null);
 
@@ -148,7 +148,7 @@ public class DistributedStore
         requireNonNull(value, "value is null");
         requireNonNull(maxAge, "maxAge is null");
 
-        long now = timeSupplier.get().getMillis();
+        long now = timeSupplier.get().toEpochMilli();
 
         Entry entry = entry(key, value, now, maxAge.toMillis());
 
@@ -174,7 +174,7 @@ public class DistributedStore
     {
         requireNonNull(key, "key is null");
 
-        long now = timeSupplier.get().getMillis();
+        long now = timeSupplier.get().toEpochMilli();
 
         Entry entry = entry(key, null, now, null);
 

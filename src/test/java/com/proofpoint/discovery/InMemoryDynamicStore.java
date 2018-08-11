@@ -17,10 +17,10 @@ package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.units.Duration;
-import org.joda.time.DateTime;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,10 +41,10 @@ public class InMemoryDynamicStore
 {
     private final Map<Id<Node>, Entry> descriptors = new HashMap<>();
     private final Duration maxAge;
-    private final Supplier<DateTime> currentTime;
+    private final Supplier<Instant> currentTime;
 
     @Inject
-    public InMemoryDynamicStore(DiscoveryConfig config, Supplier<DateTime> timeSource)
+    public InMemoryDynamicStore(DiscoveryConfig config, Supplier<Instant> timeSource)
     {
         this.currentTime = timeSource;
         this.maxAge = config.getMaxAge();
@@ -58,7 +58,7 @@ public class InMemoryDynamicStore
 
         Set<Service> services = ImmutableSet.copyOf(transform(announcement.getServiceAnnouncements(), toServiceWith(nodeId, announcement.getLocation(), announcement.getPool())));
 
-        DateTime expiration = currentTime.get().plusMillis((int) maxAge.toMillis());
+        Instant expiration = currentTime.get().plusMillis((int) maxAge.toMillis());
         descriptors.put(nodeId, new Entry(expiration, services));
     }
 
@@ -103,7 +103,7 @@ public class InMemoryDynamicStore
     {
         Iterator<Entry> iterator = descriptors.values().iterator();
 
-        DateTime now = currentTime.get();
+        Instant now = currentTime.get();
         while (iterator.hasNext()) {
             Entry entry = iterator.next();
 
@@ -116,15 +116,15 @@ public class InMemoryDynamicStore
     private static class Entry
     {
         private final Set<Service> services;
-        private final DateTime expiration;
+        private final Instant expiration;
 
-        Entry(DateTime expiration, Set<Service> services)
+        Entry(Instant expiration, Set<Service> services)
         {
             this.expiration = expiration;
             this.services = ImmutableSet.copyOf(services);
         }
 
-        public DateTime getExpiration()
+        public Instant getExpiration()
         {
             return expiration;
         }

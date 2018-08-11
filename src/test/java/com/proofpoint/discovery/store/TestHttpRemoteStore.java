@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
+import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.mock;
@@ -46,7 +47,7 @@ public class TestHttpRemoteStore
     private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID,"type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
     private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID,"type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
     private static final JsonCodec<List<Service>> SERVICE_LIST_CODEC = JsonCodec.listJsonCodec(Service.class);
-    private static final Entry TESTING_ENTRY = new Entry(
+    private static final Entry TESTING_ENTRY = entry(
             NODE_ID.getBytes(),
             SERVICE_LIST_CODEC.toJsonBytes(ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2)),
             System.currentTimeMillis(),

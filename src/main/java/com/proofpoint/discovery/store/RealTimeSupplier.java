@@ -15,16 +15,15 @@
  */
 package com.proofpoint.discovery.store;
 
-import org.joda.time.DateTime;
-
+import java.time.Instant;
 import java.util.function.Supplier;
 
 public class RealTimeSupplier
-    implements Supplier<DateTime>
+    implements Supplier<Instant>
 {
     @Override
-    public DateTime get()
+    public Instant get()
     {
-        return new DateTime();
+        return Instant.now();
     }
 }

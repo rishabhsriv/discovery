@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.proofpoint.discovery.store.Entry.entry;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -148,7 +149,7 @@ public class TestInMemoryStore
     public void testDefaultsMaxAge()
     {
         Entry entry = entryOf("blue", "apple", 1);
-        store.put(new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null));
+        store.put(entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null));
 
         assertEquals(store.get("blue".getBytes(UTF_8)), entry);
         verifyNoMoreInteractions(updateListener);
@@ -160,7 +161,7 @@ public class TestInMemoryStore
         store = new InMemoryStore();
 
         Entry entry = entryOf("blue", "apple", 1);
-        entry = new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null);
+        entry = entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null);
         store.put(entry);
 
         assertEquals(store.get("blue".getBytes(UTF_8)), entry);
@@ -169,6 +170,6 @@ public class TestInMemoryStore
 
     private static Entry entryOf(String key, String value, long timestamp)
     {
-        return new Entry(key.getBytes(UTF_8), value.getBytes(UTF_8), timestamp, 60_000L);
+        return entry(key.getBytes(UTF_8), value.getBytes(UTF_8), timestamp, 60_000L);
     }
 }

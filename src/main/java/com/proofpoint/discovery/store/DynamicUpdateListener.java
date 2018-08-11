@@ -18,9 +18,9 @@ package com.proofpoint.discovery.store;
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.discovery.Service;
 import com.proofpoint.json.JsonCodec;
-import org.joda.time.DateTime;
 
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -35,11 +35,11 @@ public class DynamicUpdateListener
 {
     private static final JsonCodec<List<Service>> CODEC = JsonCodec.listJsonCodec(Service.class);
 
-    private final Supplier<DateTime> timeSupplier;
+    private final Supplier<Instant> timeSupplier;
     private final DynamicRenewals dynamicRenewals;
 
     @Inject
-    public DynamicUpdateListener(Supplier<DateTime> timeSupplier, DynamicRenewals dynamicRenewals)
+    public DynamicUpdateListener(Supplier<Instant> timeSupplier, DynamicRenewals dynamicRenewals)
     {
         this.timeSupplier = requireNonNull(timeSupplier, "timeSupplier is null");
         this.dynamicRenewals = requireNonNull(dynamicRenewals, "dynamicRenewals is null");
@@ -49,7 +49,7 @@ public class DynamicUpdateListener
     public void notifyUpdate(Entry oldEntry, Entry newEntry)
     {
         if (newEntry.getValue() != null && oldEntry.getValue() != null) {
-            long renewedAfterMillis = timeSupplier.get().getMillis() - oldEntry.getTimestamp();
+            long renewedAfterMillis = timeSupplier.get().toEpochMilli() - oldEntry.getTimestamp();
             if (renewedAfterMillis > oldEntry.getMaxAgeInMs()) {
                 for (String type : intersection(getTypes(oldEntry), getTypes(newEntry))) {
                     dynamicRenewals.expiredFor(type).add(renewedAfterMillis - oldEntry.getMaxAgeInMs(), MILLISECONDS);
