@@ -15,6 +15,10 @@
  */
 package com.proofpoint.discovery.store;
 
+import com.proofpoint.discovery.Id;
+import com.proofpoint.discovery.Node;
+import com.proofpoint.discovery.Service;
+import com.proofpoint.json.JsonCodec;
 import com.proofpoint.reporting.Gauge;
 import com.proofpoint.units.Duration;
 import org.weakref.jmx.Managed;
@@ -23,7 +27,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.time.Instant;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -41,6 +46,8 @@ import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
  */
 public class DistributedStore
 {
+    private static final JsonCodec<List<Service>> CODEC = JsonCodec.listJsonCodec(Service.class);
+
     private final String name;
     private final InMemoryStore localStore;
     private final RemoteStore remoteStore;
@@ -127,63 +134,38 @@ public class DistributedStore
         garbageCollector.shutdownNow();
     }
 
-    public void put(byte[] key, byte[] value)
+    public void put(Id<Node> nodeId, List<Service> services, Duration maxAge)
     {
-        requireNonNull(key, "key is null");
-        requireNonNull(value, "value is null");
-
-        long now = timeSupplier.get().toEpochMilli();
-
-        Entry entry = entry(key, value, now, null);
-
-        localStore.put(entry);
-        remoteStore.put(entry);
-    }
-    
-    public void put(byte[] key, byte[] value, Duration maxAge)
-    {
-        requireNonNull(key, "key is null");
-        requireNonNull(value, "value is null");
+        requireNonNull(nodeId, "nodeId is null");
+        requireNonNull(services, "services is null");
         requireNonNull(maxAge, "maxAge is null");
 
         long now = timeSupplier.get().toEpochMilli();
 
-        Entry entry = entry(key, value, now, maxAge.toMillis());
+        byte[] value = CODEC.toJsonBytes(services);
+        Entry entry = entry(nodeId.getBytes(), value, now, maxAge.toMillis());
 
         localStore.put(entry);
         remoteStore.put(entry);
     }
 
-    public byte[] get(byte[] key)
+    public void delete(Id<Node> nodeId)
     {
-        requireNonNull(key, "key is null");
-
-        Entry entry = localStore.get(key);
-        
-        byte[] result = null;
-        if (entry != null && entry.getValue() != null && !isExpired(entry)) {
-            result = Arrays.copyOf(entry.getValue(), entry.getValue().length);
-        }
-
-        return result;
-    }
-
-    public void delete(byte[] key)
-    {
-        requireNonNull(key, "key is null");
+        requireNonNull(nodeId, "nodeId is null");
 
         long now = timeSupplier.get().toEpochMilli();
 
-        Entry entry = entry(key, null, now, null);
+        Entry entry = entry(nodeId.getBytes(), null, now, null);
 
         localStore.put(entry);
         remoteStore.put(entry);
     }
 
-    public Stream<Entry> getAll()
+    public Stream<Service> getAll()
     {
         return localStore.getAll().stream()
-                .filter(expired().negate().and(tombstone().negate()));
+                .filter(expired().negate().and(tombstone().negate()))
+                .flatMap(entry -> CODEC.fromJson(entry.getValue()).stream());
     }
 
     private Predicate<Entry> expired()

@@ -16,7 +16,6 @@
 package com.proofpoint.discovery;
 
 import com.proofpoint.discovery.store.DistributedStore;
-import com.proofpoint.json.JsonCodec;
 import com.proofpoint.units.Duration;
 
 import javax.inject.Inject;
@@ -33,8 +32,6 @@ import static java.util.Objects.requireNonNull;
 public class ReplicatedDynamicStore
         implements DynamicStore
 {
-    private final JsonCodec<List<Service>> codec = JsonCodec.listJsonCodec(Service.class);
-
     private final DistributedStore store;
     private final Duration maxAge;
 
@@ -52,23 +49,19 @@ public class ReplicatedDynamicStore
                 .map(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
                 .collect(Collectors.toList());
 
-        byte[] key = nodeId.getBytes();
-        byte[] value = codec.toJsonBytes(services);
-
-        store.put(key, value, maxAge);
+        store.put(nodeId, services, maxAge);
     }
 
     @Override
     public void delete(Id<Node> nodeId)
     {
-        store.delete(nodeId.getBytes());
+        store.delete(nodeId);
     }
 
     @Override
     public Stream<Service> getAll()
     {
-        return store.getAll()
-                .flatMap(entry -> codec.fromJson(entry.getValue()).stream());
+        return store.getAll();
     }
 
     @Override
