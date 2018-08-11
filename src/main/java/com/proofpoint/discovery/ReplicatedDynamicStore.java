@@ -20,7 +20,6 @@ import com.proofpoint.json.JsonCodec;
 import com.proofpoint.units.Duration;
 
 import javax.inject.Inject;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -66,25 +65,23 @@ public class ReplicatedDynamicStore
     }
 
     @Override
-    public Collection<Service> getAll()
+    public Stream<Service> getAll()
     {
         return store.getAll()
-                .map(entry -> codec.fromJson(entry.getValue()))
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+                .flatMap(entry -> codec.fromJson(entry.getValue()).stream());
     }
 
     @Override
     public Stream<Service> get(String type)
     {
-        return getAll().stream()
+        return getAll()
                 .filter(matchesType(type));
     }
 
     @Override
     public Stream<Service> get(String type, String pool)
     {
-        return getAll().stream()
+        return getAll()
                 .filter(matchesType(type).and(matchesPool(pool)));
     }
 }

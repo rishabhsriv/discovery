@@ -15,14 +15,12 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.proofpoint.units.Duration;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -72,15 +70,12 @@ public class InMemoryDynamicStore
     }
 
     @Override
-    public synchronized Collection<Service> getAll()
+    public synchronized Stream<Service> getAll()
     {
         removeExpired();
 
-        ImmutableList.Builder<Service> builder = ImmutableList.builder();
-        for (Entry entry : descriptors.values()) {
-            builder.addAll(entry.getServices());
-        }
-        return builder.build();
+        return descriptors.values().stream()
+                .flatMap(entry -> entry.getServices().stream());
     }
 
     @Override
@@ -88,7 +83,7 @@ public class InMemoryDynamicStore
     {
         requireNonNull(type, "type is null");
 
-        return getAll().stream()
+        return getAll()
                 .filter(matchesType(type));
     }
 
@@ -98,7 +93,7 @@ public class InMemoryDynamicStore
         requireNonNull(type, "type is null");
         requireNonNull(pool, "pool is null");
 
-        return getAll().stream()
+        return getAll()
                 .filter(matchesType(type).and(matchesPool(pool)));
     }
 

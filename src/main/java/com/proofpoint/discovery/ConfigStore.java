@@ -18,7 +18,6 @@ package com.proofpoint.discovery;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
@@ -59,11 +58,10 @@ public class ConfigStore
         table = builder.build();
     }
 
-    public Iterable<Service> getAll()
+    public Stream<Service> getAll()
     {
-        Builder<Service> builder = ImmutableList.builder();
-        table.values().forEach(builder::addAll);
-        return builder.build();
+        return table.values().stream()
+                .flatMap(Collection::stream);
     }
 
     public Stream<Service> get(String type)

@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.proofpoint.node.NodeInfo;
 
@@ -25,6 +24,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
@@ -74,7 +74,7 @@ public class ServiceResource
     public Services getAllServices()
     {
         ensureInitialized();
-        Iterable<Service> services = Iterables.concat(configStore.getAll(), dynamicStore.getAll());
+        Iterable<Service> services = Stream.concat(configStore.getAll(), dynamicStore.getAll()).collect(Collectors.toList());
         return services(node.getEnvironment(), proxyStore.filterAndGetAll(services));
     }
 

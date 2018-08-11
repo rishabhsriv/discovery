@@ -227,7 +227,7 @@ public class TestServiceResource
     public void testGetAll()
     {
         when(proxyStore.filterAndGetAll(any(Iterable.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
-        when(configStore.getAll()).thenReturn(ImmutableSet.of());
+        when(configStore.getAll()).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),
@@ -306,7 +306,7 @@ public class TestServiceResource
         final Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.filterAndGetAll(any(Iterable.class))).thenAnswer(invocationOnMock -> Iterables.concat(of(proxyStorageService),
                 (Iterable<Service>) invocationOnMock.getArguments()[0]));
-        when(configStore.getAll()).thenReturn(ImmutableSet.of());
+        when(configStore.getAll()).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),
@@ -391,7 +391,7 @@ public class TestServiceResource
     {
         final Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
         when(proxyStore.filterAndGetAll(any(Iterable.class))).thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
-        when(configStore.getAll()).thenReturn(of(proxyStorageService));
+        when(configStore.getAll()).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of(proxyStorageService));
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),

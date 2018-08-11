@@ -41,8 +41,8 @@ public class TestConfigStore
     @Test
     public void testGetAll()
     {
-        assertEqualsIgnoreOrder(store.getAll(), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3, EXPECTED_SERVICE_4));
-        assertEquals(new ConfigStore(new ConfigStoreConfig()).getAll(), ImmutableSet.of());
+        assertEqualsIgnoreOrder(store.getAll().collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3, EXPECTED_SERVICE_4));
+        assertEquals(new ConfigStore(new ConfigStoreConfig()).getAll().collect(Collectors.toList()), ImmutableSet.of());
     }
 
     @Test

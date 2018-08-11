@@ -28,7 +28,6 @@ import javax.ws.rs.core.Response.Status;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 
 public class TestDynamicAnnouncementResource
 {
@@ -56,7 +55,7 @@ public class TestDynamicAnnouncementResource
         assertNotNull(response);
         assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
 
-        assertEquals(store.getAll().size(), 1);
+        assertEquals(store.getAll().count(), 1);
         Service service = store.getAll().iterator().next();
 
         assertNotNull(service.getId());
@@ -87,7 +86,7 @@ public class TestDynamicAnnouncementResource
         assertNotNull(response);
         assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
 
-        assertEquals(store.getAll().size(), 1);
+        assertEquals(store.getAll().count(), 1);
         Service service = store.getAll().iterator().next();
 
         assertNotNull(service.getId());
@@ -111,7 +110,7 @@ public class TestDynamicAnnouncementResource
         assertNotNull(response);
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
 
-        assertTrue(store.getAll().isEmpty());
+        assertEquals(store.getAll().count(), 0);
     }
 
     @Test
@@ -130,7 +129,7 @@ public class TestDynamicAnnouncementResource
         assertNotNull(response);
         assertEquals(response.getStatus(), Status.FORBIDDEN.getStatusCode());
 
-        assertTrue(store.getAll().isEmpty());
+        assertEquals(store.getAll().count(), 0);
     }
 
     @Test
@@ -152,7 +151,7 @@ public class TestDynamicAnnouncementResource
 
         resource.delete(blueNodeId);
 
-        assertEquals(store.getAll().size(), 1);
+        assertEquals(store.getAll().count(), 1);
         Service service = store.getAll().iterator().next();
 
         assertNotNull(service.getId());
@@ -168,7 +167,7 @@ public class TestDynamicAnnouncementResource
     {
         resource.delete(Id.<Node>random());
 
-        assertTrue(store.getAll().isEmpty());
+        assertEquals(store.getAll().count(), 0);
     }
 
     @Test
@@ -184,7 +183,7 @@ public class TestDynamicAnnouncementResource
         assertNotNull(response);
         assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
 
-        assertEquals(store.getAll().size(), 1);
+        assertEquals(store.getAll().count(), 1);
         Service service = store.getAll().iterator().next();
         assertEquals(service.getId(), service.getId());
         assertNotNull(service.getLocation());

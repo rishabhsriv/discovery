@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery;
 
-import java.util.Collection;
 import java.util.stream.Stream;
 
 public interface DynamicStore
@@ -23,7 +22,7 @@ public interface DynamicStore
     void put(Id<Node> nodeId, DynamicAnnouncement announcement);
     void delete(Id<Node> nodeId);
 
-    Collection<Service> getAll();
+    Stream<Service> getAll();
     Stream<Service> get(String type);
     Stream<Service> get(String type, String pool);
 }
