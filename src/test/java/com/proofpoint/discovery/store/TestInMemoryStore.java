@@ -21,7 +21,6 @@ import com.proofpoint.discovery.DiscoveryConfig;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.Node;
 import com.proofpoint.discovery.Service;
-import com.proofpoint.json.JsonCodec;
 import com.proofpoint.units.Duration;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -43,7 +42,6 @@ public class TestInMemoryStore
     private static final Id<Node> NODE_ID = Id.random();
     private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID,"type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
     private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID,"type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
-    private static final JsonCodec<List<Service>> SERVICE_LIST_CODEC = JsonCodec.listJsonCodec(Service.class);
     private static final List<Service> SERVICE_LIST_1 = ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2);
     private static final List<Service> SERVICE_LIST_2 = ImmutableList.of(TESTING_SERVICE_2);
 
@@ -183,6 +181,6 @@ public class TestInMemoryStore
 
     private static Entry entryOf(List<Service> value, long timestamp)
     {
-        return entry(NODE_ID.getBytes(), SERVICE_LIST_CODEC.toJsonBytes(value), timestamp, 60_000L);
+        return entry(NODE_ID.getBytes(), value, timestamp, 60_000L);
     }
 }

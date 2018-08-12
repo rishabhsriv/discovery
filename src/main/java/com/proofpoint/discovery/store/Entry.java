@@ -18,14 +18,19 @@ package com.proofpoint.discovery.store;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import com.proofpoint.discovery.Service;
+import com.proofpoint.json.JsonCodec;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 @AutoValue
 public abstract class Entry
 {
+    private static final JsonCodec<List<Service>> SERVICE_LIST_CODEC = JsonCodec.listJsonCodec(Service.class);
+
     @JsonCreator
     public static Entry entry(@JsonProperty("key") byte[] key,
             @Nullable @JsonProperty("value") byte[] value,
@@ -34,6 +39,15 @@ public abstract class Entry
     {
         checkArgument(maxAgeInMs == null || maxAgeInMs > 0, "maxAgeInMs must be greater than 0");
         return new AutoValue_Entry(key, value, timestamp, maxAgeInMs);
+    }
+
+    public static Entry entry(byte[] key,
+            @Nullable List<Service> services,
+            long timestamp,
+            @Nullable Long maxAgeInMs)
+    {
+        checkArgument(maxAgeInMs == null || maxAgeInMs > 0, "maxAgeInMs must be greater than 0");
+        return new AutoValue_Entry(key, services == null ? null : SERVICE_LIST_CODEC.toJsonBytes(services), timestamp, maxAgeInMs);
     }
 
     @JsonProperty

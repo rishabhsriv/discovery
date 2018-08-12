@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.Node;
 import com.proofpoint.discovery.Service;
-import com.proofpoint.json.JsonCodec;
 import com.proofpoint.reporting.testing.TestingReportCollectionFactory;
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
@@ -39,8 +38,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 public class TestDynamicUpdateListener
 {
-    private static final JsonCodec<List<Service>> CODEC = JsonCodec.listJsonCodec(Service.class);
-
     @Mock
     private Supplier<Instant> instantSupplier;
     private DynamicRenewals argumentVerifier;
@@ -63,7 +60,7 @@ public class TestDynamicUpdateListener
     public void testOldTombstone()
     {
         Service service = new Service(Id.random(), nodeId, "type", "pool", "location", ImmutableMap.of());
-        listener.notifyUpdate(entry(nodeId.getBytes(), null, 5, 5L), entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service)), 8, 5L));
+        listener.notifyUpdate(entry(nodeId.getBytes(), (List<Service>) null, 5, 5L), entry(nodeId.getBytes(), ImmutableList.of(service), 8, 5L));
         verifyNoMoreInteractions(argumentVerifier);
     }
 
@@ -71,7 +68,7 @@ public class TestDynamicUpdateListener
     public void testNewTombstone()
     {
         Service service = new Service(Id.random(), nodeId, "type", "pool", "location", ImmutableMap.of());
-        listener.notifyUpdate(entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service)), 5, 5L), entry(nodeId.getBytes(), null, 8, 5L));
+        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service), 5, 5L), entry(nodeId.getBytes(), (List<Service>) null, 8, 5L));
         verifyNoMoreInteractions(argumentVerifier);
     }
 
@@ -83,7 +80,7 @@ public class TestDynamicUpdateListener
         Service service3 = new Service(Id.random(), nodeId, "type3", "pool", "location", ImmutableMap.of());
         Service service4 = new Service(Id.random(), nodeId, "type4", "pool", "location", ImmutableMap.of());
         when(instantSupplier.get()).thenReturn(Instant.ofEpochMilli(9));
-        listener.notifyUpdate(entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service1, service2, service3)), 5, 5L), entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service2, service3, service4)), 8, 5L));
+        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service1, service2, service3), 5, 5L), entry(nodeId.getBytes(), ImmutableList.of(service2, service3, service4), 8, 5L));
         verify(argumentVerifier).renewedAfter("type2");
         verify(argumentVerifier).renewedAfter("type3");
         verifyNoMoreInteractions(argumentVerifier);
@@ -101,7 +98,7 @@ public class TestDynamicUpdateListener
         Service service3 = new Service(Id.random(), nodeId, "type3", "pool", "location", ImmutableMap.of());
         Service service4 = new Service(Id.random(), nodeId, "type4", "pool", "location", ImmutableMap.of());
         when(instantSupplier.get()).thenReturn(Instant.ofEpochMilli(11));
-        listener.notifyUpdate(entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service1, service2, service3)), 5, 5L), entry(nodeId.getBytes(), CODEC.toJsonBytes(ImmutableList.of(service2, service3, service4)), 8, 5L));
+        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service1, service2, service3), 5, 5L), entry(nodeId.getBytes(), ImmutableList.of(service2, service3, service4), 8, 5L));
         verify(argumentVerifier).expiredFor("type2");
         verify(argumentVerifier).expiredFor("type3");
         verifyNoMoreInteractions(argumentVerifier);

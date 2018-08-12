@@ -156,8 +156,7 @@ public class DistributedStore
         List<Service> services = announcement.getServiceAnnouncements().stream()
                 .map(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
                 .collect(Collectors.toList());
-        byte[] value = CODEC.toJsonBytes(services);
-        Entry entry = entry(nodeId.getBytes(), value, now, maxAge.toMillis());
+        Entry entry = entry(nodeId.getBytes(), services, now, maxAge.toMillis());
 
         localStore.put(entry);
         remoteStore.put(entry);
@@ -170,7 +169,7 @@ public class DistributedStore
 
         long now = timeSupplier.get().toEpochMilli();
 
-        Entry entry = entry(nodeId.getBytes(), null, now, null);
+        Entry entry = entry(nodeId.getBytes(), (List<Service>) null, now, null);
 
         localStore.put(entry);
         remoteStore.put(entry);

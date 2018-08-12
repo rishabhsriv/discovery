@@ -42,23 +42,34 @@ public class TestEntry
     private static final Id<Node> NODE_ID = Id.valueOf("e8e71280-2325-4498-87a7-7f7d7d48defd");
     private static final Id<Service> SERVICE_ID_1 = Id.valueOf("efab997e-14b8-4f5a-b534-b3e70bfb8bd4");
     private static final Id<Service> SERVICE_ID_2 = Id.valueOf("d884bf44-7387-4e11-aabf-a32608776f8e");
+    private static final ImmutableList<Service> SERVICES_LIST = ImmutableList.of(
+            new Service(SERVICE_ID_1, NODE_ID, "testType", "testPool", "testLocation", ImmutableMap.of(
+                    "http", "http://invalid.invalid",
+                    "https", "https://invalid.invalid"
+            )),
+            new Service(SERVICE_ID_2, NODE_ID, "testType2", "testPool2", "testLocation2", ImmutableMap.of(
+                    "http", "http://invalid2.invalid",
+                    "https", "https://invalid2.invalid"
+            ))
+    );
     private static final Entry ENTRY = entry(
             NODE_ID.getBytes(),
-            SERVICE_LIST_CODEC.toJsonBytes(ImmutableList.of(
-                    new Service(SERVICE_ID_1, NODE_ID, "testType", "testPool", "testLocation", ImmutableMap.of(
-                            "http", "http://invalid.invalid",
-                            "https", "https://invalid.invalid"
-                    )),
-                    new Service(SERVICE_ID_2, NODE_ID, "testType2", "testPool2", "testLocation2", ImmutableMap.of(
-                            "http", "http://invalid2.invalid",
-                            "https", "https://invalid2.invalid"
-                    ))
-            )),
+            SERVICE_LIST_CODEC.toJsonBytes(SERVICES_LIST),
+            6789L,
+            12345L);
+    private static final Entry ENTRY_2 = entry(
+            NODE_ID.getBytes(),
+            SERVICES_LIST,
             6789L,
             12345L);
     private static final Entry TOMBSTONE_ENTRY = entry(
             NODE_ID.getBytes(),
-            null,
+            (byte[]) null,
+            6789L,
+            null);
+    private static final Entry TOMBSTONE_ENTRY_2 = entry(
+            NODE_ID.getBytes(),
+            (List<Service>) null,
             6789L,
             null);
 
@@ -79,6 +90,7 @@ public class TestEntry
     public void testJsonDecode()
     {
         assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), ENTRY);
+        assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), ENTRY_2);
     }
 
     @Test
@@ -87,12 +99,14 @@ public class TestEntry
         jsonStructure.remove("value");
         jsonStructure.remove("maxAgeInMs");
         assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), TOMBSTONE_ENTRY);
+        assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), TOMBSTONE_ENTRY_2);
     }
 
     @Test
     public void testJsonEncode()
     {
         assertJsonEncode(ENTRY, jsonStructure);
+        assertJsonEncode(ENTRY_2, jsonStructure);
     }
 
     @Test
@@ -101,5 +115,6 @@ public class TestEntry
         jsonStructure.remove("value");
         jsonStructure.remove("maxAgeInMs");
         assertJsonEncode(TOMBSTONE_ENTRY, jsonStructure);
+        assertJsonEncode(TOMBSTONE_ENTRY_2, jsonStructure);
     }
 }
