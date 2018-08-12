@@ -38,7 +38,7 @@ public abstract class Entry
             @Nullable @JsonProperty("maxAgeInMs") Long maxAgeInMs)
     {
         checkArgument(maxAgeInMs == null || maxAgeInMs > 0, "maxAgeInMs must be greater than 0");
-        return new AutoValue_Entry(key, value, timestamp, maxAgeInMs);
+        return new AutoValue_Entry(key, value == null ? null : SERVICE_LIST_CODEC.fromJson(value), timestamp, maxAgeInMs);
     }
 
     public static Entry entry(byte[] key,
@@ -47,15 +47,25 @@ public abstract class Entry
             @Nullable Long maxAgeInMs)
     {
         checkArgument(maxAgeInMs == null || maxAgeInMs > 0, "maxAgeInMs must be greater than 0");
-        return new AutoValue_Entry(key, services == null ? null : SERVICE_LIST_CODEC.toJsonBytes(services), timestamp, maxAgeInMs);
+        return new AutoValue_Entry(key, services, timestamp, maxAgeInMs);
     }
 
     @JsonProperty
     public abstract byte[] getKey();
 
     @Nullable
-    @JsonProperty
-    public abstract byte[] getValue();
+    @JsonProperty("value")
+    public byte[] getBytesValue()
+    {
+        List<Service> value = getValue();
+        if (value == null) {
+            return null;
+        }
+        return SERVICE_LIST_CODEC.toJsonBytes(value);
+    }
+
+    @Nullable
+    public abstract List<Service> getValue();
 
     @JsonProperty
     public abstract long getTimestamp();

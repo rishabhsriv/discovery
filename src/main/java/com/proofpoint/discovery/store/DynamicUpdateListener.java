@@ -65,6 +65,6 @@ public class DynamicUpdateListener
 
     private static Set<String> getTypes(Entry newEntry)
     {
-        return ImmutableSet.copyOf(transform(CODEC.fromJson(newEntry.getValue()), Service::getType));
+        return ImmutableSet.copyOf(transform(newEntry.getValue(), Service::getType));
     }
 }

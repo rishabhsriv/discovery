@@ -21,7 +21,6 @@ import com.proofpoint.discovery.DynamicStore;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.Node;
 import com.proofpoint.discovery.Service;
-import com.proofpoint.json.JsonCodec;
 import com.proofpoint.reporting.Gauge;
 import com.proofpoint.units.Duration;
 import org.weakref.jmx.Managed;
@@ -53,8 +52,6 @@ import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 public class DistributedStore
     implements DynamicStore
 {
-    private static final JsonCodec<List<Service>> CODEC = JsonCodec.listJsonCodec(Service.class);
-
     private final String name;
     private final InMemoryStore localStore;
     private final RemoteStore remoteStore;
@@ -194,7 +191,7 @@ public class DistributedStore
     {
         return localStore.getAll().stream()
                 .filter(expired().negate().and(tombstone().negate()))
-                .flatMap(entry -> CODEC.fromJson(entry.getValue()).stream());
+                .flatMap(entry -> entry.getValue().stream());
     }
 
     private Predicate<Entry> expired()
