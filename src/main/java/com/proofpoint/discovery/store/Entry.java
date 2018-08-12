@@ -43,13 +43,6 @@ public abstract class Entry
     @JsonProperty
     public abstract byte[] getValue();
 
-    @Deprecated
-    @JsonProperty
-    public Version getVersion()
-    {
-        return new Version(getTimestamp());
-    }
-
     @JsonProperty
     public abstract long getTimestamp();
 

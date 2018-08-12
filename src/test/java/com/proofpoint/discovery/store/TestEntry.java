@@ -47,7 +47,6 @@ public class TestEntry
         jsonStructure = new HashMap<>(ImmutableMap.<String, Object>of(
                 "key", "AAEC",
                 "value", "AwQF",
-                "version", ImmutableMap.of("sequence", 6789),
                 "timestamp", 6789,
                 "maxAgeInMs", 12345
         ));
