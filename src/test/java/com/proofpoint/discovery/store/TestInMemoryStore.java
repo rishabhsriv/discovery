@@ -15,15 +15,21 @@
  */
 package com.proofpoint.discovery.store;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.proofpoint.discovery.DiscoveryConfig;
+import com.proofpoint.discovery.Id;
+import com.proofpoint.discovery.Node;
+import com.proofpoint.discovery.Service;
+import com.proofpoint.json.JsonCodec;
 import com.proofpoint.units.Duration;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.proofpoint.discovery.store.Entry.entry;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -34,6 +40,13 @@ import static org.testng.Assert.assertTrue;
 
 public class TestInMemoryStore
 {
+    private static final Id<Node> NODE_ID = Id.random();
+    private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID,"type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
+    private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID,"type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
+    private static final JsonCodec<List<Service>> SERVICE_LIST_CODEC = JsonCodec.listJsonCodec(Service.class);
+    private static final List<Service> SERVICE_LIST_1 = ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2);
+    private static final List<Service> SERVICE_LIST_2 = ImmutableList.of(TESTING_SERVICE_2);
+
     private InMemoryStore store;
     private UpdateListener updateListener;
 
@@ -50,29 +63,29 @@ public class TestInMemoryStore
     @Test
     public void testPut()
     {
-        Entry entry = entryOf("blue", "apple", 1);
+        Entry entry = entryOf(SERVICE_LIST_1, 1);
         assertTrue(store.put(entry));
 
-        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
+        assertEquals(store.get(NODE_ID.getBytes()), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
     @Test
     public void testPutAlreadyThere()
     {
-        Entry entry = entryOf("blue", "apple", 1);
+        Entry entry = entryOf(SERVICE_LIST_1, 1);
         assertTrue(store.put(entry));
-        assertFalse(store.put(entryOf("blue", "apple", 1)));
+        assertFalse(store.put(entryOf(SERVICE_LIST_1, 1)));
 
-        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
+        assertEquals(store.get(NODE_ID.getBytes()), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
     @Test
     public void testDelete()
     {
-        byte[] key = "blue".getBytes(UTF_8);
-        Entry entry = entryOf("blue", "apple", 1);
+        byte[] key = NODE_ID.getBytes();
+        Entry entry = entryOf(SERVICE_LIST_1, 1);
         store.put(entry);
 
         assertTrue(store.delete(key, entry.getTimestamp()));
@@ -84,7 +97,7 @@ public class TestInMemoryStore
     @Test
     public void testDeleteMissingEntry()
     {
-        byte[] key = "blue".getBytes(UTF_8);
+        byte[] key = NODE_ID.getBytes();
 
         assertFalse(store.delete(key, 1));
 
@@ -95,26 +108,26 @@ public class TestInMemoryStore
     @Test
     public void testDeleteOlderVersion()
     {
-        byte[] key = "blue".getBytes(UTF_8);
-        Entry entry = entryOf("blue", "apple", 5);
+        byte[] key = NODE_ID.getBytes();
+        Entry entry = entryOf(SERVICE_LIST_1, 5);
         store.put(entry);
 
         assertFalse(store.delete(key, 2));
 
-        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
+        assertEquals(store.get(NODE_ID.getBytes()), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
     @Test
     public void testUpdate()
     {
-        Entry entry1 = entryOf("blue", "banana", 1);
+        Entry entry1 = entryOf(SERVICE_LIST_2, 1);
         assertTrue(store.put(entry1));
 
-        Entry entry2 = entryOf("blue", "apple", 2);
+        Entry entry2 = entryOf(SERVICE_LIST_1, 2);
         assertTrue(store.put(entry2));
 
-        assertEquals(store.get("blue".getBytes(UTF_8)), entry2);
+        assertEquals(store.get(NODE_ID.getBytes()), entry2);
         verify(updateListener).notifyUpdate(entry1, entry2);
         verifyNoMoreInteractions(updateListener);
     }
@@ -123,35 +136,35 @@ public class TestInMemoryStore
     public void testUpdateNoListener()
     {
         store = new InMemoryStore(new DiscoveryConfig().setMaxAge(new Duration(1, TimeUnit.MINUTES)));
-        Entry entry1 = entryOf("blue", "banana", 1);
+        Entry entry1 = entryOf(SERVICE_LIST_2, 1);
         assertTrue(store.put(entry1));
 
-        Entry entry2 = entryOf("blue", "apple", 2);
+        Entry entry2 = entryOf(SERVICE_LIST_1, 2);
         assertTrue(store.put(entry2));
 
-        assertEquals(store.get("blue".getBytes(UTF_8)), entry2);
+        assertEquals(store.get(NODE_ID.getBytes()), entry2);
     }
 
     @Test
     public void testResolvesConflict()
     {
-        Entry entry2 = entryOf("blue", "apple", 2);
+        Entry entry2 = entryOf(SERVICE_LIST_1, 2);
         assertTrue(store.put(entry2));
 
-        Entry entry1 = entryOf("blue", "banana", 1);
+        Entry entry1 = entryOf(SERVICE_LIST_2, 1);
         assertFalse(store.put(entry1));
 
-        assertEquals(store.get("blue".getBytes(UTF_8)), entry2);
+        assertEquals(store.get(NODE_ID.getBytes()), entry2);
         verifyNoMoreInteractions(updateListener);
     }
 
     @Test
     public void testDefaultsMaxAge()
     {
-        Entry entry = entryOf("blue", "apple", 1);
+        Entry entry = entryOf(SERVICE_LIST_1, 1);
         store.put(entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null));
 
-        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
+        assertEquals(store.get(NODE_ID.getBytes()), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -160,16 +173,16 @@ public class TestInMemoryStore
     {
         store = new InMemoryStore();
 
-        Entry entry = entryOf("blue", "apple", 1);
+        Entry entry = entryOf(SERVICE_LIST_1, 1);
         entry = entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null);
         store.put(entry);
 
-        assertEquals(store.get("blue".getBytes(UTF_8)), entry);
+        assertEquals(store.get(NODE_ID.getBytes()), entry);
         verifyNoMoreInteractions(updateListener);
     }
 
-    private static Entry entryOf(String key, String value, long timestamp)
+    private static Entry entryOf(List<Service> value, long timestamp)
     {
-        return entry(key.getBytes(UTF_8), value.getBytes(UTF_8), timestamp, 60_000L);
+        return entry(NODE_ID.getBytes(), SERVICE_LIST_CODEC.toJsonBytes(value), timestamp, 60_000L);
     }
 }

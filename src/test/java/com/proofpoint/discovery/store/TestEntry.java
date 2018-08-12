@@ -15,12 +15,17 @@
  */
 package com.proofpoint.discovery.store;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.proofpoint.discovery.Id;
+import com.proofpoint.discovery.Node;
+import com.proofpoint.discovery.Service;
 import com.proofpoint.json.JsonCodec;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.proofpoint.discovery.store.Entry.entry;
@@ -32,21 +37,39 @@ import static org.testng.Assert.assertEquals;
 
 public class TestEntry
 {
-    private final JsonCodec<Entry> codec = jsonCodec(Entry.class);
-    private final Entry entry = entry(
-            new byte[] { 0, 1, 2},
-            new byte[] { 3, 4, 5},
+    private static final JsonCodec<Entry> ENTRY_CODEC = jsonCodec(Entry.class);
+    private static final JsonCodec<List<Service>> SERVICE_LIST_CODEC = JsonCodec.listJsonCodec(Service.class);
+    private static final Id<Node> NODE_ID = Id.valueOf("e8e71280-2325-4498-87a7-7f7d7d48defd");
+    private static final Id<Service> SERVICE_ID_1 = Id.valueOf("efab997e-14b8-4f5a-b534-b3e70bfb8bd4");
+    private static final Id<Service> SERVICE_ID_2 = Id.valueOf("d884bf44-7387-4e11-aabf-a32608776f8e");
+    private static final Entry ENTRY = entry(
+            NODE_ID.getBytes(),
+            SERVICE_LIST_CODEC.toJsonBytes(ImmutableList.of(
+                    new Service(SERVICE_ID_1, NODE_ID, "testType", "testPool", "testLocation", ImmutableMap.of(
+                            "http", "http://invalid.invalid",
+                            "https", "https://invalid.invalid"
+                    )),
+                    new Service(SERVICE_ID_2, NODE_ID, "testType2", "testPool2", "testLocation2", ImmutableMap.of(
+                            "http", "http://invalid2.invalid",
+                            "https", "https://invalid2.invalid"
+                    ))
+            )),
             6789L,
-            12345L
-    );
+            12345L);
+    private static final Entry TOMBSTONE_ENTRY = entry(
+            NODE_ID.getBytes(),
+            null,
+            6789L,
+            null);
+
     private Map<String,Object> jsonStructure;
 
     @BeforeMethod
     public void setup()
     {
         jsonStructure = new HashMap<>(ImmutableMap.<String, Object>of(
-                "key", "AAEC",
-                "value", "AwQF",
+                "key", "ZThlNzEyODAtMjMyNS00NDk4LTg3YTctN2Y3ZDdkNDhkZWZk",
+                "value", "WyB7CiAgImlkIiA6ICJlZmFiOTk3ZS0xNGI4LTRmNWEtYjUzNC1iM2U3MGJmYjhiZDQiLAogICJub2RlSWQiIDogImU4ZTcxMjgwLTIzMjUtNDQ5OC04N2E3LTdmN2Q3ZDQ4ZGVmZCIsCiAgInR5cGUiIDogInRlc3RUeXBlIiwKICAicG9vbCIgOiAidGVzdFBvb2wiLAogICJsb2NhdGlvbiIgOiAidGVzdExvY2F0aW9uIiwKICAicHJvcGVydGllcyIgOiB7CiAgICAiaHR0cCIgOiAiaHR0cDovL2ludmFsaWQuaW52YWxpZCIsCiAgICAiaHR0cHMiIDogImh0dHBzOi8vaW52YWxpZC5pbnZhbGlkIgogIH0KfSwgewogICJpZCIgOiAiZDg4NGJmNDQtNzM4Ny00ZTExLWFhYmYtYTMyNjA4Nzc2ZjhlIiwKICAibm9kZUlkIiA6ICJlOGU3MTI4MC0yMzI1LTQ0OTgtODdhNy03ZjdkN2Q0OGRlZmQiLAogICJ0eXBlIiA6ICJ0ZXN0VHlwZTIiLAogICJwb29sIiA6ICJ0ZXN0UG9vbDIiLAogICJsb2NhdGlvbiIgOiAidGVzdExvY2F0aW9uMiIsCiAgInByb3BlcnRpZXMiIDogewogICAgImh0dHAiIDogImh0dHA6Ly9pbnZhbGlkMi5pbnZhbGlkIiwKICAgICJodHRwcyIgOiAiaHR0cHM6Ly9pbnZhbGlkMi5pbnZhbGlkIgogIH0KfSBd",
                 "timestamp", 6789,
                 "maxAgeInMs", 12345
         ));
@@ -55,12 +78,28 @@ public class TestEntry
     @Test
     public void testJsonDecode()
     {
-        assertEquals(assertValidates(decodeJson(codec, jsonStructure)), entry);
+        assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), ENTRY);
+    }
+
+    @Test
+    public void testJsonDecodeTombstone()
+    {
+        jsonStructure.remove("value");
+        jsonStructure.remove("maxAgeInMs");
+        assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), TOMBSTONE_ENTRY);
     }
 
     @Test
     public void testJsonEncode()
     {
-        assertJsonEncode(entry, jsonStructure);
+        assertJsonEncode(ENTRY, jsonStructure);
+    }
+
+    @Test
+    public void testJsonEncodeTombstone()
+    {
+        jsonStructure.remove("value");
+        jsonStructure.remove("maxAgeInMs");
+        assertJsonEncode(TOMBSTONE_ENTRY, jsonStructure);
     }
 }
