@@ -50,7 +50,6 @@ public class TestInMemoryStore
 
     @BeforeMethod
     protected void setUp()
-            throws Exception
     {
         DiscoveryConfig config = new DiscoveryConfig().setMaxAge(new Duration(1, TimeUnit.MINUTES));
         store = new InMemoryStore(config);

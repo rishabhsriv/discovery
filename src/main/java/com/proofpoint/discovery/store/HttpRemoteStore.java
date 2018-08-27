@@ -15,11 +15,8 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
@@ -47,14 +44,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.compose;
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.proofpoint.http.client.SmileBodyGenerator.smileBodyGenerator;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static java.util.Objects.requireNonNull;
@@ -149,7 +144,7 @@ class HttpRemoteStore
 
     private void updateProcessors(List<ServiceDescriptor> descriptors)
     {
-        Set<String> hostPorts = ImmutableSet.copyOf(transform(descriptors, getHostPortFunction()));
+        Set<String> hostPorts = descriptors.stream().map(getHostPortFunction()).collect(toImmutableSet());
 
         // remove old ones
         Iterator<Map.Entry<String, BatchProcessor<Entry>>> iterator = processors.entrySet().iterator();
@@ -164,8 +159,9 @@ class HttpRemoteStore
         }
 
 
-        Predicate<ServiceDescriptor> predicate = and(not(ourNodeIdPredicate), compose(not(in(processors.keySet())), getHostPortFunction()));
-        Iterable<ServiceDescriptor> newDescriptors = filter(descriptors, predicate);
+        Predicate<ServiceDescriptor> predicate = ourNodeIdPredicate.negate()
+                .and(nodeId -> !processors.keySet().contains(getHostPortFunction().apply(nodeId)));
+        Iterable<ServiceDescriptor> newDescriptors = descriptors.stream().filter(predicate).collect(Collectors.toList());
 
         for (ServiceDescriptor descriptor : newDescriptors) {
             String hostPort = getHostPort(descriptor);

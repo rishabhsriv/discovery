@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.proofpoint.discovery.DynamicServiceAnnouncement.toServiceWith;
 import static com.proofpoint.discovery.Service.matchesPool;
 import static com.proofpoint.discovery.Service.matchesType;
@@ -55,7 +55,9 @@ public class InMemoryDynamicStore
         requireNonNull(nodeId, "nodeId is null");
         requireNonNull(announcement, "announcement is null");
 
-        Set<Service> services = ImmutableSet.copyOf(transform(announcement.getServiceAnnouncements(), toServiceWith(nodeId, announcement.getLocation(), announcement.getPool())));
+        Set<Service> services = announcement.getServiceAnnouncements().stream()
+                .map(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
+                .collect(toImmutableSet());
 
         Instant expiration = currentTime.get().plusMillis((int) maxAge.toMillis());
         descriptors.put(nodeId, new Entry(expiration, services));

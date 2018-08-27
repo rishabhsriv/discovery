@@ -51,6 +51,7 @@ public abstract class Entry
     }
 
     @JsonProperty
+    @SuppressWarnings("mutable")
     public abstract byte[] getKey();
 
     @Nullable

@@ -44,7 +44,7 @@ public class TestDynamicAnnouncementResource
     @Test
     public void testPutNew()
     {
-        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("http", "http://localhost:1111"));
+        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:1111"));
         DynamicAnnouncement announcement = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
                 serviceAnnouncement)
         );
@@ -71,12 +71,12 @@ public class TestDynamicAnnouncementResource
     {
         Id<Node> nodeId = Id.random();
         DynamicAnnouncement previous = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "existing"))
+                new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "existing"))
         ));
 
         store.put(nodeId, previous);
 
-        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "new"));
+        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "new"));
         DynamicAnnouncement announcement = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
                 serviceAnnouncement)
         );
@@ -101,7 +101,7 @@ public class TestDynamicAnnouncementResource
     public void testEnvironmentConflict()
     {
         DynamicAnnouncement announcement = new DynamicAnnouncement("production", "alpha", "/a/b/c", ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("http", "http://localhost:1111")))
+                new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:1111")))
         );
 
         Id<Node> nodeId = Id.random();
@@ -120,7 +120,7 @@ public class TestDynamicAnnouncementResource
                 new DiscoveryConfig().setProxyProxiedTypes(StringSet.of("storage")));
 
         DynamicAnnouncement announcement = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("http", "http://localhost:1111")))
+                new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:1111")))
         );
 
         Id<Node> nodeId = Id.random();
@@ -136,7 +136,7 @@ public class TestDynamicAnnouncementResource
     public void testDeleteExisting()
     {
         Id<Node> blueNodeId = Id.random();
-        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("key", "valueBlue"));
+        DynamicServiceAnnouncement serviceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "valueBlue"));
         DynamicAnnouncement blue = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(
                 serviceAnnouncement
         ));
@@ -165,7 +165,7 @@ public class TestDynamicAnnouncementResource
     @Test
     public void testDeleteMissing()
     {
-        resource.delete(Id.<Node>random());
+        resource.delete(Id.random());
 
         assertEquals(store.getAll().count(), 0);
     }
@@ -174,7 +174,7 @@ public class TestDynamicAnnouncementResource
     public void testMakesUpLocation()
     {
         DynamicAnnouncement announcement = new DynamicAnnouncement("testing", "alpha", null, ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.<Service>random(), "storage", ImmutableMap.of("http", "http://localhost:1111")))
+                new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:1111")))
         );
 
         Id<Node> nodeId = Id.random();

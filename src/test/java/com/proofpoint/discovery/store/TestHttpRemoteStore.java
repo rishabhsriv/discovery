@@ -22,7 +22,6 @@ import com.proofpoint.discovery.Node;
 import com.proofpoint.discovery.Service;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.jetty.JettyHttpClient;
-import com.proofpoint.json.JsonCodec;
 import com.proofpoint.node.NodeInfo;
 import com.proofpoint.reporting.ReportExporter;
 import com.proofpoint.testing.Closeables;
@@ -32,8 +31,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;

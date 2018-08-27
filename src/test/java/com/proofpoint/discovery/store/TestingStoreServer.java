@@ -45,7 +45,7 @@ public class TestingStoreServer
     private final LifeCycleManager lifeCycleManager;
     private final InMemoryStore inMemoryStore = new InMemoryStore();
     private final AtomicBoolean serverInSelector = new AtomicBoolean(true);
-    private ServiceSelector serviceSelector;
+    private final ServiceSelector serviceSelector;
 
     public TestingStoreServer(StoreConfig storeConfig)
     {

@@ -38,7 +38,6 @@ public class Main
     private static final Logger log = Logger.get(Main.class);
 
     public static void main(String[] args)
-            throws Exception
     {
         try {
             Bootstrap app = bootstrapApplication("discovery")

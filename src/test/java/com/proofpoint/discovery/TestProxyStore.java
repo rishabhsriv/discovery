@@ -133,7 +133,6 @@ public class TestProxyStore
         @Nonnull
         @Override
         public Response handle(Request request)
-                throws Exception
         {
             assertEquals(request.getMethod(), "GET");
             URI uri = request.getUri();

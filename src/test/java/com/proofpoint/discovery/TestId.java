@@ -30,7 +30,7 @@ public class TestId
     @Test
     public void testToJson()
     {
-        Holder holder = new Holder(Id.<Holder>random());
+        Holder holder = new Holder(Id.random());
         Map<String, String> expected = ImmutableMap.of("id", holder.getId().toString());
 
         String json = jsonCodec(Holder.class).toJson(holder);

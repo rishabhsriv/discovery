@@ -44,7 +44,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient.DEFAULT_DELAY;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
@@ -175,7 +174,7 @@ public class ProxyStore
                 }
                 catch (ExecutionException e) {
                     if (!(e.getCause() instanceof DiscoveryException)) {
-                        throw propagate(e);
+                        throw new RuntimeException(e);
                     }
                     if (serverUp.compareAndSet(true, false)) {
                         log.error("Cannot connect to proxy discovery server for refresh (%s): %s", type, e.getCause().getMessage());
