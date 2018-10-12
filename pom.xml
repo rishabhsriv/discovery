@@ -11,7 +11,7 @@
     <parent>
         <groupId>com.proofpoint.platform</groupId>
         <artifactId>library</artifactId>
-        <version>1.85</version>
+        <version>1.87</version>
     </parent>
 
     <properties>
@@ -89,6 +89,12 @@
             <groupId>com.google.auto.value</groupId>
             <artifactId>auto-value</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- Proofpoint platform -->
