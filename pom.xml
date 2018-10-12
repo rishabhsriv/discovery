@@ -42,10 +42,6 @@
     <developers>
     </developers>
 
-    <prerequisites>
-        <maven>3.0</maven>
-    </prerequisites>
-
     <distributionManagement>
         <snapshotRepository>
             <id>sonatype-nexus-snapshots</id>
