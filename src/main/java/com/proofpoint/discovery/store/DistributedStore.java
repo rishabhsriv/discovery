@@ -87,6 +87,7 @@ public class DistributedStore
     }
 
     @PostConstruct
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void start()
     {
         garbageCollector.scheduleAtFixedRate(this::removeExpiredEntries, 0, garbageCollectionInterval.toMillis(), TimeUnit.MILLISECONDS);
@@ -132,8 +133,8 @@ public class DistributedStore
     {
         long ageInMs = timeSupplier.get().toEpochMilli() - entry.getTimestamp();
 
-        return entry.getValue() == null && ageInMs > tombstoneMaxAge.toMillis() ||  // TODO: this is repeated in StoreResource
-                entry.getMaxAgeInMs() != null && ageInMs > entry.getMaxAgeInMs();
+        return (entry.getValue() == null && ageInMs > tombstoneMaxAge.toMillis()) ||  // TODO: this is repeated in StoreResource
+                (entry.getMaxAgeInMs() != null && ageInMs > entry.getMaxAgeInMs());
     }
 
     @PreDestroy

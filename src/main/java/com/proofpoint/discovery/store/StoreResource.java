@@ -77,7 +77,7 @@ public class StoreResource
     {
         long ageInMs = System.currentTimeMillis() - entry.getTimestamp();
 
-        return entry.getValue() == null && ageInMs > tombstoneMaxAge.toMillis() ||
-                entry.getMaxAgeInMs() != null && ageInMs > entry.getMaxAgeInMs();
+        return (entry.getValue() == null && ageInMs > tombstoneMaxAge.toMillis()) ||
+                (entry.getMaxAgeInMs() != null && ageInMs > entry.getMaxAgeInMs());
     }
 }

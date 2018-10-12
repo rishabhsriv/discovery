@@ -144,6 +144,7 @@ public class ProxyStore
             }
         }
 
+        @SuppressWarnings("FutureReturnValueIgnored")
         private ListenableFuture<ServiceDescriptors> refresh()
         {
             final ListenableFuture<ServiceDescriptors> future = lookupClient.getServices(type);

@@ -42,8 +42,8 @@ public class TestInMemoryStore
     private static final Id<Node> NODE_ID = Id.random();
     private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID,"type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
     private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID,"type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
-    private static final List<Service> SERVICE_LIST_1 = ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2);
-    private static final List<Service> SERVICE_LIST_2 = ImmutableList.of(TESTING_SERVICE_2);
+    private static final ImmutableList<Service> SERVICE_LIST_1 = ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2);
+    private static final ImmutableList<Service> SERVICE_LIST_2 = ImmutableList.of(TESTING_SERVICE_2);
 
     private InMemoryStore store;
     private UpdateListener updateListener;
