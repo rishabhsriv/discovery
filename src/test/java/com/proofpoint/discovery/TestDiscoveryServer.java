@@ -26,7 +26,6 @@ import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.client.announce.DiscoveryAnnouncementClient;
 import com.proofpoint.discovery.client.announce.ServiceAnnouncement;
-import com.proofpoint.event.client.InMemoryEventModule;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.jetty.JettyHttpClient;
 import com.proofpoint.http.server.testing.TestingHttpServer;
@@ -118,7 +117,6 @@ public class TestDiscoveryServer
                         new TestingNodeModule("testing", "red"),
                         new ReportingModule(),
                         new TestingMBeanModule(),
-                        new InMemoryEventModule(),
                         new JsonModule(),
                         new DiscoveryModule()
                 )
@@ -166,7 +164,6 @@ public class TestDiscoveryServer
                         new TestingNodeModule("testing"),
                         new ReportingModule(),
                         new TestingMBeanModule(),
-                        new InMemoryEventModule(),
                         new JsonModule(),
                         new DiscoveryModule(),
                         binder -> discoveryBinder(binder).bindSelector(type)
