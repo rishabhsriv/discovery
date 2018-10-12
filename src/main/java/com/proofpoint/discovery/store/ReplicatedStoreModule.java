@@ -43,7 +43,7 @@ import java.util.function.Supplier;
 import static com.google.inject.multibindings.MapBinder.newMapBinder;
 import static com.google.inject.name.Names.named;
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
-import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
+import static com.proofpoint.configuration.ConfigBinder.bindConfig;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
 import static com.proofpoint.jaxrs.JaxrsBinder.jaxrsBinder;
 import static com.proofpoint.reporting.ReportBinder.reportBinder;
@@ -92,7 +92,7 @@ public class ReplicatedStoreModule
             reportBinder(binder).bindReportCollection(DynamicRenewals.class).withApplicationPrefix();
         }
 
-        bindConfig(binder).annotatedWith(annotation).prefixedWith(name).to(StoreConfig.class);
+        bindConfig(binder).bind(StoreConfig.class).annotatedWith(annotation).prefixedWith(name);
         httpClientBinder(binder).bindHttpClient(name, annotation);
         binder.bind(DistributedStore.class).annotatedWith(annotation).toProvider(new DistributedStoreProvider(name, localStoreKey, storeConfigKey, remoteStoreKey, updateListenerKey)).in(Scopes.SINGLETON);
         binder.bind(Replicator.class).annotatedWith(annotation).toProvider(new ReplicatorProvider(name, localStoreKey, httpClientKey, storeConfigKey)).in(Scopes.SINGLETON);

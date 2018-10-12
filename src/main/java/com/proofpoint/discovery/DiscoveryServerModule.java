@@ -32,7 +32,7 @@ import com.proofpoint.node.NodeInfo;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static com.proofpoint.configuration.ConfigurationModule.bindConfig;
+import static com.proofpoint.configuration.ConfigBinder.bindConfig;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
 import static com.proofpoint.jaxrs.JaxrsBinder.jaxrsBinder;
@@ -43,7 +43,7 @@ public class DiscoveryServerModule
     @Override
     public void setup(Binder binder)
     {
-        bindConfig(binder).to(DiscoveryConfig.class);
+        bindConfig(binder).bind(DiscoveryConfig.class);
         jaxrsBinder(binder).bind(ServiceResource.class).withApplicationPrefix();
         binder.bind(InitializationTracker.class).in(Scopes.SINGLETON);
 
@@ -56,7 +56,7 @@ public class DiscoveryServerModule
 
         // config-based static announcements
         binder.bind(ConfigStore.class).in(Scopes.SINGLETON);
-        bindConfig(binder).to(ConfigStoreConfig.class);
+        bindConfig(binder).bind(ConfigStoreConfig.class);
 
         // proxy announcements
         DiscoveryConfig discoveryConfig = buildConfigObject(DiscoveryConfig.class);
