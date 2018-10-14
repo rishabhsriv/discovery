@@ -32,6 +32,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -41,6 +43,7 @@ import static org.mockito.Mockito.mock;
 public class TestHttpRemoteStore
 {
     private static final Id<Node> NODE_ID = Id.random();
+    private static final Id<Node> TOMBSTONE_ID = Id.random();
     private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID,"type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
     private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID,"type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
     private static final Entry TESTING_ENTRY = entry(
@@ -48,6 +51,12 @@ public class TestHttpRemoteStore
             ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2),
             System.currentTimeMillis(),
             20_000L
+    );
+    private static final Entry TESTING_TOMBSTONE = entry(
+            TOMBSTONE_ID.getBytes(),
+            (List<Service>) null,
+            System.currentTimeMillis(),
+            null
     );
 
     private final TestingStoreServer server = new TestingStoreServer(new StoreConfig());
@@ -85,9 +94,10 @@ public class TestHttpRemoteStore
     {
         createStore();
         store.put(TESTING_ENTRY);
+        store.put(TESTING_TOMBSTONE);
         Thread.sleep(1000);
 
-        assertThat(serverStore.getAll()).containsExactly(TESTING_ENTRY);
+        assertThat(serverStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
     }
 
     @Test
@@ -106,9 +116,10 @@ public class TestHttpRemoteStore
         server.setServerInSelector(true);
         executor.elapseTime(1, NANOSECONDS);
         store.put(TESTING_ENTRY);
+        store.put(TESTING_TOMBSTONE);
         Thread.sleep(1000);
 
-        assertThat(serverStore.getAll()).containsExactly(TESTING_ENTRY);
+        assertThat(serverStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
     }
 
     @Test
