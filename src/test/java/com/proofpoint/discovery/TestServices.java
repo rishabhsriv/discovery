@@ -30,9 +30,8 @@ import java.util.stream.Stream;
 
 import static com.proofpoint.discovery.Services.services;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
-import static com.proofpoint.testing.Assertions.assertNotEquals;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestServices
 {
@@ -43,10 +42,11 @@ public class TestServices
         set.add(new Service(Id.random(), Id.random(), "blue", "pool", "/location", ImmutableMap.of("key", "value")));
 
         Services services = services("testing", set);
-        assertEquals(services.getServices(), set);
+        assertThat(services.getServices()).containsExactlyElementsOf(set);
 
-        set.add(new Service(Id.random(), Id.random(), "red", "pool", "/location", ImmutableMap.of("key", "value")));
-        assertNotEquals(services.getServices(), set);
+        Service newService = new Service(Id.random(), Id.random(), "red", "pool", "/location", ImmutableMap.of("key", "value"));
+        set.add(newService);
+        assertThat(services.getServices()).doesNotContain(newService);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class TestServices
             services.getServices().add(new Service(Id.random(), Id.random(), "red", "pool", "/location", ImmutableMap.of("key", "value")));
 
             // a copy of the internal map is acceptable
-            assertEquals(services.getServices(), ImmutableSet.of(blue));
+            assertThat(services.getServices()).containsExactly(blue);
         }
         catch (UnsupportedOperationException e) {
             // an exception is ok, too
@@ -80,7 +80,7 @@ public class TestServices
         Object parsed = codec.fromJson(json);
         Object expected = codec.fromJson(Resources.toString(Resources.getResource("services.json"), UTF_8));
 
-        assertEquals(parsed, expected);
+        assertThat(parsed).isEqualTo(expected);
     }
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = ".*environment.*")

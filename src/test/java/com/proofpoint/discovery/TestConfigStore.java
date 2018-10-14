@@ -16,13 +16,9 @@
 package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import org.testng.annotations.Test;
 
-import java.util.stream.Collectors;
-
-import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestConfigStore
 {
@@ -41,24 +37,24 @@ public class TestConfigStore
     @Test
     public void testGetAll()
     {
-        assertEqualsIgnoreOrder(store.getAll().collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3, EXPECTED_SERVICE_4));
-        assertEquals(new ConfigStore(new ConfigStoreConfig()).getAll().collect(Collectors.toList()), ImmutableSet.of());
+        assertThat(store.getAll()).containsExactlyInAnyOrder(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3, EXPECTED_SERVICE_4);
+        assertThat(new ConfigStore(new ConfigStoreConfig()).getAll()).isEmpty();
     }
 
     @Test
     public void testGetType()
     {
-        assertEqualsIgnoreOrder(store.get("type1").collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3));
-        assertEqualsIgnoreOrder(store.get("type2").collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_4));
-        assertEqualsIgnoreOrder(store.get("unknown").collect(Collectors.toList()), ImmutableSet.of());
+        assertThat(store.get("type1")).containsExactlyInAnyOrder(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3);
+        assertThat(store.get("type2")).containsExactly(EXPECTED_SERVICE_4);
+        assertThat(store.get("unknown")).isEmpty();
     }
 
     @Test
     public void testGetTypeAndPool()
     {
-        assertEquals(store.get("type1", "general").collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2));
-        assertEquals(store.get("type1", "alternate").collect(Collectors.toList()), ImmutableSet.of(EXPECTED_SERVICE_3));
-        assertEquals(store.get("type1", "unknown").collect(Collectors.toList()), ImmutableSet.of());
+        assertThat(store.get("type1", "general")).containsExactlyInAnyOrder(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2);
+        assertThat(store.get("type1", "alternate")).containsExactly(EXPECTED_SERVICE_3);
+        assertThat(store.get("type1", "unknown")).isEmpty();
     }
 
     private static StaticAnnouncementConfig staticAnnouncementConfig(String type, String pool, String uri)

@@ -15,16 +15,13 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.proofpoint.discovery.Services.services;
 import static com.proofpoint.http.client.testing.TestingResponse.mockResponse;
-import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 public class TestProxyStore
@@ -36,9 +33,9 @@ public class TestProxyStore
         ProxyStore proxyStore = new ProxyStore(new DiscoveryConfig(), injector);
         Set<Service> services = ImmutableSet.of(new Service(Id.random(), Id.random(), "type", "pool", "/location", ImmutableMap.of("key", "value")));
 
-        assertEquals(proxyStore.filterAndGetAll(services), services);
-        assertEquals(proxyStore.get("foo"), null);
-        assertEquals(proxyStore.get("foo", "bar"), null);
+        assertThat(proxyStore.filterAndGetAll(services)).isEqualTo(services);
+        assertThat(proxyStore.get("foo")).isNull();
+        assertThat(proxyStore.get("foo", "bar")).isNull();
         verifyNoMoreInteractions(injector);
     }
 
@@ -64,20 +61,20 @@ public class TestProxyStore
         Service service5 = new Service(Id.random(), Id.random(), "auth", "pool3", "/location/5", ImmutableMap.of("key5", "value5"));
         Service service6 = new Service(Id.random(), Id.random(), "event", "general", "/location/6", ImmutableMap.of("key6", "value6"));
 
-        assertEqualsIgnoreOrder(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
-                ImmutableSet.of(service1, service2, service3, service6));
+        assertThat(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)))
+                .containsExactlyInAnyOrder(service1, service2, service3, service6);
 
-        assertEqualsIgnoreOrder(proxyStore.get("storage").collect(Collectors.toList()), ImmutableSet.of(service1, service2));
-        assertEqualsIgnoreOrder(proxyStore.get("customer").collect(Collectors.toList()), ImmutableSet.of(service3));
-        assertEqualsIgnoreOrder(proxyStore.get("auth").collect(Collectors.toList()), ImmutableSet.<Service>of());
-        assertNull(proxyStore.get("event"));
+        assertThat(proxyStore.get("storage")).containsExactlyInAnyOrder(service1, service2);
+        assertThat(proxyStore.get("customer")).containsExactly(service3);
+        assertThat(proxyStore.get("auth")).isEmpty();
+        assertThat(proxyStore.get("event")).isNull();
 
-        assertEquals(proxyStore.get("storage", "pool1").collect(Collectors.toList()), ImmutableSet.of(service1));
-        assertEquals(proxyStore.get("storage", "pool2").collect(Collectors.toList()), ImmutableSet.of(service2));
-        assertEquals(proxyStore.get("customer", "general").collect(Collectors.toList()), ImmutableSet.of(service3));
-        assertEquals(proxyStore.get("customer", "pool3").collect(Collectors.toList()), ImmutableSet.<Service>of());
-        assertEquals(proxyStore.get("auth", "pool3").collect(Collectors.toList()), ImmutableSet.<Service>of());
-        assertNull(proxyStore.get("event", "general"));
+        assertThat(proxyStore.get("storage", "pool1")).containsExactly(service1);
+        assertThat(proxyStore.get("storage", "pool2")).containsExactly(service2);
+        assertThat(proxyStore.get("customer", "general")).containsExactly(service3);
+        assertThat(proxyStore.get("customer", "pool3")).isEmpty();
+        assertThat(proxyStore.get("auth", "pool3")).isEmpty();
+        assertThat(proxyStore.get("event", "general")).isNull();
     }
 
     @Test
@@ -102,20 +99,20 @@ public class TestProxyStore
         Service service5 = new Service(Id.random(), null, "auth", "pool3", "/location/5", ImmutableMap.of("key5", "value5"));
         Service service6 = new Service(Id.random(), null, "event", "general", "/location/6", ImmutableMap.of("key6", "value6"));
 
-        assertEqualsIgnoreOrder(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)),
-                ImmutableSet.of(service1, service2, service3, service6));
+        assertThat(proxyStore.filterAndGetAll(ImmutableSet.of(service4, service5, service6)))
+                .containsExactlyInAnyOrder(service1, service2, service3, service6);
 
-        assertEqualsIgnoreOrder(proxyStore.get("storage").collect(Collectors.toList()), ImmutableSet.of(service1, service2));
-        assertEqualsIgnoreOrder(proxyStore.get("customer").collect(Collectors.toList()), ImmutableSet.of(service3));
-        assertEqualsIgnoreOrder(proxyStore.get("auth").collect(Collectors.toList()), ImmutableSet.<Service>of());
-        assertNull(proxyStore.get("event"));
+        assertThat(proxyStore.get("storage")).containsExactlyInAnyOrder(service1, service2);
+        assertThat(proxyStore.get("customer")).containsExactly(service3);
+        assertThat(proxyStore.get("auth")).isEmpty();
+        assertThat(proxyStore.get("event")).isNull();
 
-        assertEquals(proxyStore.get("storage", "pool1").collect(Collectors.toList()), ImmutableSet.of(service1));
-        assertEquals(proxyStore.get("storage", "pool2").collect(Collectors.toList()), ImmutableSet.of(service2));
-        assertEquals(proxyStore.get("customer", "general").collect(Collectors.toList()), ImmutableSet.of(service3));
-        assertEquals(proxyStore.get("customer", "pool3").collect(Collectors.toList()), ImmutableSet.<Service>of());
-        assertEquals(proxyStore.get("auth", "pool3").collect(Collectors.toList()), ImmutableSet.<Service>of());
-        assertNull(proxyStore.get("event", "general"));
+        assertThat(proxyStore.get("storage", "pool1")).containsExactly(service1);
+        assertThat(proxyStore.get("storage", "pool2")).containsExactly(service2);
+        assertThat(proxyStore.get("customer", "general")).containsExactly(service3);
+        assertThat(proxyStore.get("customer", "pool3")).isEmpty();
+        assertThat(proxyStore.get("auth", "pool3")).isEmpty();
+        assertThat(proxyStore.get("event", "general")).isNull();
     }
 
     private static class DiscoveryProcessor
@@ -134,7 +131,7 @@ public class TestProxyStore
         @Override
         public Response handle(Request request)
         {
-            assertEquals(request.getMethod(), "GET");
+            assertThat(request.getMethod()).isEqualTo("GET");
             URI uri = request.getUri();
             assertTrue(uri.toString().startsWith("v1/service/"), "uri " + uri.toString() + " starts with expected prefix");
             String type = uri.toASCIIString().substring(11);

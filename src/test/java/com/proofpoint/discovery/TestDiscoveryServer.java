@@ -52,9 +52,7 @@ import static com.proofpoint.bootstrap.Bootstrap.bootstrapTest;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.discovery.client.ServiceTypes.serviceType;
 import static com.proofpoint.jaxrs.JaxrsModule.explicitJaxrsModule;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestDiscoveryServer
 {
@@ -135,20 +133,20 @@ public class TestDiscoveryServer
         NodeInfo announcerNodeInfo = announcerInjector.getInstance(NodeInfo.class);
 
         List<ServiceDescriptor> services = selectorFor("apple", "red").selectAllServices();
-        assertEquals(services.size(), 1);
+        assertThat(services).hasSize(1);
 
         ServiceDescriptor service = services.get(0);
-        assertNotNull(service.getId());
-        assertEquals(service.getNodeId(), announcerNodeInfo.getNodeId());
-        assertEquals(service.getLocation(), announcerNodeInfo.getLocation());
-        assertEquals(service.getPool(), announcerNodeInfo.getPool());
-        assertEquals(service.getProperties(), announcement.getProperties());
+        assertThat(service.getId()).isNotNull();
+        assertThat(service.getNodeId()).isEqualTo(announcerNodeInfo.getNodeId());
+        assertThat(service.getLocation()).isEqualTo(announcerNodeInfo.getLocation());
+        assertThat(service.getPool()).isEqualTo(announcerNodeInfo.getPool());
+        assertThat(service.getProperties()).isEqualTo(announcement.getProperties());
 
 
         // ensure that service is no longer visible
         client.unannounce().get();
 
-        assertTrue(selectorFor("apple", "red").selectAllServices().isEmpty());
+        assertThat(selectorFor("apple", "red").selectAllServices()).isEmpty();
     }
 
     private ServiceSelector selectorFor(final String type, String pool)

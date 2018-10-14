@@ -35,8 +35,8 @@ import org.testng.annotations.Test;
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.testng.Assert.assertEquals;
 
 public class TestHttpRemoteStore
 {
@@ -87,7 +87,7 @@ public class TestHttpRemoteStore
         store.put(TESTING_ENTRY);
         Thread.sleep(1000);
 
-        assertEquals(serverStore.getAll(), ImmutableList.of(TESTING_ENTRY));
+        assertThat(serverStore.getAll()).containsExactly(TESTING_ENTRY);
     }
 
     @Test
@@ -101,14 +101,14 @@ public class TestHttpRemoteStore
         store.put(TESTING_ENTRY);
         Thread.sleep(1000);
 
-        assertEquals(serverStore.getAll(), ImmutableList.of());
+        assertThat(serverStore.getAll()).isEmpty();
 
         server.setServerInSelector(true);
         executor.elapseTime(1, NANOSECONDS);
         store.put(TESTING_ENTRY);
         Thread.sleep(1000);
 
-        assertEquals(serverStore.getAll(), ImmutableList.of(TESTING_ENTRY));
+        assertThat(serverStore.getAll()).containsExactly(TESTING_ENTRY);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class TestHttpRemoteStore
         store.put(TESTING_ENTRY);
         Thread.sleep(1000);
 
-        assertEquals(serverStore.getAll(), ImmutableList.of());
+        assertThat(serverStore.getAll()).isEmpty();
     }
 
     private void createStore()

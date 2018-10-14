@@ -29,12 +29,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.proofpoint.discovery.store.Entry.entry;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 public class TestInMemoryStore
@@ -63,7 +62,7 @@ public class TestInMemoryStore
         Entry entry = entryOf(SERVICE_LIST_1, 1);
         assertTrue(store.put(entry));
 
-        assertEquals(store.get(NODE_ID.getBytes()), entry);
+        assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -74,7 +73,7 @@ public class TestInMemoryStore
         assertTrue(store.put(entry));
         assertFalse(store.put(entryOf(SERVICE_LIST_1, 1)));
 
-        assertEquals(store.get(NODE_ID.getBytes()), entry);
+        assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -87,7 +86,7 @@ public class TestInMemoryStore
 
         assertTrue(store.delete(key, entry.getTimestamp()));
 
-        assertNull(store.get(key));
+        assertThat(store.get(key)).isNull();
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -98,7 +97,7 @@ public class TestInMemoryStore
 
         assertFalse(store.delete(key, 1));
 
-        assertNull(store.get(key));
+        assertThat(store.get(key)).isNull();
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -111,7 +110,7 @@ public class TestInMemoryStore
 
         assertFalse(store.delete(key, 2));
 
-        assertEquals(store.get(NODE_ID.getBytes()), entry);
+        assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -124,7 +123,7 @@ public class TestInMemoryStore
         Entry entry2 = entryOf(SERVICE_LIST_1, 2);
         assertTrue(store.put(entry2));
 
-        assertEquals(store.get(NODE_ID.getBytes()), entry2);
+        assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry2);
         verify(updateListener).notifyUpdate(entry1, entry2);
         verifyNoMoreInteractions(updateListener);
     }
@@ -139,7 +138,7 @@ public class TestInMemoryStore
         Entry entry2 = entryOf(SERVICE_LIST_1, 2);
         assertTrue(store.put(entry2));
 
-        assertEquals(store.get(NODE_ID.getBytes()), entry2);
+        assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry2);
     }
 
     @Test
@@ -151,7 +150,7 @@ public class TestInMemoryStore
         Entry entry1 = entryOf(SERVICE_LIST_2, 1);
         assertFalse(store.put(entry1));
 
-        assertEquals(store.get(NODE_ID.getBytes()), entry2);
+        assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry2);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -161,7 +160,7 @@ public class TestInMemoryStore
         Entry entry = entryOf(SERVICE_LIST_1, 1);
         store.put(entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null));
 
-        assertEquals(store.get(NODE_ID.getBytes()), entry);
+        assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry);
         verifyNoMoreInteractions(updateListener);
     }
 
@@ -174,7 +173,7 @@ public class TestInMemoryStore
         entry = entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null);
         store.put(entry);
 
-        assertEquals(store.get(NODE_ID.getBytes()), entry);
+        assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry);
         verifyNoMoreInteractions(updateListener);
     }
 

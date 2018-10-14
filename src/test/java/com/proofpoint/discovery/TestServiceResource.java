@@ -45,7 +45,6 @@ import java.net.URI;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static com.google.common.collect.ImmutableSet.of;
 import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
 import static com.proofpoint.http.client.JsonResponseHandler.createJsonResponseHandler;
 import static com.proofpoint.http.client.Request.Builder.prepareGet;
@@ -53,15 +52,14 @@ import static com.proofpoint.http.client.StatusResponseHandler.createStatusRespo
 import static com.proofpoint.jaxrs.JaxrsBinder.jaxrsBinder;
 import static com.proofpoint.jaxrs.JaxrsModule.explicitJaxrsModule;
 import static com.proofpoint.json.JsonCodec.mapJsonCodec;
-import static com.proofpoint.testing.Assertions.assertEqualsIgnoreOrder;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.testng.Assert.assertEquals;
 
 @SuppressWarnings("unchecked")
 public class TestServiceResource
@@ -94,15 +92,15 @@ public class TestServiceResource
         Id<Node> redNodeId = Id.random();
         DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.random() , "storage", ImmutableMap.of("key", "1"));
         DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.random(), "web", ImmutableMap.of("key", "2"));
-        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", of(redStorage, redWeb));
+        DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(redStorage, redWeb));
 
         Id<Node> greenNodeId = Id.random();
         DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "3"));
-        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", of(greenStorage));
+        DynamicAnnouncement green = new DynamicAnnouncement("testing", "alpha", "/x/y/z", ImmutableSet.of(greenStorage));
 
         Id<Node> blueNodeId = Id.random();
         DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "4"));
-        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", of(blueStorage));
+        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", ImmutableSet.of(blueStorage));
 
         dynamicStore.put(redNodeId, red);
         dynamicStore.put(greenNodeId, green);
@@ -159,18 +157,18 @@ public class TestServiceResource
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
-        assertEquals(actual.get("environment"), "testing");
-        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+        assertThat(actual.keySet()).containsExactly("environment", "services");
+        assertThat(actual.get("environment")).isEqualTo("testing");
+        assertThat((Iterable<Object>) actual.get("services")).containsExactlyInAnyOrder(
                 redStorageRepresentation,
                 greenStorageRepresentation,
                 blueStorageRepresentation
-        ));
+        );
 
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/web")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of(
                         redWebRepresentation
@@ -179,7 +177,7 @@ public class TestServiceResource
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/unknown")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of()));
 
@@ -196,17 +194,17 @@ public class TestServiceResource
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
-        assertEquals(actual.get("environment"), "testing");
-        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+        assertThat(actual.keySet()).containsExactly("environment", "services");
+        assertThat(actual.get("environment")).isEqualTo("testing");
+        assertThat((Iterable<Object>) actual.get("services")).containsExactlyInAnyOrder(
                 redStorageRepresentation,
                 greenStorageRepresentation
-        ));
+        );
 
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/beta")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of(
                         blueStorageRepresentation
@@ -215,7 +213,7 @@ public class TestServiceResource
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/unknown")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of()));
 
@@ -232,14 +230,14 @@ public class TestServiceResource
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
-        assertEquals(actual.get("environment"), "testing");
-        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+        assertThat(actual.keySet()).containsExactly("environment", "services");
+        assertThat(actual.get("environment")).isEqualTo("testing");
+        assertThat((Iterable<Object>) actual.get("services")).containsExactlyInAnyOrder(
                 redStorageRepresentation,
                 redWebRepresentation,
                 greenStorageRepresentation,
                 blueStorageRepresentation
-        ));
+        );
 
         verify(proxyStore).filterAndGetAll(any(Iterable.class));
         verifyNoMoreInteractions(proxyStore);
@@ -255,7 +253,7 @@ public class TestServiceResource
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of(
                         toServiceRepresentation(proxyStorageService)
@@ -264,7 +262,7 @@ public class TestServiceResource
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/web")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of()));
     }
@@ -279,7 +277,7 @@ public class TestServiceResource
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of(
                         toServiceRepresentation(proxyStorageService)
@@ -288,14 +286,14 @@ public class TestServiceResource
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/beta")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of()));
 
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/unknown")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of()));
     }
@@ -304,22 +302,22 @@ public class TestServiceResource
     public void testProxyGetAll()
     {
         final Service proxyStorageService = new Service(Id.random(), Id.random(), "storage", "alpha", "loc", ImmutableMap.of("key", "5"));
-        when(proxyStore.filterAndGetAll(any(Iterable.class))).thenAnswer(invocationOnMock -> Iterables.concat(of(proxyStorageService),
+        when(proxyStore.filterAndGetAll(any(Iterable.class))).thenAnswer(invocationOnMock -> Iterables.concat(ImmutableSet.of(proxyStorageService),
                 (Iterable<Service>) invocationOnMock.getArguments()[0]));
         when(configStore.getAll()).thenAnswer((Answer<Stream<Service>>) invocation -> Stream.of());
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
-        assertEquals(actual.get("environment"), "testing");
-        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+        assertThat(actual.keySet()).containsExactly("environment", "services");
+        assertThat(actual.get("environment")).isEqualTo("testing");
+        assertThat((Iterable<Object>) actual.get("services")).containsExactlyInAnyOrder(
                 toServiceRepresentation(proxyStorageService),
                 redStorageRepresentation,
                 redWebRepresentation,
                 greenStorageRepresentation,
                 blueStorageRepresentation
-        ));
+        );
     }
 
     @Test
@@ -332,19 +330,19 @@ public class TestServiceResource
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
-        assertEquals(actual.get("environment"), "testing");
-        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+        assertThat(actual.keySet()).containsExactly("environment", "services");
+        assertThat(actual.get("environment")).isEqualTo("testing");
+        assertThat((Iterable<Object>) actual.get("services")).containsExactlyInAnyOrder(
                 toServiceRepresentation(configStorageService),
                 redStorageRepresentation,
                 greenStorageRepresentation,
                 blueStorageRepresentation
-        ));
+        );
 
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/web")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of(
                         redWebRepresentation
@@ -361,18 +359,18 @@ public class TestServiceResource
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
-        assertEquals(actual.get("environment"), "testing");
-        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+        assertThat(actual.keySet()).containsExactly("environment", "services");
+        assertThat(actual.get("environment")).isEqualTo("testing");
+        assertThat((Iterable<Object>) actual.get("services")).containsExactlyInAnyOrder(
                 toServiceRepresentation(configStorageService),
                 redStorageRepresentation,
                 greenStorageRepresentation
-        ));
+        );
 
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/beta")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of(
                         blueStorageRepresentation
@@ -381,7 +379,7 @@ public class TestServiceResource
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/unknown")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual, ImmutableMap.of(
+        assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
                 "services", ImmutableList.of()));
     }
@@ -396,15 +394,15 @@ public class TestServiceResource
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertEquals(actual.keySet(), ImmutableSet.of("environment", "services"));
-        assertEquals(actual.get("environment"), "testing");
-        assertEqualsIgnoreOrder((Iterable<?>) actual.get("services"), ImmutableSet.of(
+        assertThat(actual.keySet()).containsExactly("environment", "services");
+        assertThat(actual.get("environment")).isEqualTo("testing");
+        assertThat((Iterable<Object>) actual.get("services")).containsExactlyInAnyOrder(
                 toServiceRepresentation(proxyStorageService),
                 redStorageRepresentation,
                 redWebRepresentation,
                 greenStorageRepresentation,
                 blueStorageRepresentation
-        ));
+        );
     }
 
     @Test
@@ -415,7 +413,7 @@ public class TestServiceResource
         StatusResponse response = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage")).build(),
                 createStatusResponseHandler());
-        assertEquals(response.getStatusCode(), 503);
+        assertThat(response.getStatusCode()).isEqualTo(503);
     }
 
     @Test
@@ -426,7 +424,7 @@ public class TestServiceResource
         StatusResponse response = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
                 createStatusResponseHandler());
-        assertEquals(response.getStatusCode(), 503);
+        assertThat(response.getStatusCode()).isEqualTo(503);
     }
 
     @Test
@@ -437,7 +435,7 @@ public class TestServiceResource
         StatusResponse response = client.execute(
                 prepareGet().setUri(uriFor("/v1/service")).build(),
                 createStatusResponseHandler());
-        assertEquals(response.getStatusCode(), 503);
+        assertThat(response.getStatusCode()).isEqualTo(503);
     }
 
     private static Map<String, Object> toServiceRepresentation(Id<Node> nodeId, DynamicAnnouncement dynamicAnnouncement, DynamicServiceAnnouncement dynamicServiceAnnouncement)

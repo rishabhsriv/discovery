@@ -33,7 +33,7 @@ import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static com.proofpoint.json.testing.JsonTester.assertJsonEncode;
 import static com.proofpoint.json.testing.JsonTester.decodeJson;
 import static com.proofpoint.testing.ValidationAssertions.assertValidates;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestEntry
 {
@@ -89,8 +89,8 @@ public class TestEntry
     @Test
     public void testJsonDecode()
     {
-        assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), ENTRY);
-        assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), ENTRY_2);
+        assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(ENTRY);
+        assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(ENTRY_2);
     }
 
     @Test
@@ -98,8 +98,8 @@ public class TestEntry
     {
         jsonStructure.remove("value");
         jsonStructure.remove("maxAgeInMs");
-        assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), TOMBSTONE_ENTRY);
-        assertEquals(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure)), TOMBSTONE_ENTRY_2);
+        assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(TOMBSTONE_ENTRY);
+        assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(TOMBSTONE_ENTRY_2);
     }
 
     @Test

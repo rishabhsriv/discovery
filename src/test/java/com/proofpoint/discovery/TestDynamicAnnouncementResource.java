@@ -24,10 +24,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestDynamicAnnouncementResource
 {
@@ -52,18 +53,18 @@ public class TestDynamicAnnouncementResource
         Id<Node> nodeId = Id.random();
         Response response = resource.put(nodeId, announcement);
 
-        assertNotNull(response);
-        assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(ACCEPTED.getStatusCode());
 
-        assertEquals(store.getAll().count(), 1);
+        assertThat(store.getAll()).hasSize(1);
         Service service = store.getAll().iterator().next();
 
-        assertNotNull(service.getId());
-        assertEquals(service.getNodeId(), nodeId);
-        assertEquals(service.getLocation(), announcement.getLocation());
-        assertEquals(service.getType(), serviceAnnouncement.getType());
-        assertEquals(service.getPool(), announcement.getPool());
-        assertEquals(service.getProperties(), serviceAnnouncement.getProperties());
+        assertThat(service.getId()).isNotNull();
+        assertThat(service.getNodeId()).isEqualTo(nodeId);
+        assertThat(service.getLocation()).isEqualTo(announcement.getLocation());
+        assertThat(service.getType()).isEqualTo(serviceAnnouncement.getType());
+        assertThat(service.getPool()).isEqualTo(announcement.getPool());
+        assertThat(service.getProperties()).isEqualTo(serviceAnnouncement.getProperties());
     }
 
     @Test
@@ -83,18 +84,18 @@ public class TestDynamicAnnouncementResource
 
         Response response = resource.put(nodeId, announcement);
 
-        assertNotNull(response);
-        assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(ACCEPTED.getStatusCode());
 
-        assertEquals(store.getAll().count(), 1);
+        assertThat(store.getAll()).hasSize(1);
         Service service = store.getAll().iterator().next();
 
-        assertNotNull(service.getId());
-        assertEquals(service.getNodeId(), nodeId);
-        assertEquals(service.getLocation(), announcement.getLocation());
-        assertEquals(service.getType(), serviceAnnouncement.getType());
-        assertEquals(service.getPool(), announcement.getPool());
-        assertEquals(service.getProperties(), serviceAnnouncement.getProperties());
+        assertThat(service.getId()).isNotNull();
+        assertThat(service.getNodeId()).isEqualTo(nodeId);
+        assertThat(service.getLocation()).isEqualTo(announcement.getLocation());
+        assertThat(service.getType()).isEqualTo(serviceAnnouncement.getType());
+        assertThat(service.getPool()).isEqualTo(announcement.getPool());
+        assertThat(service.getProperties()).isEqualTo(serviceAnnouncement.getProperties());
     }
 
     @Test
@@ -107,10 +108,10 @@ public class TestDynamicAnnouncementResource
         Id<Node> nodeId = Id.random();
         Response response = resource.put(nodeId, announcement);
 
-        assertNotNull(response);
-        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(BAD_REQUEST.getStatusCode());
 
-        assertEquals(store.getAll().count(), 0);
+        assertThat(store.getAll()).isEmpty();
     }
 
     @Test
@@ -126,10 +127,10 @@ public class TestDynamicAnnouncementResource
         Id<Node> nodeId = Id.random();
         Response response = resource.put(nodeId, announcement);
 
-        assertNotNull(response);
-        assertEquals(response.getStatus(), Status.FORBIDDEN.getStatusCode());
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(FORBIDDEN.getStatusCode());
 
-        assertEquals(store.getAll().count(), 0);
+        assertThat(store.getAll()).isEmpty();
     }
 
     @Test
@@ -151,15 +152,15 @@ public class TestDynamicAnnouncementResource
 
         resource.delete(blueNodeId);
 
-        assertEquals(store.getAll().count(), 1);
+        assertThat(store.getAll()).hasSize(1);
         Service service = store.getAll().iterator().next();
 
-        assertNotNull(service.getId());
-        assertEquals(service.getNodeId(), redNodeId);
-        assertEquals(service.getLocation(), red.getLocation());
-        assertEquals(service.getType(), serviceAnnouncement.getType());
-        assertEquals(service.getPool(), red.getPool());
-        assertEquals(service.getProperties(), serviceAnnouncement.getProperties());
+        assertThat(service.getId()).isNotNull();
+        assertThat(service.getNodeId()).isEqualTo(redNodeId);
+        assertThat(service.getLocation()).isEqualTo(red.getLocation());
+        assertThat(service.getType()).isEqualTo(serviceAnnouncement.getType());
+        assertThat(service.getPool()).isEqualTo(red.getPool());
+        assertThat(service.getProperties()).isEqualTo(serviceAnnouncement.getProperties());
     }
 
     @Test
@@ -167,7 +168,7 @@ public class TestDynamicAnnouncementResource
     {
         resource.delete(Id.random());
 
-        assertEquals(store.getAll().count(), 0);
+        assertThat(store.getAll()).isEmpty();
     }
 
     @Test
@@ -180,12 +181,12 @@ public class TestDynamicAnnouncementResource
         Id<Node> nodeId = Id.random();
         Response response = resource.put(nodeId, announcement);
 
-        assertNotNull(response);
-        assertEquals(response.getStatus(), Response.Status.ACCEPTED.getStatusCode());
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(ACCEPTED.getStatusCode());
 
-        assertEquals(store.getAll().count(), 1);
+        assertThat(store.getAll()).hasSize(1);
         Service service = store.getAll().iterator().next();
-        assertEquals(service.getId(), service.getId());
-        assertNotNull(service.getLocation());
+        assertThat(service.getId()).isEqualTo(service.getId());
+        assertThat(service.getLocation()).isNotNull();
     }
 }

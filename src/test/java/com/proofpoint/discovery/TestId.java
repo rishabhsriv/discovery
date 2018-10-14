@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 import java.util.Map;
 
 import static com.proofpoint.json.JsonCodec.jsonCodec;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestId
 {
@@ -35,7 +35,7 @@ public class TestId
 
         String json = jsonCodec(Holder.class).toJson(holder);
 
-        assertEquals(jsonCodec(Object.class).fromJson(json), expected);
+        assertThat(jsonCodec(Object.class).fromJson(json)).isEqualTo(expected);
     }
 
     @Test
@@ -46,7 +46,7 @@ public class TestId
         Map<String, String> map = ImmutableMap.of("id", id.toString());
         String json = jsonCodec(Object.class).toJson(map);
 
-        assertEquals(jsonCodec(Holder.class).fromJson(json).getId(), id);
+        assertThat(jsonCodec(Holder.class).fromJson(json).getId()).isEqualTo(id);
     }
 
     public static class Holder

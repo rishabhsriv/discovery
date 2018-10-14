@@ -24,10 +24,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.proofpoint.testing.Assertions.assertNotEquals;
 import static com.proofpoint.testing.EquivalenceTester.equivalenceTester;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestService
 {
@@ -53,9 +52,9 @@ public class TestService
         properties.put("key", "value");
         Service service = new Service(Id.random(), Id.random(), "type", "pool", "/location", properties);
 
-        assertEquals(service.getProperties(), properties);
+        assertThat(service.getProperties()).isEqualTo(properties);
         properties.put("key2", "value2");
-        assertNotEquals(service.getProperties(), properties);
+        assertThat(service.getProperties()).isNotEqualTo(properties);
     }
 
     @Test
@@ -67,7 +66,7 @@ public class TestService
             service.getProperties().put("key2", "value2");
 
             // a copy of the internal map is acceptable
-            assertEquals(service.getProperties(), ImmutableMap.of("key", "value"));
+            assertThat(service.getProperties()).isEqualTo(ImmutableMap.of("key", "value"));
         }
         catch (UnsupportedOperationException e) {
             // an exception is ok, too
@@ -87,7 +86,7 @@ public class TestService
         Object parsed = codec.fromJson(json);
         Object expected = codec.fromJson(Resources.toString(Resources.getResource("service.json"), UTF_8));
 
-        assertEquals(parsed, expected);
+        assertThat(parsed).isEqualTo(expected);
     }
 
     @Test
@@ -99,7 +98,7 @@ public class TestService
 
         Service expected = new Service(Id.valueOf("c0c5be5f-b298-4cfa-922a-3e5954208444"), Id.valueOf("3ff52f57-04e0-46c3-b606-7497b09dd5c7"), "type", "pool", "/location", ImmutableMap.of("key", "value"));
 
-        assertEquals(parsed, expected);
+        assertThat(parsed).isEqualTo(expected);
     }
 
     @SuppressWarnings("ResultOfObjectAllocationIgnored")

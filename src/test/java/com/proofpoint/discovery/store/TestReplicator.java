@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestReplicator
 {
@@ -92,7 +92,7 @@ public class TestReplicator
 
         replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
 
-        assertEquals(inMemoryStore.getAll(), ImmutableList.of(TESTING_ENTRY));
+        assertThat(inMemoryStore.getAll()).containsExactly(TESTING_ENTRY);
     }
 
     @Test
@@ -102,12 +102,12 @@ public class TestReplicator
         replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
 
         executor.elapseTimeNanosecondBefore(1, SECONDS);
-        assertEquals(inMemoryStore.getAll(), ImmutableList.of());
+        assertThat(inMemoryStore.getAll()).isEmpty();
 
         serverStore.put(TESTING_ENTRY);
 
         executor.elapseTime(1, NANOSECONDS);
-        assertEquals(inMemoryStore.getAll(), ImmutableList.of(TESTING_ENTRY));
+        assertThat(inMemoryStore.getAll()).containsExactly(TESTING_ENTRY);
     }
 
     @Test
@@ -117,13 +117,13 @@ public class TestReplicator
         replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
 
         executor.elapseTimeNanosecondBefore(1, SECONDS);
-        assertEquals(inMemoryStore.getAll(), ImmutableList.of());
+        assertThat(inMemoryStore.getAll()).isEmpty();
 
         server.setServerInSelector(true);
         serverStore.put(TESTING_ENTRY);
 
         executor.elapseTime(1, NANOSECONDS);
-        assertEquals(inMemoryStore.getAll(), ImmutableList.of(TESTING_ENTRY));
+        assertThat(inMemoryStore.getAll()).containsExactly(TESTING_ENTRY);
     }
 
     @Test
@@ -132,13 +132,13 @@ public class TestReplicator
         replicator = createReplicator(new StoreConfig().setReplicationInterval(new Duration(1, SECONDS)));
 
         executor.elapseTimeNanosecondBefore(1, SECONDS);
-        assertEquals(inMemoryStore.getAll(), ImmutableList.of());
+        assertThat(inMemoryStore.getAll()).isEmpty();
 
         server.setServerInSelector(false);
         serverStore.put(TESTING_ENTRY);
 
         executor.elapseTime(1, NANOSECONDS);
-        assertEquals(inMemoryStore.getAll(), ImmutableList.of());
+        assertThat(inMemoryStore.getAll()).isEmpty();
     }
 
     private Replicator createReplicator(StoreConfig storeConfig)
