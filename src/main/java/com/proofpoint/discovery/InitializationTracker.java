@@ -1,12 +1,11 @@
 package com.proofpoint.discovery;
 
-import org.eclipse.jetty.util.ConcurrentHashSet;
-
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InitializationTracker
 {
-    private final Set<CompletionNotifier> notifiers = new ConcurrentHashSet<>();
+    private final Set<CompletionNotifier> notifiers = ConcurrentHashMap.newKeySet();
 
     public boolean isPending()
     {
