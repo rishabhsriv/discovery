@@ -9,7 +9,7 @@
             "location": "/localhost",
             "state": "RUNNING",
             "properties": {
-                "http": "http://localhost:8411"
+                "http": "http://localhost:4111"
             }
         },
         {
