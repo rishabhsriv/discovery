@@ -80,7 +80,7 @@ public class TestDiscoveryConfig
     {
         DiscoveryConfig config = new DiscoveryConfig().setMaxAge(null);
 
-        assertFailsValidation(config, "maxAge", "may not be null", NotNull.class);
+        assertFailsValidation(config, "maxAge", "must not be null", NotNull.class);
     }
 
     @Test

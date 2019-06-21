@@ -62,7 +62,7 @@ public class TestConfigStoreConfig
     @Test
     public void testRequiredConfigAbsent()
     {
-        assertFailsValidation(new StaticAnnouncementConfig(), "type", "may not be null", NotNull.class);
-        assertFailsValidation(new StaticAnnouncementConfig(), "properties", "may not be null", NotNull.class);
+        assertFailsValidation(new StaticAnnouncementConfig(), "type", "must not be null", NotNull.class);
+        assertFailsValidation(new StaticAnnouncementConfig(), "properties", "must not be null", NotNull.class);
     }
 }

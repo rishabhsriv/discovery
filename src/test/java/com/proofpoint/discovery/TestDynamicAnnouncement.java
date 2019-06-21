@@ -36,7 +36,7 @@ public class TestDynamicAnnouncement
     public void testRejectsNullEnvironment()
     {
         DynamicAnnouncement announcement = new DynamicAnnouncement(null, "pool", "/location", Collections.emptySet());
-        assertFailsValidation(announcement, "environment", "may not be null", NotNull.class);
+        assertFailsValidation(announcement, "environment", "must not be null", NotNull.class);
     }
 
     @Test
@@ -51,14 +51,14 @@ public class TestDynamicAnnouncement
     public void testRejectsNullPool()
     {
         DynamicAnnouncement announcement = new DynamicAnnouncement("testing", null, "/location", Collections.emptySet());
-        assertFailsValidation(announcement, "pool", "may not be null", NotNull.class);
+        assertFailsValidation(announcement, "pool", "must not be null", NotNull.class);
     }
 
     @Test
     public void testRejectsNullServiceAnnouncements()
     {
         DynamicAnnouncement announcement = new DynamicAnnouncement("testing", "pool", "/location", null);
-        assertFailsValidation(announcement, "serviceAnnouncements", "may not be null", NotNull.class);
+        assertFailsValidation(announcement, "serviceAnnouncements", "must not be null", NotNull.class);
     }
 
     @Test
@@ -68,7 +68,7 @@ public class TestDynamicAnnouncement
                 new DynamicServiceAnnouncement(null, "type", Collections.emptyMap()))
         );
 
-        assertFailsValidation(announcement, "serviceAnnouncements[].id", "may not be null", NotNull.class);
+        assertFailsValidation(announcement, "serviceAnnouncements[].id", "must not be null", NotNull.class);
     }
 
     @Test
