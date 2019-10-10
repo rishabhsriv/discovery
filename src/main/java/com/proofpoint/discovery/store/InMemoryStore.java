@@ -54,7 +54,8 @@ public class InMemoryStore
             entry = entry(entry.getKey(),
                     entry.getValue(),
                     entry.getTimestamp(),
-                    maxAgeInMs);
+                    maxAgeInMs,
+                    entry.getAnnouncer());
         }
 
         ByteBuffer key = ByteBuffer.wrap(entry.getKey());
@@ -121,7 +122,8 @@ public class InMemoryStore
         }
     }
 
-    private static boolean isNewer(Entry entry, long timestamp) {
+    private static boolean isNewer(Entry entry, long timestamp)
+    {
         return (entry.getTimestamp() > timestamp);
     }
 }

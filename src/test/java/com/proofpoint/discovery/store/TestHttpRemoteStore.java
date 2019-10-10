@@ -47,26 +47,29 @@ public class TestHttpRemoteStore
 {
     private static final Id<Node> NODE_ID = Id.random();
     private static final Id<Node> TOMBSTONE_ID = Id.random();
-    private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID,"type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
-    private static final Service TESTING_GENERAL_SERVICE_1 = new Service(TESTING_SERVICE_1.getId(), NODE_ID,"type1", "general", "/test-location", TESTING_SERVICE_1.getProperties());
-    private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID,"type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
-    private static final Service TESTING_GENERAL_SERVICE_2 = new Service(TESTING_SERVICE_2.getId(), NODE_ID,"type2", "general", "/test-location", TESTING_SERVICE_2.getProperties());
+    private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID, "type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
+    private static final Service TESTING_GENERAL_SERVICE_1 = new Service(TESTING_SERVICE_1.getId(), NODE_ID, "type1", "general", "/test-location", TESTING_SERVICE_1.getProperties());
+    private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID, "type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
+    private static final Service TESTING_GENERAL_SERVICE_2 = new Service(TESTING_SERVICE_2.getId(), NODE_ID, "type2", "general", "/test-location", TESTING_SERVICE_2.getProperties());
     private static final Entry TESTING_ENTRY = entry(
             NODE_ID.getBytes(),
             ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2),
             System.currentTimeMillis(),
-            2_000_000L
+            2_000_000L,
+            "127.0.0.1"
     );
     private static final Entry TESTING_GENERAL_ENTRY = entry(
             NODE_ID.getBytes(),
             ImmutableList.of(TESTING_GENERAL_SERVICE_1, TESTING_GENERAL_SERVICE_2),
             TESTING_ENTRY.getTimestamp(),
-            2_000_000L
+            2_000_000L,
+            "127.0.0.1"
     );
     private static final Entry TESTING_TOMBSTONE = entry(
             TOMBSTONE_ID.getBytes(),
             (List<Service>) null,
             System.currentTimeMillis(),
+            null,
             null
     );
 

@@ -18,11 +18,13 @@ package com.proofpoint.discovery;
 import com.google.inject.Inject;
 import com.proofpoint.node.NodeInfo;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,9 +41,11 @@ public class ServiceResource
     private final NodeInfo node;
     private final InitializationTracker initializationTracker;
     private final String generalPoolMapTarget;
+    private final AuthManager authManager;
 
     @Inject
-    public ServiceResource(DynamicStore dynamicStore, ConfigStore configStore, ProxyStore proxyStore, NodeInfo node, InitializationTracker initializationTracker, DiscoveryConfig discoveryConfig)
+    public ServiceResource(DynamicStore dynamicStore, ConfigStore configStore, ProxyStore proxyStore, NodeInfo node,
+            InitializationTracker initializationTracker, DiscoveryConfig discoveryConfig, AuthManager authManager)
     {
         this.dynamicStore = dynamicStore;
         this.configStore = configStore;
@@ -49,14 +53,16 @@ public class ServiceResource
         this.node = node;
         this.initializationTracker = initializationTracker;
         generalPoolMapTarget = discoveryConfig.getGeneralPoolMapTarget();
+        this.authManager = authManager;
     }
 
     @GET
     @Path("{type}/{pool}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Services getServices(@PathParam("type") String type, @PathParam("pool") String pool)
+    public Services getServices(@PathParam("type") String type, @PathParam("pool") String pool, @Context HttpServletRequest request)
     {
         ensureInitialized();
+        authManager.checkAuthRead(request);
         if ("general".equals(pool)) {
             pool = generalPoolMapTarget;
         }
@@ -67,18 +73,20 @@ public class ServiceResource
     @GET
     @Path("{type}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Services getTypeServices(@PathParam("type") String type)
+    public Services getTypeServices(@PathParam("type") String type, @Context HttpServletRequest request)
     {
         ensureInitialized();
+        authManager.checkAuthRead(request);
         return services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
                 Stream.concat(configStore.get(type), dynamicStore.get(type))));
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Services getAllServices()
+    public Services getAllServices(@Context HttpServletRequest request)
     {
         ensureInitialized();
+        authManager.checkAuthRead(request);
         Iterable<Service> services = Stream.concat(configStore.getAll(), dynamicStore.getAll()).collect(Collectors.toList());
         return services(node.getEnvironment(), proxyStore.filterAndGetAll(services));
     }

@@ -64,6 +64,13 @@ public class DiscoveryServerModule
             httpClientBinder(binder).bindBalancingHttpClient("discovery.proxy", ForProxyStore.class, discoveryConfig.getProxyUris());
         }
         binder.bind(ProxyStore.class).in(Scopes.SINGLETON);
+
+        if (discoveryConfig.isEnforceHostIpMapping()) {
+            binder.bind(AuthManager.class).to(IpHostnameAuthManager.class).in(Scopes.SINGLETON);
+        }
+        else {
+            binder.bind(AuthManager.class).to(AllowAllAuthManager.class).in(Scopes.SINGLETON);
+        }
     }
 
     @Singleton

@@ -57,18 +57,21 @@ public class TestReplicator
             NODE_ID.getBytes(),
             ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2),
             System.currentTimeMillis(),
-            20_000L
+            20_000L,
+            "127.0.0.1"
     );
     private static final Entry TESTING_GENERAL_ENTRY = entry(
             NODE_ID.getBytes(),
             ImmutableList.of(TESTING_GENERAL_SERVICE_1, TESTING_GENERAL_SERVICE_2),
             TESTING_ENTRY.getTimestamp(),
-            20_000L
+            20_000L,
+            "127.0.0.1"
     );
     private static final Entry TESTING_TOMBSTONE = entry(
             TOMBSTONE_ID.getBytes(),
             (List<Service>) null,
             System.currentTimeMillis(),
+            null,
             null
     );
 

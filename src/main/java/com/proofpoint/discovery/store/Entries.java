@@ -18,7 +18,6 @@ package com.proofpoint.discovery.store;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.proofpoint.discovery.Service;
-import com.proofpoint.json.JsonCodec;
 
 import java.util.List;
 
@@ -44,7 +43,7 @@ class Entries
                 builder.add(service);
             }
             if (transformed) {
-                entry = entry(entry.getKey(), builder.build(), entry.getTimestamp(), entry.getMaxAgeInMs());
+                entry = entry(entry.getKey(), builder.build(), entry.getTimestamp(), entry.getMaxAgeInMs(), entry.getAnnouncer());
             }
         }
         return entry;

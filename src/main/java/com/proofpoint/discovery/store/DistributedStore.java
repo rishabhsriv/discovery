@@ -50,7 +50,7 @@ import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
  * A simple, eventually consistent, fully replicated, distributed key-value store.
  */
 public class DistributedStore
-    implements DynamicStore
+        implements DynamicStore
 {
     private final String name;
     private final InMemoryStore localStore;
@@ -154,7 +154,7 @@ public class DistributedStore
         List<Service> services = announcement.getServiceAnnouncements().stream()
                 .map(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
                 .collect(Collectors.toList());
-        Entry entry = entry(nodeId.getBytes(), services, now, maxAge.toMillis());
+        Entry entry = entry(nodeId.getBytes(), services, now, maxAge.toMillis(), announcement.getAnnouncer());
 
         localStore.put(entry);
         remoteStore.put(entry);
@@ -167,7 +167,7 @@ public class DistributedStore
 
         long now = timeSupplier.get().toEpochMilli();
 
-        Entry entry = entry(nodeId.getBytes(), (List<Service>) null, now, null);
+        Entry entry = entry(nodeId.getBytes(), (List<Service>) null, now, null, null);
 
         localStore.put(entry);
         remoteStore.put(entry);
@@ -185,6 +185,12 @@ public class DistributedStore
     {
         return getAll()
                 .filter(matchesType(type).and(matchesPool(pool)));
+    }
+
+    @Override
+    public Entry get(Id<Node> nodeId)
+    {
+        return localStore.get(nodeId.getBytes());
     }
 
     @Override

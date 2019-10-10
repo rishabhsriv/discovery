@@ -19,11 +19,13 @@ import com.google.common.base.Joiner;
 import com.proofpoint.node.NodeInfo;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.HashSet;
@@ -42,20 +44,23 @@ public class DynamicAnnouncementResource
     private final DynamicStore dynamicStore;
     private final String generalPoolMapTarget;
     private final Set<String> proxyTypes;
+    private final AuthManager authManager;
 
     @Inject
-    public DynamicAnnouncementResource(DynamicStore dynamicStore, NodeInfo nodeInfo, DiscoveryConfig discoveryConfig)
+    public DynamicAnnouncementResource(DynamicStore dynamicStore, NodeInfo nodeInfo, DiscoveryConfig discoveryConfig, AuthManager authManager)
     {
         this.dynamicStore = dynamicStore;
         this.nodeInfo = nodeInfo;
         generalPoolMapTarget = discoveryConfig.getGeneralPoolMapTarget();
         proxyTypes = discoveryConfig.getProxyProxiedTypes();
+        this.authManager = authManager;
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response put(@PathParam("node_id") Id<Node> nodeId, DynamicAnnouncement announcement)
+    public Response put(@PathParam("node_id") Id<Node> nodeId, DynamicAnnouncement announcement, @Context HttpServletRequest request)
     {
+        authManager.checkAuthAnnounce(nodeId, announcement, request);
         if (!nodeInfo.getEnvironment().equals(announcement.getEnvironment())) {
             return Response.status(BAD_REQUEST)
                     .entity(format("Environment mismatch. Expected: %s, Provided: %s", nodeInfo.getEnvironment(), announcement.getEnvironment()))
@@ -87,6 +92,7 @@ public class DynamicAnnouncementResource
         DynamicAnnouncement announcementWithLocation = DynamicAnnouncement.copyOf(announcement)
                 .setLocation(location)
                 .setPool(pool)
+                .setAnnouncer(request.getRemoteAddr())
                 .build();
 
         dynamicStore.put(nodeId, announcementWithLocation);
@@ -95,8 +101,9 @@ public class DynamicAnnouncementResource
     }
 
     @DELETE
-    public void delete(@PathParam("node_id") Id<Node> nodeId)
+    public void delete(@PathParam("node_id") Id<Node> nodeId, @Context HttpServletRequest request)
     {
+        authManager.checkAuthDelete(nodeId, request);
         dynamicStore.delete(nodeId);
     }
 }

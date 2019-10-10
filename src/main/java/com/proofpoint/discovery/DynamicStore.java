@@ -15,6 +15,8 @@
  */
 package com.proofpoint.discovery;
 
+import com.proofpoint.discovery.store.Entry;
+
 import java.util.stream.Stream;
 
 public interface DynamicStore
@@ -25,4 +27,6 @@ public interface DynamicStore
     Stream<Service> getAll();
     Stream<Service> get(String type);
     Stream<Service> get(String type, String pool);
+
+    Entry get(Id<Node> nodeId);
 }

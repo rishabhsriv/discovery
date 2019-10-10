@@ -31,6 +31,7 @@ public class DynamicAnnouncement
     private final String location;
     private final String pool;
     private final Set<DynamicServiceAnnouncement> services;
+    private final String announcer;
 
     @JsonCreator
     public DynamicAnnouncement(
@@ -49,6 +50,27 @@ public class DynamicAnnouncement
         else {
             this.services = null;
         }
+        this.announcer = null;
+    }
+
+    private DynamicAnnouncement(
+            String environment,
+            String pool,
+            String location,
+            Set<DynamicServiceAnnouncement> services,
+            String announcer)
+    {
+        this.environment = environment;
+        this.location = location;
+        this.pool = pool;
+
+        if (services != null) {
+            this.services = ImmutableSet.copyOf(services);
+        }
+        else {
+            this.services = null;
+        }
+        this.announcer = announcer;
     }
 
     @NotNull
@@ -73,6 +95,11 @@ public class DynamicAnnouncement
     public Set<DynamicServiceAnnouncement> getServiceAnnouncements()
     {
         return services;
+    }
+
+    public String getAnnouncer()
+    {
+        return announcer;
     }
 
     @Override
@@ -135,6 +162,7 @@ public class DynamicAnnouncement
         private String location;
         private String pool;
         private Set<DynamicServiceAnnouncement> services;
+        private String announcer;
 
         public Builder copyOf(DynamicAnnouncement announcement)
         {
@@ -158,9 +186,15 @@ public class DynamicAnnouncement
             return this;
         }
 
+        public Builder setAnnouncer(String announcer)
+        {
+            this.announcer = announcer;
+            return this;
+        }
+
         public DynamicAnnouncement build()
         {
-            return new DynamicAnnouncement(environment, pool, location, services);
+            return new DynamicAnnouncement(environment, pool, location, services, announcer);
         }
     }
 }

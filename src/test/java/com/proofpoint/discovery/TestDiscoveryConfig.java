@@ -42,7 +42,8 @@ public class TestDiscoveryConfig
                 .setGeneralPoolLegacyReplicationMode(ReplicationMode.PHASE_ONE)
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of())
                 .setProxyEnvironment(null)
-                .setProxyUris(DiscoveryConfig.UriSet.of()));
+                .setProxyUris(DiscoveryConfig.UriSet.of())
+                .setEnforceHostIpMapping(false));
     }
 
     @Test
@@ -55,6 +56,7 @@ public class TestDiscoveryConfig
                 .put("discovery.proxy.proxied-types", "foo  ,  bar")
                 .put("discovery.proxy.environment", "pre-release")
                 .put("discovery.proxy.uri", "http://10.20.30.40:4111,http://50.60.70.80:9125")
+                .put("discovery.enforce-host-ip-mapping", "true")
                 .build();
 
         DiscoveryConfig expected = new DiscoveryConfig()
@@ -63,7 +65,8 @@ public class TestDiscoveryConfig
                 .setGeneralPoolLegacyReplicationMode(ReplicationMode.PHASE_TWO)
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of("foo", "bar"))
                 .setProxyEnvironment("pre-release")
-                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://10.20.30.40:4111"), URI.create("http://50.60.70.80:9125")));
+                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://10.20.30.40:4111"), URI.create("http://50.60.70.80:9125")))
+                .setEnforceHostIpMapping(true);
 
         ConfigAssertions.assertFullMapping(properties, expected);
     }

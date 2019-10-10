@@ -92,7 +92,7 @@ public class TestServiceResource
 
         dynamicStore = new InMemoryDynamicStore(new DiscoveryConfig(), new TestingTimeSupplier());
         Id<Node> redNodeId = Id.random();
-        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.random() , "storage", ImmutableMap.of("key", "1"));
+        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "1"));
         DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.random(), "web", ImmutableMap.of("key", "2"));
         DynamicAnnouncement red = new DynamicAnnouncement("testing", "alpha", "/a/b/c", ImmutableSet.of(redStorage, redWeb));
 
@@ -113,7 +113,8 @@ public class TestServiceResource
         greenStorageRepresentation = toServiceRepresentation(greenNodeId, green, greenStorage);
         blueStorageRepresentation = toServiceRepresentation(blueNodeId, blue, blueStorage);
 
-        ServiceResource resource = new ServiceResource(dynamicStore, configStore, proxyStore, new NodeInfo("testing"), initializationTracker, new DiscoveryConfig().setGeneralPoolMapTarget("SNV"));
+        ServiceResource resource = new ServiceResource(dynamicStore, configStore, proxyStore, new NodeInfo("testing"),
+                initializationTracker, new DiscoveryConfig().setGeneralPoolMapTarget("SNV"), new AllowAllAuthManager());
 
         Bootstrap app = bootstrapApplication("test-application")
                 .doNotInitializeLogging()

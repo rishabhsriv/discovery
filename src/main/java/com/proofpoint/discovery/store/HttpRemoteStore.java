@@ -218,7 +218,7 @@ class HttpRemoteStore
                             return service;
                         })
                         .collect(toImmutableList());
-                entry = entry(entry.getKey(), services, entry.getTimestamp(), entry.getMaxAgeInMs());
+                entry = entry(entry.getKey(), services, entry.getTimestamp(), entry.getMaxAgeInMs(), entry.getAnnouncer());
             }
         }
         for (BatchProcessor<Entry> processor : processors.values()) {

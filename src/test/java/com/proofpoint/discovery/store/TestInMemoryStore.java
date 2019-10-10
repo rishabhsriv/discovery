@@ -158,7 +158,7 @@ public class TestInMemoryStore
     public void testDefaultsMaxAge()
     {
         Entry entry = entryOf(SERVICE_LIST_1, 1);
-        store.put(entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null));
+        store.put(entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null, "127.0.0.1"));
 
         assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry);
         verifyNoMoreInteractions(updateListener);
@@ -170,7 +170,7 @@ public class TestInMemoryStore
         store = new InMemoryStore();
 
         Entry entry = entryOf(SERVICE_LIST_1, 1);
-        entry = entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null);
+        entry = entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), null, "127.0.0.1");
         store.put(entry);
 
         assertThat(store.get(NODE_ID.getBytes())).isEqualTo(entry);
@@ -179,6 +179,6 @@ public class TestInMemoryStore
 
     private static Entry entryOf(List<Service> value, long timestamp)
     {
-        return entry(NODE_ID.getBytes(), value, timestamp, 60_000L);
+        return entry(NODE_ID.getBytes(), value, timestamp, 60_000L, "127.0.0.1");
     }
 }

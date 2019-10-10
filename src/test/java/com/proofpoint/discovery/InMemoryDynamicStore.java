@@ -16,11 +16,13 @@
 package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableSet;
+import com.proofpoint.discovery.store.Entry;
 import com.proofpoint.units.Duration;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -38,7 +40,7 @@ import static java.util.Objects.requireNonNull;
 public class InMemoryDynamicStore
         implements DynamicStore
 {
-    private final Map<Id<Node>, Entry> descriptors = new HashMap<>();
+    private final Map<Id<Node>, LocalEntry> descriptors = new HashMap<>();
     private final Duration maxAge;
     private final Supplier<Instant> currentTime;
 
@@ -60,7 +62,7 @@ public class InMemoryDynamicStore
                 .collect(toImmutableSet());
 
         Instant expiration = currentTime.get().plusMillis((int) maxAge.toMillis());
-        descriptors.put(nodeId, new Entry(expiration, services));
+        descriptors.put(nodeId, new LocalEntry(expiration, services, announcement.getAnnouncer()));
     }
 
     @Override
@@ -99,13 +101,26 @@ public class InMemoryDynamicStore
                 .filter(matchesType(type).and(matchesPool(pool)));
     }
 
+    @Override
+    public Entry get(Id<Node> nodeId)
+    {
+        removeExpired();
+
+        LocalEntry localEntry = descriptors.get(nodeId);
+        if (localEntry == null) {
+            return null;
+        }
+        long timestamp = localEntry.getExpiration().minusMillis((int) maxAge.toMillis()).toEpochMilli();
+        return Entry.entry(nodeId.getBytes(), new ArrayList<>(localEntry.getServices()), timestamp, maxAge.toMillis(), localEntry.getAnnouncer());
+    }
+
     private synchronized void removeExpired()
     {
-        Iterator<Entry> iterator = descriptors.values().iterator();
+        Iterator<LocalEntry> iterator = descriptors.values().iterator();
 
         Instant now = currentTime.get();
         while (iterator.hasNext()) {
-            Entry entry = iterator.next();
+            LocalEntry entry = iterator.next();
 
             if (now.isAfter(entry.getExpiration())) {
                 iterator.remove();
@@ -113,25 +128,32 @@ public class InMemoryDynamicStore
         }
     }
 
-    private static class Entry
+    private static class LocalEntry
     {
         private final Set<Service> services;
         private final Instant expiration;
+        private final String announcer;
 
-        Entry(Instant expiration, Set<Service> services)
+        LocalEntry(Instant expiration, Set<Service> services, String announcer)
         {
             this.expiration = expiration;
             this.services = ImmutableSet.copyOf(services);
+            this.announcer = announcer;
         }
 
-        public Instant getExpiration()
+        Instant getExpiration()
         {
             return expiration;
         }
 
-        public Set<Service> getServices()
+        Set<Service> getServices()
         {
             return services;
+        }
+
+        String getAnnouncer()
+        {
+            return announcer;
         }
     }
 }

@@ -56,24 +56,28 @@ public class TestEntry
             NODE_ID.getBytes(),
             SERVICE_LIST_CODEC.toJsonBytes(SERVICES_LIST),
             6789L,
-            12345L);
+            12345L,
+            new byte[]{127, 0, 0, 1});
     private static final Entry ENTRY_2 = entry(
             NODE_ID.getBytes(),
             SERVICES_LIST,
             6789L,
-            12345L);
+            12345L,
+            "127.0.0.1");
     private static final Entry TOMBSTONE_ENTRY = entry(
             NODE_ID.getBytes(),
             (byte[]) null,
             6789L,
+            null,
             null);
     private static final Entry TOMBSTONE_ENTRY_2 = entry(
             NODE_ID.getBytes(),
             (List<Service>) null,
             6789L,
+            null,
             null);
 
-    private Map<String,Object> jsonStructure;
+    private Map<String, Object> jsonStructure;
 
     @BeforeMethod
     public void setup()
@@ -82,7 +86,8 @@ public class TestEntry
                 "key", "ZThlNzEyODAtMjMyNS00NDk4LTg3YTctN2Y3ZDdkNDhkZWZk",
                 "value", "WyB7CiAgImlkIiA6ICJlZmFiOTk3ZS0xNGI4LTRmNWEtYjUzNC1iM2U3MGJmYjhiZDQiLAogICJub2RlSWQiIDogImU4ZTcxMjgwLTIzMjUtNDQ5OC04N2E3LTdmN2Q3ZDQ4ZGVmZCIsCiAgInR5cGUiIDogInRlc3RUeXBlIiwKICAicG9vbCIgOiAidGVzdFBvb2wiLAogICJsb2NhdGlvbiIgOiAidGVzdExvY2F0aW9uIiwKICAicHJvcGVydGllcyIgOiB7CiAgICAiaHR0cCIgOiAiaHR0cDovL2ludmFsaWQuaW52YWxpZCIsCiAgICAiaHR0cHMiIDogImh0dHBzOi8vaW52YWxpZC5pbnZhbGlkIgogIH0KfSwgewogICJpZCIgOiAiZDg4NGJmNDQtNzM4Ny00ZTExLWFhYmYtYTMyNjA4Nzc2ZjhlIiwKICAibm9kZUlkIiA6ICJlOGU3MTI4MC0yMzI1LTQ0OTgtODdhNy03ZjdkN2Q0OGRlZmQiLAogICJ0eXBlIiA6ICJ0ZXN0VHlwZTIiLAogICJwb29sIiA6ICJ0ZXN0UG9vbDIiLAogICJsb2NhdGlvbiIgOiAidGVzdExvY2F0aW9uMiIsCiAgInByb3BlcnRpZXMiIDogewogICAgImh0dHAiIDogImh0dHA6Ly9pbnZhbGlkMi5pbnZhbGlkIiwKICAgICJodHRwcyIgOiAiaHR0cHM6Ly9pbnZhbGlkMi5pbnZhbGlkIgogIH0KfSBd",
                 "timestamp", 6789,
-                "maxAgeInMs", 12345
+                "maxAgeInMs", 12345,
+                "announcer", "fwAAAQ=="
         ));
     }
 
@@ -98,6 +103,7 @@ public class TestEntry
     {
         jsonStructure.remove("value");
         jsonStructure.remove("maxAgeInMs");
+        jsonStructure.remove("announcer");
         assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(TOMBSTONE_ENTRY);
         assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(TOMBSTONE_ENTRY_2);
     }
@@ -114,6 +120,7 @@ public class TestEntry
     {
         jsonStructure.remove("value");
         jsonStructure.remove("maxAgeInMs");
+        jsonStructure.remove("announcer");
         assertJsonEncode(TOMBSTONE_ENTRY, jsonStructure);
         assertJsonEncode(TOMBSTONE_ENTRY_2, jsonStructure);
     }

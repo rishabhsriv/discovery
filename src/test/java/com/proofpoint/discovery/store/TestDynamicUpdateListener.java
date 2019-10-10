@@ -26,7 +26,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.function.Supplier;
 
 import static com.proofpoint.discovery.store.Entry.entry;
@@ -60,7 +59,7 @@ public class TestDynamicUpdateListener
     public void testOldTombstone()
     {
         Service service = new Service(Id.random(), nodeId, "type", "pool", "location", ImmutableMap.of());
-        listener.notifyUpdate(entry(nodeId.getBytes(), (List<Service>) null, 5, 5L), entry(nodeId.getBytes(), ImmutableList.of(service), 8, 5L));
+        listener.notifyUpdate(entry(nodeId.getBytes(), null, 5, 5L, "127.0.0.1"), entry(nodeId.getBytes(), ImmutableList.of(service), 8, 5L, "127.0.0.1"));
         verifyNoMoreInteractions(argumentVerifier);
     }
 
@@ -68,7 +67,7 @@ public class TestDynamicUpdateListener
     public void testNewTombstone()
     {
         Service service = new Service(Id.random(), nodeId, "type", "pool", "location", ImmutableMap.of());
-        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service), 5, 5L), entry(nodeId.getBytes(), (List<Service>) null, 8, 5L));
+        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service), 5, 5L, "127.0.0.1"), entry(nodeId.getBytes(), null, 8, 5L, "127.0.0.1"));
         verifyNoMoreInteractions(argumentVerifier);
     }
 
@@ -80,7 +79,7 @@ public class TestDynamicUpdateListener
         Service service3 = new Service(Id.random(), nodeId, "type3", "pool", "location", ImmutableMap.of());
         Service service4 = new Service(Id.random(), nodeId, "type4", "pool", "location", ImmutableMap.of());
         when(instantSupplier.get()).thenReturn(Instant.ofEpochMilli(9));
-        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service1, service2, service3), 5, 5L), entry(nodeId.getBytes(), ImmutableList.of(service2, service3, service4), 8, 5L));
+        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service1, service2, service3), 5, 5L, "127.0.0.1"), entry(nodeId.getBytes(), ImmutableList.of(service2, service3, service4), 8, 5L, "127.0.0.1"));
         verify(argumentVerifier).renewedAfter("type2");
         verify(argumentVerifier).renewedAfter("type3");
         verifyNoMoreInteractions(argumentVerifier);
@@ -98,7 +97,7 @@ public class TestDynamicUpdateListener
         Service service3 = new Service(Id.random(), nodeId, "type3", "pool", "location", ImmutableMap.of());
         Service service4 = new Service(Id.random(), nodeId, "type4", "pool", "location", ImmutableMap.of());
         when(instantSupplier.get()).thenReturn(Instant.ofEpochMilli(11));
-        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service1, service2, service3), 5, 5L), entry(nodeId.getBytes(), ImmutableList.of(service2, service3, service4), 8, 5L));
+        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service1, service2, service3), 5, 5L, "127.0.0.1"), entry(nodeId.getBytes(), ImmutableList.of(service2, service3, service4), 8, 5L, "127.0.0.1"));
         verify(argumentVerifier).expiredFor("type2");
         verify(argumentVerifier).expiredFor("type3");
         verifyNoMoreInteractions(argumentVerifier);

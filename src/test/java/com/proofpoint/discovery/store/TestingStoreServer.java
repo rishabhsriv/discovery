@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 import com.proofpoint.bootstrap.LifeCycleManager;
+import com.proofpoint.discovery.AllowAllAuthManager;
+import com.proofpoint.discovery.AuthManager;
 import com.proofpoint.discovery.DiscoveryConfig;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
@@ -45,6 +47,7 @@ public class TestingStoreServer
 {
     private final LifeCycleManager lifeCycleManager;
     private final InMemoryStore inMemoryStore = new InMemoryStore();
+    private final AuthManager authManager = new AllowAllAuthManager();
     private final AtomicBoolean serverInSelector = new AtomicBoolean(true);
     private final ServiceSelector serviceSelector;
 
@@ -62,6 +65,7 @@ public class TestingStoreServer
                             binder -> {
                                 binder.bind(StoreConfig.class).toInstance(storeConfig);
                                 binder.bind(DiscoveryConfig.class).toInstance(discoveryConfig);
+                                binder.bind(AuthManager.class).toInstance(authManager);
                                 jaxrsBinder(binder).bind(StoreResource.class);
                                 binder.bind(new TypeLiteral<Map<String, InMemoryStore>>() {})
                                         .toInstance(ImmutableMap.of("dynamic", inMemoryStore));

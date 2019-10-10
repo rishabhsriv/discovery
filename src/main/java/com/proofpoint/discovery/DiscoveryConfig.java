@@ -38,6 +38,7 @@ public class DiscoveryConfig
     private StringSet proxyProxiedTypes = StringSet.of();
     private String proxyEnvironment = null;
     private UriSet proxyUris = UriSet.of();
+    private boolean enforceHostIpMapping = false;
 
     @NotNull
     public Duration getMaxAge()
@@ -126,6 +127,19 @@ public class DiscoveryConfig
     public boolean isProxyTypeAndUri()
     {
         return proxyProxiedTypes.isEmpty() == proxyUris.isEmpty();
+    }
+
+    public boolean isEnforceHostIpMapping()
+    {
+        return enforceHostIpMapping;
+    }
+
+    @Config("discovery.enforce-host-ip-mapping")
+    @ConfigDescription("Restrict announcements to matching hostnames and IP addresses")
+    public DiscoveryConfig setEnforceHostIpMapping(boolean enforceHostIpMapping)
+    {
+        this.enforceHostIpMapping = enforceHostIpMapping;
+        return this;
     }
 
     public static final class StringSet extends ForwardingSet<String>
