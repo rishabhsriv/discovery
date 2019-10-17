@@ -1,6 +1,7 @@
 package com.proofpoint.discovery;
 
 import com.proofpoint.discovery.store.Entry;
+import com.proofpoint.log.Logger;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +21,7 @@ public class IpHostnameAuthManager implements AuthManager
 {
     private final DynamicStore dynamicStore;
     private final Set<InetAddress> discoveryHosts;
+    private static final Logger logger = Logger.get(IpHostnameAuthManager.class);
 
     @Inject
     public IpHostnameAuthManager(DynamicStore dynamicStore, ConfigStore configStore)
@@ -50,6 +52,7 @@ public class IpHostnameAuthManager implements AuthManager
             Entry nodeEntry = dynamicStore.get(nodeId);
             if (nodeEntry != null && !requesterAddress.equals(InetAddress.getByName(nodeEntry.getAnnouncer()))) {
                 //NodeId was previously announced by a different IP
+                logger.error("IP %s attempted to re-announce node %s owned by IP %s", requesterAddress.getHostAddress(), nodeId.toString(), nodeEntry.getAnnouncer());
                 throw new ForbiddenException();
             }
             Set<DynamicServiceAnnouncement> newAnnouncements = announcement.getServiceAnnouncements();
@@ -65,6 +68,7 @@ public class IpHostnameAuthManager implements AuthManager
         }
         catch (UnknownHostException e) {
             //Unable to validate an IP or look up a hostname
+            logger.error(e);
             throw new ForbiddenException();
         }
     }
@@ -76,10 +80,12 @@ public class IpHostnameAuthManager implements AuthManager
             InetAddress requesterAddress = InetAddress.getByName(request.getRemoteAddr());
             Entry nodeEntry = dynamicStore.get(nodeId);
             if (nodeEntry != null && !requesterAddress.equals(InetAddress.getByName(nodeEntry.getAnnouncer()))) {
+                logger.error("IP %s tried to delete node %s owned by IP %s", requesterAddress.getHostAddress(), nodeId.toString(), nodeEntry.getAnnouncer());
                 throw new ForbiddenException();
             }
         }
         catch (UnknownHostException e) {
+            logger.error(e);
             throw new ForbiddenException();
         }
     }
@@ -96,10 +102,12 @@ public class IpHostnameAuthManager implements AuthManager
         try {
             InetAddress requesterAddress = InetAddress.getByName(request.getRemoteAddr());
             if (!discoveryHosts.contains(requesterAddress)) {
+                logger.error("IP %s tried to replicate as Discovery", requesterAddress.getHostAddress());
                 throw new ForbiddenException();
             }
         }
         catch (UnknownHostException e) {
+            logger.error(e);
             throw new ForbiddenException();
         }
     }
@@ -112,9 +120,14 @@ public class IpHostnameAuthManager implements AuthManager
         try {
             URI hostUri = URI.create(hostname);
             InetAddress[] hostIps = InetAddress.getAllByName(hostUri.getHost());
-            return !Arrays.asList(hostIps).contains(requesterAddress);
+            if (!Arrays.asList(hostIps).contains(requesterAddress)) {
+                logger.error("IP %s tried to announce other host %s", requesterAddress.getHostAddress(), hostUri.getHost());
+                return true;
+            }
+            return false;
         }
         catch (UnknownHostException e) {
+            logger.error(e);
             return true;
         }
     }

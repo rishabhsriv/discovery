@@ -40,17 +40,7 @@ public class DynamicAnnouncement
             @JsonProperty("location") String location,
             @JsonProperty("services") Set<DynamicServiceAnnouncement> services)
     {
-        this.environment = environment;
-        this.location = location;
-        this.pool = pool;
-
-        if (services != null) {
-            this.services = ImmutableSet.copyOf(services);
-        }
-        else {
-            this.services = null;
-        }
-        this.announcer = null;
+        this(environment, pool, location, services, null);
     }
 
     private DynamicAnnouncement(
