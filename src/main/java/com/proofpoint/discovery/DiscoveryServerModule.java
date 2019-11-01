@@ -31,11 +31,14 @@ import com.proofpoint.node.NodeInfo;
 
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
+import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.configuration.ConfigBinder.bindConfig;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
 import static com.proofpoint.http.client.HttpClientBinder.httpClientBinder;
 import static com.proofpoint.jaxrs.JaxrsBinder.jaxrsBinder;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
 public class DiscoveryServerModule
         extends AbstractConfigurationAwareModule
@@ -66,6 +69,8 @@ public class DiscoveryServerModule
         binder.bind(ProxyStore.class).in(Scopes.SINGLETON);
 
         if (discoveryConfig.isEnforceHostIpMapping()) {
+            binder.bind(ScheduledExecutorService.class).annotatedWith(ForAuthManager.class)
+                    .toInstance(newSingleThreadScheduledExecutor(daemonThreadsNamed("auth-manager")));
             binder.bind(AuthManager.class).to(IpHostnameAuthManager.class).in(Scopes.SINGLETON);
         }
         else {

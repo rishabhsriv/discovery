@@ -119,8 +119,8 @@ public abstract class TestDynamicStore
 
         assertThat(store.getAll())
                 .containsExactlyInAnyOrder(newAnnouncement.getServiceAnnouncements().stream()
-                    .map(toServiceWith(nodeId, newAnnouncement.getLocation(), newAnnouncement.getPool()))
-                    .toArray(Service[]::new));
+                        .map(toServiceWith(nodeId, newAnnouncement.getLocation(), newAnnouncement.getPool()))
+                        .toArray(Service[]::new));
     }
 
     @Test
@@ -142,8 +142,8 @@ public abstract class TestDynamicStore
 
         assertThat(store.getAll())
                 .containsExactlyInAnyOrder(newAnnouncement.getServiceAnnouncements().stream()
-                    .map(toServiceWith(nodeId, newAnnouncement.getLocation(), newAnnouncement.getPool()))
-                    .toArray(Service[]::new));
+                        .map(toServiceWith(nodeId, newAnnouncement.getLocation(), newAnnouncement.getPool()))
+                        .toArray(Service[]::new));
     }
 
     @Test
@@ -260,6 +260,27 @@ public abstract class TestDynamicStore
     }
 
     @Test
+    public void testGetAnnouncer()
+    {
+        Id<Node> blueNodeId = Id.random();
+        DynamicAnnouncement blue = DynamicAnnouncement.copyOf(new DynamicAnnouncement("testing", "poolA", "/US/West/SC4/rack1/host1/vm1/slot1", ImmutableSet.of(
+                new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:1111"))
+        ))).setAnnouncer("127.0.0.1").build();
+
+        Id<Node> redNodeId = Id.random();
+        DynamicAnnouncement red = new DynamicAnnouncement("testing", "poolA", "/US/West/SC4/rack1/host1/vm1/slot2", ImmutableSet.of(
+                new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:2222"))
+        ));
+
+        store.put(blueNodeId, blue);
+        store.put(redNodeId, red);
+
+        assertThat(store.getAnnouncer(blueNodeId)).isNotNull().isEqualTo("127.0.0.1");
+        assertThat(store.getAnnouncer(redNodeId)).isNull();
+        assertThat(store.getAnnouncer(Id.random())).isNull();
+    }
+
+    @Test
     public void testDelete()
     {
         Id<Node> blueNodeId = Id.random();
@@ -335,11 +356,11 @@ public abstract class TestDynamicStore
 
             store.put(id, announcement);
             builder.add(new Service(serviceAnnouncement.getId(),
-                                    id,
-                                    serviceAnnouncement.getType(),
-                                    announcement.getPool(),
-                                    announcement.getLocation(),
-                                    serviceAnnouncement.getProperties()));
+                    id,
+                    serviceAnnouncement.getType(),
+                    announcement.getPool(),
+                    announcement.getLocation(),
+                    serviceAnnouncement.getProperties()));
         }
 
         assertThat(store.getAll().collect(Collectors.toList())).hasSameElementsAs(builder.build());

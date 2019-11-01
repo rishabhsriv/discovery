@@ -15,11 +15,6 @@ public class AllowAllAuthManager implements AuthManager
     }
 
     @Override
-    public void checkAuthRead(HttpServletRequest request)
-    {
-    }
-
-    @Override
     public void checkAuthReplicate(HttpServletRequest request)
     {
     }

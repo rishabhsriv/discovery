@@ -23,8 +23,6 @@ import com.proofpoint.discovery.Service;
 import com.proofpoint.json.JsonCodec;
 
 import javax.annotation.Nullable;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -40,11 +38,11 @@ public abstract class Entry
             @Nullable @JsonProperty("value") byte[] value,
             @JsonProperty("timestamp") long timestamp,
             @Nullable @JsonProperty("maxAgeInMs") Long maxAgeInMs,
-            @Nullable @JsonProperty("announcer") byte[] announcer)
+            @Nullable @JsonProperty("announcer") String announcer)
     {
         checkArgument(maxAgeInMs == null || maxAgeInMs > 0, "maxAgeInMs must be greater than 0");
         return new AutoValue_Entry(key, value == null ? null : SERVICE_LIST_CODEC.fromJson(value), timestamp, maxAgeInMs,
-                announcer == null ? null : byteAddressToString(announcer));
+                announcer);
     }
 
     public static Entry entry(byte[] key,
@@ -83,22 +81,7 @@ public abstract class Entry
     public abstract Long getMaxAgeInMs();
 
     @Nullable
-    @JsonProperty("announcer")
-    public byte[] getBytesAnnouncer()
-    {
-        try {
-            String announcer = getAnnouncer();
-            if (announcer == null) {
-                return null;
-            }
-            return InetAddress.getByName(announcer).getAddress();
-        }
-        catch (UnknownHostException e) {
-            return null;
-        }
-    }
-
-    @Nullable
+    @JsonProperty
     public abstract String getAnnouncer();
 
     @Override
@@ -111,16 +94,6 @@ public abstract class Entry
                 .add("maxAgeInMs", getMaxAgeInMs())
                 .add("announcer", getAnnouncer())
                 .toString();
-    }
-
-    private static String byteAddressToString(byte[] address)
-    {
-        try {
-            return InetAddress.getByAddress(address).getHostAddress();
-        }
-        catch (UnknownHostException e) {
-            return null;
-        }
     }
 }
 

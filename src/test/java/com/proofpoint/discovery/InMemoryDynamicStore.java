@@ -16,13 +16,11 @@
 package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableSet;
-import com.proofpoint.discovery.store.Entry;
 import com.proofpoint.units.Duration;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -102,7 +100,7 @@ public class InMemoryDynamicStore
     }
 
     @Override
-    public Entry get(Id<Node> nodeId)
+    public String getAnnouncer(Id<Node> nodeId)
     {
         removeExpired();
 
@@ -110,8 +108,7 @@ public class InMemoryDynamicStore
         if (localEntry == null) {
             return null;
         }
-        long timestamp = localEntry.getExpiration().minusMillis((int) maxAge.toMillis()).toEpochMilli();
-        return Entry.entry(nodeId.getBytes(), new ArrayList<>(localEntry.getServices()), timestamp, maxAge.toMillis(), localEntry.getAnnouncer());
+        return localEntry.getAnnouncer();
     }
 
     private synchronized void removeExpired()

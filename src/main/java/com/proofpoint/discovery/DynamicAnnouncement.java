@@ -19,9 +19,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Immutable
@@ -87,6 +90,7 @@ public class DynamicAnnouncement
         return services;
     }
 
+    @Nullable
     public String getAnnouncer()
     {
         return announcer;
@@ -101,33 +105,18 @@ public class DynamicAnnouncement
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         DynamicAnnouncement that = (DynamicAnnouncement) o;
-
-        if (environment != null ? !environment.equals(that.environment) : that.environment != null) {
-            return false;
-        }
-        if (location != null ? !location.equals(that.location) : that.location != null) {
-            return false;
-        }
-        if (pool != null ? !pool.equals(that.pool) : that.pool != null) {
-            return false;
-        }
-        if (services != null ? !services.equals(that.services) : that.services != null) {
-            return false;
-        }
-
-        return true;
+        return environment.equals(that.environment) &&
+                location.equals(that.location) &&
+                pool.equals(that.pool) &&
+                services.equals(that.services) &&
+                Objects.equals(announcer, that.announcer);
     }
 
     @Override
     public int hashCode()
     {
-        int result = environment != null ? environment.hashCode() : 0;
-        result = 31 * result + (location != null ? location.hashCode() : 0);
-        result = 31 * result + (pool != null ? pool.hashCode() : 0);
-        result = 31 * result + (services != null ? services.hashCode() : 0);
-        return result;
+        return Objects.hash(environment, location, pool, services, announcer);
     }
 
     @Override
@@ -137,7 +126,8 @@ public class DynamicAnnouncement
                 "environment='" + environment + '\'' +
                 ", location='" + location + '\'' +
                 ", pool='" + pool + '\'' +
-                ", services=" + services +
+                ", services=" + services + '\'' +
+                ", announcer=" + Optional.ofNullable(announcer).orElse("null") +
                 '}';
     }
 
@@ -160,6 +150,7 @@ public class DynamicAnnouncement
             location = announcement.getLocation();
             services = announcement.getServiceAnnouncements();
             pool = announcement.getPool();
+            announcer = announcement.getAnnouncer();
 
             return this;
         }

@@ -57,13 +57,19 @@ public class TestEntry
             SERVICE_LIST_CODEC.toJsonBytes(SERVICES_LIST),
             6789L,
             12345L,
-            new byte[]{127, 0, 0, 1});
+            "127.0.0.1");
     private static final Entry ENTRY_2 = entry(
             NODE_ID.getBytes(),
             SERVICES_LIST,
             6789L,
             12345L,
             "127.0.0.1");
+    private static final Entry ENTRY_3 = entry(
+            NODE_ID.getBytes(),
+            SERVICES_LIST,
+            6789L,
+            12345L,
+            null);
     private static final Entry TOMBSTONE_ENTRY = entry(
             NODE_ID.getBytes(),
             (byte[]) null,
@@ -87,7 +93,7 @@ public class TestEntry
                 "value", "WyB7CiAgImlkIiA6ICJlZmFiOTk3ZS0xNGI4LTRmNWEtYjUzNC1iM2U3MGJmYjhiZDQiLAogICJub2RlSWQiIDogImU4ZTcxMjgwLTIzMjUtNDQ5OC04N2E3LTdmN2Q3ZDQ4ZGVmZCIsCiAgInR5cGUiIDogInRlc3RUeXBlIiwKICAicG9vbCIgOiAidGVzdFBvb2wiLAogICJsb2NhdGlvbiIgOiAidGVzdExvY2F0aW9uIiwKICAicHJvcGVydGllcyIgOiB7CiAgICAiaHR0cCIgOiAiaHR0cDovL2ludmFsaWQuaW52YWxpZCIsCiAgICAiaHR0cHMiIDogImh0dHBzOi8vaW52YWxpZC5pbnZhbGlkIgogIH0KfSwgewogICJpZCIgOiAiZDg4NGJmNDQtNzM4Ny00ZTExLWFhYmYtYTMyNjA4Nzc2ZjhlIiwKICAibm9kZUlkIiA6ICJlOGU3MTI4MC0yMzI1LTQ0OTgtODdhNy03ZjdkN2Q0OGRlZmQiLAogICJ0eXBlIiA6ICJ0ZXN0VHlwZTIiLAogICJwb29sIiA6ICJ0ZXN0UG9vbDIiLAogICJsb2NhdGlvbiIgOiAidGVzdExvY2F0aW9uMiIsCiAgInByb3BlcnRpZXMiIDogewogICAgImh0dHAiIDogImh0dHA6Ly9pbnZhbGlkMi5pbnZhbGlkIiwKICAgICJodHRwcyIgOiAiaHR0cHM6Ly9pbnZhbGlkMi5pbnZhbGlkIgogIH0KfSBd",
                 "timestamp", 6789,
                 "maxAgeInMs", 12345,
-                "announcer", "fwAAAQ=="
+                "announcer", "127.0.0.1"
         ));
     }
 
@@ -96,6 +102,8 @@ public class TestEntry
     {
         assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(ENTRY);
         assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(ENTRY_2);
+        jsonStructure.remove("announcer");
+        assertThat(assertValidates(decodeJson(ENTRY_CODEC, jsonStructure))).isEqualTo(ENTRY_3);
     }
 
     @Test
@@ -113,6 +121,8 @@ public class TestEntry
     {
         assertJsonEncode(ENTRY, jsonStructure);
         assertJsonEncode(ENTRY_2, jsonStructure);
+        jsonStructure.remove("announcer");
+        assertJsonEncode(ENTRY_3, jsonStructure);
     }
 
     @Test

@@ -11,7 +11,5 @@ public interface AuthManager
 
     void checkAuthDelete(Id<Node> nodeId, HttpServletRequest request);
 
-    void checkAuthRead(HttpServletRequest request);
-
     void checkAuthReplicate(HttpServletRequest request);
 }

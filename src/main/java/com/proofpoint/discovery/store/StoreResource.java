@@ -83,7 +83,6 @@ public class StoreResource
     @Produces({"application/x-jackson-smile", "application/json"})
     public Response getAll(@PathParam("store") String storeName, @Context HttpServletRequest request)
     {
-        authManager.checkAuthRead(request);
         InMemoryStore store = localStores.get(storeName);
         if (store == null) {
             return Response.status(Status.NOT_FOUND).build();

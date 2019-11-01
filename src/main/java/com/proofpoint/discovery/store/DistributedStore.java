@@ -188,9 +188,10 @@ public class DistributedStore
     }
 
     @Override
-    public Entry get(Id<Node> nodeId)
+    public String getAnnouncer(Id<Node> nodeId)
     {
-        return localStore.get(nodeId.getBytes());
+        Entry entry = localStore.get(nodeId.getBytes());
+        return entry == null ? null : entry.getAnnouncer();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Proofpoint, Inc.
+ * Copyright 2013 Proofpoint, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,17 @@
  */
 package com.proofpoint.discovery;
 
-import java.util.stream.Stream;
+import com.google.inject.BindingAnnotation;
 
-public interface DynamicStore
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+@Retention(RUNTIME)
+@Target(PARAMETER)
+@BindingAnnotation
+public @interface ForAuthManager
 {
-    void put(Id<Node> nodeId, DynamicAnnouncement announcement);
-
-    void delete(Id<Node> nodeId);
-
-    Stream<Service> getAll();
-
-    Stream<Service> get(String type);
-
-    Stream<Service> get(String type, String pool);
-
-    String getAnnouncer(Id<Node> nodeId);
 }

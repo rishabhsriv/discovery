@@ -114,7 +114,7 @@ public class TestServiceResource
         blueStorageRepresentation = toServiceRepresentation(blueNodeId, blue, blueStorage);
 
         ServiceResource resource = new ServiceResource(dynamicStore, configStore, proxyStore, new NodeInfo("testing"),
-                initializationTracker, new DiscoveryConfig().setGeneralPoolMapTarget("SNV"), new AllowAllAuthManager());
+                initializationTracker, new DiscoveryConfig().setGeneralPoolMapTarget("SNV"));
 
         Bootstrap app = bootstrapApplication("test-application")
                 .doNotInitializeLogging()

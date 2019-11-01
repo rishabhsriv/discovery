@@ -2,67 +2,51 @@ package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.mockito.Mock;
+import com.proofpoint.discovery.client.ServiceDescriptor;
+import com.proofpoint.discovery.client.ServiceState;
+import com.proofpoint.discovery.client.testing.StaticServiceSelector;
+import com.proofpoint.discovery.store.StoreConfig;
+import com.proofpoint.node.NodeInfo;
+import com.proofpoint.testing.SerialScheduledExecutorService;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.ForbiddenException;
-import java.util.stream.Stream;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class TestIpHostnameAuthManager
 {
-    @Mock
-    private ConfigStore configStore;
-
     private InMemoryDynamicStore dynamicStore;
-    private final Service discovery1 = new Service(Id.random(), Id.random(), "discovery", "general", "/somewhere", ImmutableMap.of("http", "http://localhost:4111"));
-    private final Service discovery2 = new Service(Id.random(), Id.random(), "discovery", "general", "/other", ImmutableMap.of("http", "http://127.0.0.1:4111"));
+    private final StaticServiceSelector selector = new StaticServiceSelector(new ServiceDescriptor(
+            UUID.randomUUID(),
+            UUID.randomUUID().toString(),
+            "discovery",
+            "general",
+            "/location",
+            ServiceState.RUNNING,
+            ImmutableMap.of("http", "http://localhost:4111")));
+    private final NodeInfo nodeInfo = new NodeInfo("test_environment");
+    private SerialScheduledExecutorService executor;
 
     @BeforeMethod
     public void beforeMethod()
     {
         initMocks(this);
         dynamicStore = new InMemoryDynamicStore(new DiscoveryConfig(), new TestingTimeSupplier());
-        when(configStore.get("discovery")).thenReturn(Stream.of(discovery1, discovery2));
-    }
-
-    @Test
-    public void testConstruct()
-    {
-        assertThatCode(() -> new IpHostnameAuthManager(dynamicStore, configStore)).doesNotThrowAnyException();
-        when(configStore.get("discovery")).thenReturn(Stream.of());
-        assertThatCode(() -> new IpHostnameAuthManager(dynamicStore, configStore)).doesNotThrowAnyException();
-        when(configStore.get("discovery")).thenReturn(Stream.of(
-                new Service(Id.random(), Id.random(), "discovery", "general", "/location", ImmutableMap.of())));
-        assertThatCode(() -> new IpHostnameAuthManager(dynamicStore, configStore)).doesNotThrowAnyException();
-        when(configStore.get("discovery")).thenReturn(Stream.of(
-                new Service(Id.random(), Id.random(), "discovery", "general", "/location", ImmutableMap.of("http", "http://invalid"))));
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new IpHostnameAuthManager(dynamicStore, configStore))
-                .withMessage("Unable to build discovery IP list");
-    }
-
-    @Test
-    public void testRead()
-    {
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRemoteAddr()).thenReturn("127.0.0.1");
-        assertThatCode(() -> authManager.checkAuthRead(request)).doesNotThrowAnyException();
+        executor = new SerialScheduledExecutorService();
     }
 
     @Test
     public void testReplicate()
     {
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         assertThatCode(() -> authManager.checkAuthReplicate(request)).doesNotThrowAnyException();
@@ -71,7 +55,7 @@ public class TestIpHostnameAuthManager
     @Test
     public void testReplicateMismatch()
     {
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.20.30.40");
         assertThatExceptionOfType(ForbiddenException.class)
@@ -81,11 +65,32 @@ public class TestIpHostnameAuthManager
     }
 
     @Test
-    public void testReplicateInvalidIp()
+    public void testReplicateEmptyDiscoveryList()
     {
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        StaticServiceSelector selector = new StaticServiceSelector(new ServiceDescriptor(
+                UUID.randomUUID(),
+                nodeInfo.getNodeId(),
+                "discovery",
+                "general",
+                "/location",
+                ServiceState.RUNNING,
+                ImmutableMap.of("http", "http://localhost:4111")));
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRemoteAddr()).thenReturn("10.10.10.10.10");
+        when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+        assertThatExceptionOfType(ForbiddenException.class)
+                .isThrownBy(() -> authManager.checkAuthReplicate(request))
+                .withMessageContaining("HTTP 403")
+                .withNoCause();
+    }
+
+    @Test
+    public void testReplicateEmptySelector()
+    {
+        StaticServiceSelector selector = new StaticServiceSelector();
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         assertThatExceptionOfType(ForbiddenException.class)
                 .isThrownBy(() -> authManager.checkAuthReplicate(request))
                 .withMessageContaining("HTTP 403")
@@ -101,11 +106,34 @@ public class TestIpHostnameAuthManager
         ))).setAnnouncer("10.20.30.40").build();
         dynamicStore.put(nodeId, toDelete);
 
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.20.30.40");
         assertThatCode(() -> authManager.checkAuthDelete(nodeId, request)).doesNotThrowAnyException();
+    }
+
+    @Test
+    public void testDeleteNoEntry()
+    {
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteAddr()).thenReturn("10.20.30.40");
         assertThatCode(() -> authManager.checkAuthDelete(Id.random(), request)).doesNotThrowAnyException();
+    }
+
+    @Test
+    public void testDeleteNullAnnouncer()
+    {
+        Id<Node> nodeId = Id.random();
+        DynamicAnnouncement toDelete = new DynamicAnnouncement("testing", "general", "/location", ImmutableSet.of(
+                new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:4111"))
+        ));
+        dynamicStore.put(nodeId, toDelete);
+
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteAddr()).thenReturn("10.20.30.40");
+        assertThatCode(() -> authManager.checkAuthDelete(nodeId, request)).doesNotThrowAnyException();
     }
 
     @Test
@@ -117,27 +145,9 @@ public class TestIpHostnameAuthManager
         ))).setAnnouncer("10.20.30.40").build();
         dynamicStore.put(nodeId, toDelete);
 
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
-        assertThatExceptionOfType(ForbiddenException.class)
-                .isThrownBy(() -> authManager.checkAuthDelete(nodeId, request))
-                .withMessageContaining("HTTP 403")
-                .withNoCause();
-    }
-
-    @Test
-    public void testDeleteInvalidIp()
-    {
-        Id<Node> nodeId = Id.random();
-        DynamicAnnouncement toDelete = DynamicAnnouncement.copyOf(new DynamicAnnouncement("testing", "general", "/location", ImmutableSet.of(
-                new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:4111"))
-        ))).setAnnouncer("10.20.30.40").build();
-        dynamicStore.put(nodeId, toDelete);
-
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRemoteAddr()).thenReturn("10.10.10.10.10");
         assertThatExceptionOfType(ForbiddenException.class)
                 .isThrownBy(() -> authManager.checkAuthDelete(nodeId, request))
                 .withMessageContaining("HTTP 403")
@@ -150,7 +160,7 @@ public class TestIpHostnameAuthManager
         Id<Node> nodeId = Id.random();
         DynamicServiceAnnouncement localhostServiceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:4111"));
         DynamicAnnouncement localhostAnnouncement = new DynamicAnnouncement("testing", "general", "/location", ImmutableSet.of(localhostServiceAnnouncement));
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         //Announce new
@@ -161,12 +171,25 @@ public class TestIpHostnameAuthManager
     }
 
     @Test
+    public void testAnnounceNullAnnouncer()
+    {
+        Id<Node> nodeId = Id.random();
+        DynamicServiceAnnouncement localhostServiceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:4111"));
+        DynamicAnnouncement localhostAnnouncement = new DynamicAnnouncement("testing", "general", "/location", ImmutableSet.of(localhostServiceAnnouncement));
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+        dynamicStore.put(nodeId, localhostAnnouncement);
+        assertThatCode(() -> authManager.checkAuthAnnounce(nodeId, localhostAnnouncement, request)).doesNotThrowAnyException();
+    }
+
+    @Test
     public void testAnnounceMismatch()
     {
         Id<Node> nodeId = Id.random();
         DynamicServiceAnnouncement localhostServiceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:4111"));
         DynamicAnnouncement localhostAnnouncement = new DynamicAnnouncement("testing", "general", "/location", ImmutableSet.of(localhostServiceAnnouncement));
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("10.20.30.40");
         assertThatExceptionOfType(ForbiddenException.class)
@@ -186,7 +209,7 @@ public class TestIpHostnameAuthManager
     {
         DynamicServiceAnnouncement localhostServiceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:4111"));
         DynamicServiceAnnouncement exampleServiceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "example", ImmutableMap.of("http", "http://example.com:4111"));
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         DynamicAnnouncement multipleAnnouncement = new DynamicAnnouncement("testing", "general", "/location", ImmutableSet.of(exampleServiceAnnouncement, localhostServiceAnnouncement));
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
@@ -199,7 +222,7 @@ public class TestIpHostnameAuthManager
     @Test
     public void testAnnounceSingleServiceDifferentHosts()
     {
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         DynamicServiceAnnouncement multiplePropsServiceAnnoucement = new DynamicServiceAnnouncement(Id.random(), "example", ImmutableMap.of("http", "http://example.com:4111", "https", "https://localhost:4111"));
@@ -211,24 +234,9 @@ public class TestIpHostnameAuthManager
     }
 
     @Test
-    public void testAnnounceInvalidIp()
-    {
-        Id<Node> nodeId = Id.random();
-        DynamicServiceAnnouncement localhostServiceAnnouncement = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("http", "http://localhost:4111"));
-        DynamicAnnouncement localhostAnnouncement = new DynamicAnnouncement("testing", "general", "/location", ImmutableSet.of(localhostServiceAnnouncement));
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRemoteAddr()).thenReturn("10.10.10.10.10");
-        assertThatExceptionOfType(ForbiddenException.class)
-                .isThrownBy(() -> authManager.checkAuthAnnounce(nodeId, localhostAnnouncement, request))
-                .withMessageContaining("HTTP 403")
-                .withNoCause();
-    }
-
-    @Test
     public void testAnnounceInvalidProperty()
     {
-        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, configStore);
+        AuthManager authManager = new IpHostnameAuthManager(dynamicStore, selector, nodeInfo, new StoreConfig(), executor);
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
 

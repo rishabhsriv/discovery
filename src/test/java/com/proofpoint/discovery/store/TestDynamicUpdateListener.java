@@ -26,6 +26,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.proofpoint.discovery.store.Entry.entry;
@@ -59,7 +60,7 @@ public class TestDynamicUpdateListener
     public void testOldTombstone()
     {
         Service service = new Service(Id.random(), nodeId, "type", "pool", "location", ImmutableMap.of());
-        listener.notifyUpdate(entry(nodeId.getBytes(), null, 5, 5L, "127.0.0.1"), entry(nodeId.getBytes(), ImmutableList.of(service), 8, 5L, "127.0.0.1"));
+        listener.notifyUpdate(entry(nodeId.getBytes(), (List<Service>) null, 5, 5L, "127.0.0.1"), entry(nodeId.getBytes(), ImmutableList.of(service), 8, 5L, "127.0.0.1"));
         verifyNoMoreInteractions(argumentVerifier);
     }
 
@@ -67,7 +68,7 @@ public class TestDynamicUpdateListener
     public void testNewTombstone()
     {
         Service service = new Service(Id.random(), nodeId, "type", "pool", "location", ImmutableMap.of());
-        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service), 5, 5L, "127.0.0.1"), entry(nodeId.getBytes(), null, 8, 5L, "127.0.0.1"));
+        listener.notifyUpdate(entry(nodeId.getBytes(), ImmutableList.of(service), 5, 5L, "127.0.0.1"), entry(nodeId.getBytes(), (List<Service>) null, 8, 5L, "127.0.0.1"));
         verifyNoMoreInteractions(argumentVerifier);
     }
 
