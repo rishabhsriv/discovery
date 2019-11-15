@@ -10,9 +10,11 @@ import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.Request;
 import com.proofpoint.http.client.Response;
 import com.proofpoint.http.client.testing.TestingHttpClient;
+import com.proofpoint.http.client.testing.TestingHttpClient.Processor;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import java.net.ConnectException;
 import java.net.URI;
 import java.util.Set;
 
@@ -113,6 +115,28 @@ public class TestProxyStore
         assertThat(proxyStore.get("customer", "pool3")).isEmpty();
         assertThat(proxyStore.get("auth", "pool3")).isEmpty();
         assertThat(proxyStore.get("event", "general")).isNull();
+    }
+
+    @Test
+    public void testProxyDown()
+            throws InterruptedException
+    {
+        DiscoveryConfig config = new DiscoveryConfig()
+                .setProxyProxiedTypes(StringSet.of("storage"))
+                .setProxyEnvironment("upstream")
+                .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://discovery.example.com")));
+        Injector injector = mock(Injector.class);
+        HttpClient httpClient = new TestingHttpClient(request -> {throw new ConnectException();});
+        when(injector.getInstance(Key.get(HttpClient.class, ForProxyStore.class))).thenReturn(httpClient);
+        ProxyStore proxyStore = new ProxyStore(config, injector);
+        Thread.sleep(100);
+
+        Service service4 = new Service(Id.random(), Id.random(), "storage", "pool1", "/location/4", ImmutableMap.of("key4", "value4"));
+
+        assertThat(proxyStore.filterAndGetAll(ImmutableSet.of(service4))).isEmpty();
+
+        assertThat(proxyStore.get("storage")).isEmpty();
+        assertThat(proxyStore.get("storage", "pool1")).isEmpty();
     }
 
     private static class DiscoveryProcessor
