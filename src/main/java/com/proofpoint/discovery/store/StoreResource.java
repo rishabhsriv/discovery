@@ -81,7 +81,7 @@ public class StoreResource
 
     @GET
     @Produces({"application/x-jackson-smile", "application/json"})
-    public Response getAll(@PathParam("store") String storeName, @Context HttpServletRequest request)
+    public Response getAll(@PathParam("store") String storeName)
     {
         InMemoryStore store = localStores.get(storeName);
         if (store == null) {

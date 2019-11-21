@@ -154,7 +154,7 @@ public class DistributedStore
         List<Service> services = announcement.getServiceAnnouncements().stream()
                 .map(toServiceWith(nodeId, announcement.getLocation(), announcement.getPool()))
                 .collect(Collectors.toList());
-        Entry entry = entry(nodeId.getBytes(), services, now, maxAge.toMillis(), announcement.getAnnouncer());
+        Entry entry = entry(nodeId.getBytes(), services, now, maxAge.toMillis(), announcement.getAnnouncerAddr());
 
         localStore.put(entry);
         remoteStore.put(entry);

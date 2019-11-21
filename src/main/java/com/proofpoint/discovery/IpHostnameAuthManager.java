@@ -1,13 +1,15 @@
 package com.proofpoint.discovery;
 
 import com.google.common.collect.Sets;
+import com.proofpoint.audit.AuditLogger;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.store.StoreConfig;
 import com.proofpoint.log.Logger;
-import com.proofpoint.node.NodeInfo;
 import com.proofpoint.units.Duration;
 
+import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -25,37 +27,36 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.proofpoint.discovery.AuthAuditRecord.auditRecord;
 import static java.util.Objects.requireNonNull;
 
 public class IpHostnameAuthManager implements AuthManager
 {
+    private static final Logger logger = Logger.get(IpHostnameAuthManager.class);
     private final DynamicStore dynamicStore;
     private final ServiceSelector discoverySelector;
-    private final String localNodeId;
     private final Duration updateInterval;
     private final Set<InetAddress> discoveryAddrs = Sets.newConcurrentHashSet();
-    private Future<?> future;
     private final ScheduledExecutorService executor;
-
-    private static final Logger logger = Logger.get(IpHostnameAuthManager.class);
+    private final AuditLogger<AuthAuditRecord> auditLogger;
+    private Future<?> future;
 
     @Inject
     public IpHostnameAuthManager(DynamicStore dynamicStore,
             ServiceSelector discoverySelector,
-            NodeInfo nodeInfo,
             StoreConfig config,
-            @ForAuthManager ScheduledExecutorService executor)
+            @ForAuthManager ScheduledExecutorService executor,
+            AuditLogger<AuthAuditRecord> auditLogger)
     {
         this.dynamicStore = requireNonNull(dynamicStore, "dynamicStore is null");
         this.discoverySelector = requireNonNull(discoverySelector, "discoverySelector is null");
-        this.localNodeId = requireNonNull(nodeInfo, "nodeInfo is null").getNodeId();
         this.updateInterval = requireNonNull(config, "config is null").getRemoteUpdateInterval();
         this.executor = requireNonNull(executor, "executor is null");
-        startDiscoveryRefresh();
+        this.auditLogger = requireNonNull(auditLogger, "auditLogger is null");
     }
 
     @PreDestroy
-    public synchronized void preDestroy()
+    private void preDestroy()
     {
         if (future != null) {
             future.cancel(true);
@@ -64,15 +65,16 @@ public class IpHostnameAuthManager implements AuthManager
         future = null;
     }
 
-    private synchronized void startDiscoveryRefresh()
+    @PostConstruct
+    private void startDiscoveryRefresh()
     {
         if (future == null) {
             future = executor.scheduleWithFixedDelay(() -> {
                 try {
                     updateDiscoveryAddrs(discoverySelector.selectAllServices());
                 }
-                catch (Throwable e) {
-                    logger.warn("Unable to refresh discovery servers. No replication will be permitted");
+                catch (Exception e) {
+                    logger.warn(e, "Unable to refresh discovery servers. No replication will be permitted");
                 }
             }, 0, updateInterval.toMillis(), TimeUnit.MILLISECONDS);
         }
@@ -81,7 +83,6 @@ public class IpHostnameAuthManager implements AuthManager
     private void updateDiscoveryAddrs(List<ServiceDescriptor> descriptors)
     {
         Set<InetAddress> otherDiscoveryHosts = descriptors.stream()
-                .filter(d -> !localNodeId.equals(d.getNodeId()))
                 .map(d -> d.getProperties().get("http"))
                 .map(URI::create)
                 .map(u -> {
@@ -107,7 +108,7 @@ public class IpHostnameAuthManager implements AuthManager
             String nodeAnnouncer = dynamicStore.getAnnouncer(nodeId);
             if (mismatchedAnnouncer(nodeAnnouncer, requesterAddress)) {
                 //NodeId was previously announced by a different IP
-                logger.warn("IP %s tried to re-announce node %s owned by IP %s", requesterAddress.getHostAddress(), nodeId.toString(), nodeAnnouncer);
+                auditLogger.audit(auditRecord("IP %s tried to re-announce node %s owned by IP %s", requesterAddress.getHostAddress(), nodeId.toString(), nodeAnnouncer));
                 throw new ForbiddenException();
             }
             Set<DynamicServiceAnnouncement> newAnnouncements = announcement.getServiceAnnouncements();
@@ -123,7 +124,7 @@ public class IpHostnameAuthManager implements AuthManager
         }
         catch (UnknownHostException e) {
             //Unable to validate an IP or look up a hostname
-            logger.error(e);
+            auditLogger.audit(auditRecord(e.getMessage()));
             throw new ForbiddenException();
         }
     }
@@ -135,12 +136,12 @@ public class IpHostnameAuthManager implements AuthManager
             InetAddress requesterAddress = InetAddress.getByName(request.getRemoteAddr());
             String nodeAnnouncer = dynamicStore.getAnnouncer(nodeId);
             if (mismatchedAnnouncer(nodeAnnouncer, requesterAddress)) {
-                logger.warn("IP %s tried to delete node %s owned by IP %s", requesterAddress.getHostAddress(), nodeId.toString(), nodeAnnouncer);
+                auditLogger.audit(auditRecord("IP %s tried to delete node %s owned by IP %s", requesterAddress.getHostAddress(), nodeId.toString(), nodeAnnouncer));
                 throw new ForbiddenException();
             }
         }
         catch (UnknownHostException e) {
-            logger.error(e);
+            auditLogger.audit(auditRecord(e.getMessage()));
             throw new ForbiddenException();
         }
     }
@@ -151,17 +152,17 @@ public class IpHostnameAuthManager implements AuthManager
         try {
             InetAddress requesterAddress = InetAddress.getByName(request.getRemoteAddr());
             if (!discoveryAddrs.contains(requesterAddress)) {
-                logger.warn("IP %s tried to replicate as Discovery", requesterAddress.getHostAddress());
+                auditLogger.audit(auditRecord("IP %s tried to replicate as Discovery", requesterAddress.getHostAddress()));
                 throw new ForbiddenException();
             }
         }
         catch (UnknownHostException e) {
-            logger.error(e);
+            auditLogger.audit(auditRecord(e.getMessage()));
             throw new ForbiddenException();
         }
     }
 
-    private boolean mismatchedAnnouncer(String nodeAnnouncer, InetAddress requesterAddr)
+    private boolean mismatchedAnnouncer(@Nullable String nodeAnnouncer, InetAddress requesterAddr)
             throws UnknownHostException
     {
         return nodeAnnouncer != null && !requesterAddr.equals(InetAddress.getByName(nodeAnnouncer));
@@ -176,13 +177,13 @@ public class IpHostnameAuthManager implements AuthManager
             URI hostUri = URI.create(hostname);
             InetAddress[] hostIps = InetAddress.getAllByName(hostUri.getHost());
             if (!Arrays.asList(hostIps).contains(requesterAddress)) {
-                logger.warn("IP %s tried to announce other host %s", requesterAddress.getHostAddress(), hostUri.getHost());
+                auditLogger.audit(auditRecord("IP %s tried to announce other host %s", requesterAddress.getHostAddress(), hostUri.getHost()));
                 return true;
             }
             return false;
         }
         catch (UnknownHostException e) {
-            logger.error(e);
+            auditLogger.audit(auditRecord(e.getMessage()));
             return true;
         }
     }

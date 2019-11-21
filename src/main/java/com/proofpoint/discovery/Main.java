@@ -17,6 +17,7 @@ package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
+import com.proofpoint.audit.AuditLogModule;
 import com.proofpoint.bootstrap.Bootstrap;
 import com.proofpoint.discovery.client.DiscoveryModule;
 import com.proofpoint.discovery.client.announce.Announcer;
@@ -51,6 +52,7 @@ public class Main
                             new DiscoveryServerModule(),
                             new ReportingModule(),
                             new ReportingClientModule(),
+                            new AuditLogModule(),
                             new DiscoveryModule()
                     )
                     .withApplicationDefaults(ImmutableMap.of(

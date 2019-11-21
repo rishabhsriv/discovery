@@ -34,7 +34,7 @@ public class DynamicAnnouncement
     private final String location;
     private final String pool;
     private final Set<DynamicServiceAnnouncement> services;
-    private final String announcer;
+    private final String announcerAddr;
 
     @JsonCreator
     public DynamicAnnouncement(
@@ -51,7 +51,7 @@ public class DynamicAnnouncement
             String pool,
             String location,
             Set<DynamicServiceAnnouncement> services,
-            String announcer)
+            String announcerAddr)
     {
         this.environment = environment;
         this.location = location;
@@ -63,7 +63,7 @@ public class DynamicAnnouncement
         else {
             this.services = null;
         }
-        this.announcer = announcer;
+        this.announcerAddr = announcerAddr;
     }
 
     @NotNull
@@ -91,9 +91,9 @@ public class DynamicAnnouncement
     }
 
     @Nullable
-    public String getAnnouncer()
+    public String getAnnouncerAddr()
     {
-        return announcer;
+        return announcerAddr;
     }
 
     @Override
@@ -106,17 +106,17 @@ public class DynamicAnnouncement
             return false;
         }
         DynamicAnnouncement that = (DynamicAnnouncement) o;
-        return environment.equals(that.environment) &&
-                location.equals(that.location) &&
-                pool.equals(that.pool) &&
-                services.equals(that.services) &&
-                Objects.equals(announcer, that.announcer);
+        return Objects.equals(environment, that.environment) &&
+                Objects.equals(location, that.location) &&
+                Objects.equals(pool, that.pool) &&
+                Objects.equals(services, that.services) &&
+                Objects.equals(announcerAddr, that.announcerAddr);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(environment, location, pool, services, announcer);
+        return Objects.hash(environment, location, pool, services, announcerAddr);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class DynamicAnnouncement
                 ", location='" + location + '\'' +
                 ", pool='" + pool + '\'' +
                 ", services=" + services + '\'' +
-                ", announcer=" + Optional.ofNullable(announcer).orElse("null") +
+                ", announcer=" + Optional.ofNullable(announcerAddr).orElse("null") +
                 '}';
     }
 
@@ -150,7 +150,7 @@ public class DynamicAnnouncement
             location = announcement.getLocation();
             services = announcement.getServiceAnnouncements();
             pool = announcement.getPool();
-            announcer = announcement.getAnnouncer();
+            announcer = announcement.getAnnouncerAddr();
 
             return this;
         }

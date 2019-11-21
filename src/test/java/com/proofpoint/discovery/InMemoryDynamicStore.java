@@ -60,7 +60,7 @@ public class InMemoryDynamicStore
                 .collect(toImmutableSet());
 
         Instant expiration = currentTime.get().plusMillis((int) maxAge.toMillis());
-        descriptors.put(nodeId, new LocalEntry(expiration, services, announcement.getAnnouncer()));
+        descriptors.put(nodeId, new LocalEntry(expiration, services, announcement.getAnnouncerAddr()));
     }
 
     @Override

@@ -33,6 +33,7 @@ import javax.inject.Singleton;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static com.proofpoint.audit.AuditLoggerBinder.auditLoggerBinder;
 import static com.proofpoint.concurrent.Threads.daemonThreadsNamed;
 import static com.proofpoint.configuration.ConfigBinder.bindConfig;
 import static com.proofpoint.discovery.client.DiscoveryBinder.discoveryBinder;
@@ -72,6 +73,7 @@ public class DiscoveryServerModule
             binder.bind(ScheduledExecutorService.class).annotatedWith(ForAuthManager.class)
                     .toInstance(newSingleThreadScheduledExecutor(daemonThreadsNamed("auth-manager")));
             binder.bind(AuthManager.class).to(IpHostnameAuthManager.class).in(Scopes.SINGLETON);
+            auditLoggerBinder(binder).bind(AuthAuditRecord.class);
         }
         else {
             binder.bind(AuthManager.class).to(AllowAllAuthManager.class).in(Scopes.SINGLETON);

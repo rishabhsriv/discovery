@@ -144,6 +144,11 @@
             <artifactId>reporting-client</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.proofpoint.platform</groupId>
+            <artifactId>audit</artifactId>
+        </dependency>
+
         <!-- for packaging -->
         <dependency>
             <groupId>com.proofpoint.platform</groupId>
