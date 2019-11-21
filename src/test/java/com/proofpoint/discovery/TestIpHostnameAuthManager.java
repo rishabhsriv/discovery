@@ -293,8 +293,8 @@ public class TestIpHostnameAuthManager
                 .withMessageContaining("HTTP 403")
                 .withNoCause();
         assertThat(auditLog.getRecords()).hasSize(1)
-                .extracting("message")
-                .contains("example: nodename nor servname provided, or not known");
+                .extracting("message").asString()
+                .contains("example");
     }
 
     private static class DiscoverySelector implements ServiceSelector
