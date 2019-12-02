@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.proofpoint.discovery</groupId>
     <artifactId>discovery-server</artifactId>
-    <version>1.33-SNAPSHOT</version>
+    <version>1.33</version>
     <name>discovery-server</name>
     <description>Discovery server</description>
     <url>https://github.com/proofpoint/discovery</url>
@@ -36,7 +36,7 @@
         <connection>scm:git:git://github.com/proofpoint/discovery.git</connection>
         <developerConnection>scm:git:git@github.com:proofpoint/discovery.git</developerConnection>
         <url>https://github.com/proofpoint/discovery</url>
-      <tag>HEAD</tag>
+      <tag>1.33</tag>
   </scm>
 
     <developers>
