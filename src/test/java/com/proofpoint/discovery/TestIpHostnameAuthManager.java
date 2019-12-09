@@ -9,6 +9,7 @@ import com.proofpoint.audit.testing.TestingAuditLog;
 import com.proofpoint.audit.testing.TestingAuditLogModule;
 import com.proofpoint.bootstrap.LifeCycleManager;
 import com.proofpoint.discovery.client.ServiceDescriptor;
+import com.proofpoint.discovery.client.ServiceInventoryConfig;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.client.ServiceState;
 import com.proofpoint.discovery.store.StoreConfig;
@@ -68,7 +69,7 @@ public class TestIpHostnameAuthManager
                         (binder -> {
                             binder.bind(DynamicStore.class).toInstance(dynamicStore);
                             binder.bind(ServiceSelector.class).toInstance(selector);
-                            bindConfig(binder).bind(StoreConfig.class);
+                            bindConfig(binder).bind(ServiceInventoryConfig.class);
                             binder.bind(ScheduledExecutorService.class).annotatedWith(ForAuthManager.class).toInstance(executor);
                             auditLoggerBinder(binder).bind(AuthAuditRecord.class);
                             binder.bind(AuthManager.class).to(IpHostnameAuthManager.class).in(Scopes.SINGLETON);
@@ -116,13 +117,13 @@ public class TestIpHostnameAuthManager
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
         assertThatCode(() -> authManager.checkAuthReplicate(request)).doesNotThrowAnyException();
         selector.clear();
-        executor.elapseTime(6, TimeUnit.SECONDS);
+        executor.elapseTime(11, TimeUnit.SECONDS);
         assertThatExceptionOfType(ForbiddenException.class)
                 .isThrownBy(() -> authManager.checkAuthReplicate(request))
                 .withMessageContaining("HTTP 403")
                 .withNoCause();
         selector.add(discoveryDescriptor);
-        executor.elapseTime(6, TimeUnit.SECONDS);
+        executor.elapseTime(11, TimeUnit.SECONDS);
         assertThatCode(() -> authManager.checkAuthReplicate(request)).doesNotThrowAnyException();
         assertThat(auditLog.getRecords()).hasSize(1)
                 .extracting("message")

@@ -3,8 +3,8 @@ package com.proofpoint.discovery;
 import com.google.common.collect.Sets;
 import com.proofpoint.audit.AuditLogger;
 import com.proofpoint.discovery.client.ServiceDescriptor;
+import com.proofpoint.discovery.client.ServiceInventoryConfig;
 import com.proofpoint.discovery.client.ServiceSelector;
-import com.proofpoint.discovery.store.StoreConfig;
 import com.proofpoint.log.Logger;
 import com.proofpoint.units.Duration;
 
@@ -44,13 +44,13 @@ public class IpHostnameAuthManager implements AuthManager
     @Inject
     public IpHostnameAuthManager(DynamicStore dynamicStore,
             ServiceSelector discoverySelector,
-            StoreConfig config,
+            ServiceInventoryConfig config,
             @ForAuthManager ScheduledExecutorService executor,
             AuditLogger<AuthAuditRecord> auditLogger)
     {
         this.dynamicStore = requireNonNull(dynamicStore, "dynamicStore is null");
         this.discoverySelector = requireNonNull(discoverySelector, "discoverySelector is null");
-        this.updateInterval = requireNonNull(config, "config is null").getRemoteUpdateInterval();
+        this.updateInterval = requireNonNull(config, "config is null").getUpdateInterval();
         this.executor = requireNonNull(executor, "executor is null");
         this.auditLogger = requireNonNull(auditLogger, "auditLogger is null");
     }

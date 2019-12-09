@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.proofpoint.audit.AuditLogModule;
 import com.proofpoint.bootstrap.LifeCycleManager;
 import com.proofpoint.discovery.client.DiscoveryModule;
 import com.proofpoint.discovery.client.ServiceDescriptor;
@@ -70,15 +71,18 @@ public class TestDiscoveryServer
                 .withModules(
                         new MBeanModule(),
                         new TestingNodeModule("testing"),
-                        new ReportingModule(),
-                        new TestingMBeanModule(),
                         new TestingHttpServerModule(),
-                        new JsonModule(),
                         explicitJaxrsModule(),
+                        new JsonModule(),
+                        new TestingMBeanModule(),
                         new DiscoveryServerModule(),
-                        new DiscoveryModule(),
-                        new ReportingModule())
-                .setRequiredConfigurationProperty("service-inventory.uri", Resources.getResource("empty-service-inventory.json").toString())
+                        new ReportingModule(),
+                        new AuditLogModule(),
+                        new DiscoveryModule())
+                .setRequiredConfigurationProperties(ImmutableMap.of(
+                        "service-inventory.uri", Resources.getResource("empty-service-inventory.json").toString(),
+                        "discovery.enforce-host-ip-mapping", "true"
+                ))
                 .initialize();
 
         lifeCycleManagers = new HashSet<>();
@@ -107,8 +111,8 @@ public class TestDiscoveryServer
     {
         // publish announcement
         Map<String, String> announcerProperties = ImmutableMap.<String, String>builder()
-            .put("testing.discovery.uri", server.getBaseUrl().toString())
-            .build();
+                .put("testing.discovery.uri", server.getBaseUrl().toString())
+                .build();
 
         Injector announcerInjector = bootstrapTest()
                 .withModules(
@@ -153,9 +157,9 @@ public class TestDiscoveryServer
             throws Exception
     {
         Map<String, String> clientProperties = ImmutableMap.<String, String>builder()
-            .put("testing.discovery.uri", server.getBaseUrl().toString())
-            .put("discovery.apple.pool", pool)
-            .build();
+                .put("testing.discovery.uri", server.getBaseUrl().toString())
+                .put("discovery.apple.pool", pool)
+                .build();
 
         Injector clientInjector = bootstrapTest()
                 .withModules(
