@@ -25,9 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestConfigStore
 {
-    private static final DiscoveryConfig DISCOVERY_CONFIG = new DiscoveryConfig().setGeneralPoolMapTarget("generalTarget");
-    private static final Service EXPECTED_SERVICE_1 = staticService("c4ca4238-a0b9-3382-8dcc-509a6f75849b", "1", "type1", "generalTarget", "http://a1.invalid");
-    private static final Service EXPECTED_SERVICE_2 = staticService("c81e728d-9d4c-3f63-af06-7f89cc14862c", "2", "type1", "generalTarget", "http://a2.invalid");
+    private static final Service EXPECTED_SERVICE_1 = staticService("c4ca4238-a0b9-3382-8dcc-509a6f75849b", "1", "type1", "general", "http://a1.invalid");
+    private static final Service EXPECTED_SERVICE_2 = staticService("c81e728d-9d4c-3f63-af06-7f89cc14862c", "2", "type1", "general", "http://a2.invalid");
     private static final Service EXPECTED_SERVICE_3 = staticService("eccbc87e-4b5c-32fe-a830-8fd9f2a7baf3", "3", "type1", "alternate", "http://a3.invalid");
     private static final Service EXPECTED_SERVICE_4 = staticService("a87ff679-a2f3-371d-9181-a67b7542122c", "4", "type2", "alternate", "http://a4.invalid");
 
@@ -36,7 +35,7 @@ public class TestConfigStore
             "2", staticAnnouncementConfig("type1", "general", "http://a2.invalid"),
             "3", staticAnnouncementConfig("type1", "alternate", "http://a3.invalid"),
             "4", staticAnnouncementConfig("type2", "alternate", "http://a4.invalid")
-    )), DISCOVERY_CONFIG);
+    )));
 
     @Test
     public void testGetAll()
@@ -44,7 +43,7 @@ public class TestConfigStore
         assertThat(store.getAll())
                 .usingElementComparator(TestConfigStore::strictly)
                 .containsExactlyInAnyOrder(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2, EXPECTED_SERVICE_3, EXPECTED_SERVICE_4);
-        assertThat(new ConfigStore(new ConfigStoreConfig(), DISCOVERY_CONFIG).getAll()).isEmpty();
+        assertThat(new ConfigStore(new ConfigStoreConfig()).getAll()).isEmpty();
     }
 
     @Test
@@ -62,7 +61,7 @@ public class TestConfigStore
     @Test
     public void testGetTypeAndPool()
     {
-        assertThat(store.get("type1", "generalTarget"))
+        assertThat(store.get("type1", "general"))
                 .usingElementComparator(TestConfigStore::strictly)
                 .containsExactlyInAnyOrder(EXPECTED_SERVICE_1, EXPECTED_SERVICE_2);
         assertThat(store.get("type1", "alternate"))

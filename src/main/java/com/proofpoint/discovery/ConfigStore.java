@@ -36,24 +36,18 @@ public class ConfigStore
     private final Table<String, String, Collection<Service>> table;
 
     @Inject
-    public ConfigStore(ConfigStoreConfig config, DiscoveryConfig discoveryConfig)
+    public ConfigStore(final ConfigStoreConfig config)
     {
-        String generalPoolMapTarget = discoveryConfig.getGeneralPoolMapTarget();
         Multimap<TypeAndPool, Service> multimap = HashMultimap.create();
         for (Entry<String, StaticAnnouncementConfig> entry : config.getAnnouncements().entrySet()) {
-            String pool = entry.getValue().getPool();
-            if ("general".equals(pool)) {
-                pool = generalPoolMapTarget;
-            }
-
             Service service = new Service(
                     Id.valueOf(UUID.nameUUIDFromBytes(entry.getKey().getBytes(UTF_8))),
                     null,
                     entry.getValue().getType(),
-                    pool,
+                    entry.getValue().getPool(),
                     "/somewhere/" + entry.getKey(),
                     entry.getValue().getProperties());
-            multimap.put(new AutoValue_ConfigStore_TypeAndPool(entry.getValue().getType(), pool), service);
+            multimap.put(new AutoValue_ConfigStore_TypeAndPool(entry.getValue().getType(), entry.getValue().getPool()), service);
         }
 
         ImmutableTable.Builder<String, String, Collection<Service>> builder = ImmutableTable.builder();
