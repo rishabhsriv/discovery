@@ -18,8 +18,6 @@ package com.proofpoint.discovery.store;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.proofpoint.discovery.AuthManager;
-import com.proofpoint.discovery.DiscoveryConfig;
-import com.proofpoint.discovery.DiscoveryConfig.ReplicationMode;
 import com.proofpoint.units.Duration;
 
 import javax.inject.Inject;
@@ -36,24 +34,18 @@ import javax.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-
 @Path("/v1/store/{store}")
 public class StoreResource
 {
     private final Map<String, InMemoryStore> localStores;
     private final Map<String, Duration> tombstoneMaxAges;
-    private final String generalPoolMapTarget;
-    private final ReplicationMode generalPoolLegacyReplicationMode;
     private final AuthManager authManager;
 
     @Inject
-    public StoreResource(Map<String, InMemoryStore> localStores, Map<String, StoreConfig> configs, DiscoveryConfig discoveryConfig, AuthManager authManager)
+    public StoreResource(Map<String, InMemoryStore> localStores, Map<String, StoreConfig> configs, AuthManager authManager)
     {
         this.localStores = ImmutableMap.copyOf(localStores);
         this.tombstoneMaxAges = ImmutableMap.copyOf(Maps.transformValues(configs, StoreConfig::getTombstoneMaxAge));
-        generalPoolMapTarget = discoveryConfig.getGeneralPoolMapTarget();
-        generalPoolLegacyReplicationMode = discoveryConfig.getGeneralPoolLegacyReplicationMode();
         this.authManager = authManager;
     }
 
@@ -70,9 +62,6 @@ public class StoreResource
 
         for (Entry entry : entries) {
             if (!isExpired(tombstoneMaxAge, entry)) {
-                if (generalPoolLegacyReplicationMode != ReplicationMode.PHASE_THREE) {
-                    entry = Entries.transformPools(entry, "general", generalPoolMapTarget);
-                }
                 store.put(entry);
             }
         }
@@ -87,15 +76,6 @@ public class StoreResource
         if (store == null) {
             return Response.status(Status.NOT_FOUND).build();
         }
-
-        if (generalPoolLegacyReplicationMode == ReplicationMode.PHASE_ONE) {
-            return Response.ok(
-                    store.getAll().stream()
-                            .map(entry -> Entries.transformPools(entry, generalPoolMapTarget, "general"))
-                            .collect(toImmutableList()))
-                    .build();
-        }
-
         return Response.ok(store.getAll()).build();
     }
 

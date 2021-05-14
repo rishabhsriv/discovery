@@ -34,7 +34,6 @@ public class DiscoveryConfig
 {
     private Duration maxAge = new Duration(90, TimeUnit.SECONDS);
     private String mapTarget = "general";
-    private ReplicationMode generalPoolLegacyReplicationMode = ReplicationMode.PHASE_ONE;
     private StringSet proxyProxiedTypes = StringSet.of();
     private String proxyEnvironment = null;
     private UriSet proxyUris = UriSet.of();
@@ -63,18 +62,6 @@ public class DiscoveryConfig
     public DiscoveryConfig setGeneralPoolMapTarget(String mapTarget)
     {
         this.mapTarget = mapTarget;
-        return this;
-    }
-
-    public ReplicationMode getGeneralPoolLegacyReplicationMode()
-    {
-        return generalPoolLegacyReplicationMode;
-    }
-
-    @Config("discovery.general-pool.legacy-replication-mode")
-    public DiscoveryConfig setGeneralPoolLegacyReplicationMode(ReplicationMode mode)
-    {
-        generalPoolLegacyReplicationMode = mode;
         return this;
     }
 
@@ -196,14 +183,4 @@ public class DiscoveryConfig
             return delegate;
         }
     }
-
-    public enum ReplicationMode
-    {
-        PHASE_ONE, PHASE_TWO, PHASE_THREE;
-
-        public static ReplicationMode fromString(String mode)
-        {
-            return ReplicationMode.valueOf(mode.toUpperCase());
-
-        }
-    }}
+}

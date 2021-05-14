@@ -18,9 +18,6 @@ package com.proofpoint.discovery.store;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
-import com.proofpoint.discovery.DiscoveryConfig;
-import com.proofpoint.discovery.DiscoveryConfig.ReplicationMode;
-import com.proofpoint.discovery.Service;
 import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.http.client.HttpClient;
@@ -52,9 +49,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static com.proofpoint.discovery.store.Entry.entry;
 import static com.proofpoint.http.client.SmileBodyGenerator.smileBodyGenerator;
 import static com.proofpoint.json.JsonCodec.jsonCodec;
 import static java.util.Objects.requireNonNull;
@@ -80,8 +75,6 @@ class HttpRemoteStore
 
     private final AtomicLong lastRemoteServerRefreshTimestamp = new AtomicLong();
     private final Predicate<ServiceDescriptor> ourNodeIdPredicate;
-    private final String generalPoolMapTarget;
-    private final ReplicationMode generalPoolLegacyReplicationMode;
 
     public HttpRemoteStore(String name,
             final NodeInfo node,
@@ -89,8 +82,7 @@ class HttpRemoteStore
             StoreConfig config,
             HttpClient httpClient,
             ReportExporter reportExporter,
-            ScheduledExecutorService executor,
-            DiscoveryConfig discoveryConfig)
+            ScheduledExecutorService executor)
     {
         requireNonNull(name, "name is null");
         requireNonNull(node, "node is null");
@@ -110,8 +102,6 @@ class HttpRemoteStore
         queueSize = config.getQueueSize();
         updateInterval = config.getRemoteUpdateInterval();
         ourNodeIdPredicate = input -> node.getNodeId().equals(input.getNodeId());
-        generalPoolMapTarget = discoveryConfig.getGeneralPoolMapTarget();
-        generalPoolLegacyReplicationMode = discoveryConfig.getGeneralPoolLegacyReplicationMode();
     }
 
     synchronized void start()
@@ -207,20 +197,6 @@ class HttpRemoteStore
     @Override
     public void put(Entry entry)
     {
-        if (generalPoolLegacyReplicationMode == ReplicationMode.PHASE_ONE) {
-            List<Service> services = entry.getValue();
-            if (services != null) {
-                services = services.stream()
-                        .map(service -> {
-                            if (service.getPool().equals(generalPoolMapTarget)) {
-                                service = Service.copyOf(service).setPool("general").build();
-                            }
-                            return service;
-                        })
-                        .collect(toImmutableList());
-                entry = entry(entry.getKey(), services, entry.getTimestamp(), entry.getMaxAgeInMs(), entry.getAnnouncer());
-            }
-        }
         for (BatchProcessor<Entry> processor : processors.values()) {
             processor.put(entry);
         }

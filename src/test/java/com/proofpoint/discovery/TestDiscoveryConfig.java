@@ -17,7 +17,6 @@ package com.proofpoint.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.proofpoint.configuration.testing.ConfigAssertions;
-import com.proofpoint.discovery.DiscoveryConfig.ReplicationMode;
 import com.proofpoint.discovery.DiscoveryConfig.StringSet;
 import com.proofpoint.units.Duration;
 import org.testng.annotations.Test;
@@ -39,7 +38,6 @@ public class TestDiscoveryConfig
         ConfigAssertions.assertRecordedDefaults(ConfigAssertions.recordDefaults(DiscoveryConfig.class)
                 .setMaxAge(new Duration(90, TimeUnit.SECONDS))
                 .setGeneralPoolMapTarget("general")
-                .setGeneralPoolLegacyReplicationMode(ReplicationMode.PHASE_ONE)
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of())
                 .setProxyEnvironment(null)
                 .setProxyUris(DiscoveryConfig.UriSet.of())
@@ -52,7 +50,6 @@ public class TestDiscoveryConfig
         Map<String, String> properties = ImmutableMap.<String, String>builder()
                 .put("discovery.max-age", "1m")
                 .put("reporting.tag.datacenter", "SNV")
-                .put("discovery.general-pool.legacy-replication-mode", "phase_two")
                 .put("discovery.proxy.proxied-types", "foo  ,  bar")
                 .put("discovery.proxy.environment", "pre-release")
                 .put("discovery.proxy.uri", "http://10.20.30.40:4111,http://50.60.70.80:9125")
@@ -62,7 +59,6 @@ public class TestDiscoveryConfig
         DiscoveryConfig expected = new DiscoveryConfig()
                 .setMaxAge(new Duration(1, TimeUnit.MINUTES))
                 .setGeneralPoolMapTarget("SNV")
-                .setGeneralPoolLegacyReplicationMode(ReplicationMode.PHASE_TWO)
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of("foo", "bar"))
                 .setProxyEnvironment("pre-release")
                 .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://10.20.30.40:4111"), URI.create("http://50.60.70.80:9125")))

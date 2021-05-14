@@ -17,7 +17,6 @@ package com.proofpoint.discovery.store;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.proofpoint.discovery.DiscoveryConfig;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.Node;
 import com.proofpoint.discovery.Service;
@@ -34,9 +33,6 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-import static com.proofpoint.discovery.DiscoveryConfig.ReplicationMode.PHASE_ONE;
-import static com.proofpoint.discovery.DiscoveryConfig.ReplicationMode.PHASE_THREE;
-import static com.proofpoint.discovery.DiscoveryConfig.ReplicationMode.PHASE_TWO;
 import static com.proofpoint.discovery.store.Entry.entry;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -48,20 +44,11 @@ public class TestHttpRemoteStore
     private static final Id<Node> NODE_ID = Id.random();
     private static final Id<Node> TOMBSTONE_ID = Id.random();
     private static final Service TESTING_SERVICE_1 = new Service(Id.random(), NODE_ID, "type1", "test-pool", "/test-location", ImmutableMap.of("http", "http://127.0.0.1"));
-    private static final Service TESTING_GENERAL_SERVICE_1 = new Service(TESTING_SERVICE_1.getId(), NODE_ID, "type1", "general", "/test-location", TESTING_SERVICE_1.getProperties());
     private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID, "type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
-    private static final Service TESTING_GENERAL_SERVICE_2 = new Service(TESTING_SERVICE_2.getId(), NODE_ID, "type2", "general", "/test-location", TESTING_SERVICE_2.getProperties());
     private static final Entry TESTING_ENTRY = entry(
             NODE_ID.getBytes(),
             ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2),
             System.currentTimeMillis(),
-            2_000_000L,
-            "127.0.0.1"
-    );
-    private static final Entry TESTING_GENERAL_ENTRY = entry(
-            NODE_ID.getBytes(),
-            ImmutableList.of(TESTING_GENERAL_SERVICE_1, TESTING_GENERAL_SERVICE_2),
-            TESTING_ENTRY.getTimestamp(),
             2_000_000L,
             "127.0.0.1"
     );
@@ -101,133 +88,19 @@ public class TestHttpRemoteStore
     public void testReplication()
             throws InterruptedException
     {
-        assertReplication(new DiscoveryConfig(), new DiscoveryConfig(), TESTING_ENTRY, TESTING_ENTRY);
-    }
-
-    @Test
-    public void testPhaseOneToLegacy()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig(),
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
-                TESTING_ENTRY,
-                TESTING_GENERAL_ENTRY
-        );
-    }
-
-    @Test
-    public void testLegacyToPhaseOne()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
-                new DiscoveryConfig(),
-                TESTING_GENERAL_ENTRY,
-                TESTING_ENTRY
-        );
-    }
-
-    @Test
-    public void testPhaseOneToPhaseOne()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
-                TESTING_ENTRY,
-                TESTING_ENTRY
-        );
-    }
-
-    @Test
-    public void testPhaseTwoToPhaseOne()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
-                TESTING_ENTRY,
-                TESTING_ENTRY
-        );
-    }
-
-    @Test
-    public void testPhaseOneToPhaseTwo()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_ONE),
-                TESTING_ENTRY,
-                TESTING_ENTRY
-        );
-    }
-
-    @Test
-    public void testPhaseTwoToPhaseTwo()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
-                TESTING_ENTRY,
-                TESTING_ENTRY
-        );
-    }
-
-    @Test
-    public void testPhaseThreeToPhaseTwo()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_THREE),
-                TESTING_ENTRY,
-                TESTING_ENTRY
-        );
-    }
-
-    @Test
-    public void testPhaseTwoToPhaseThree()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_THREE),
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_TWO),
-                TESTING_ENTRY,
-                TESTING_ENTRY
-        );
-    }
-
-    @Test
-    public void testPhaseThreeToPhaseThree()
-            throws InterruptedException
-    {
-        assertReplication(
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_THREE),
-                new DiscoveryConfig().setGeneralPoolMapTarget("test-pool").setGeneralPoolLegacyReplicationMode(PHASE_THREE),
-                TESTING_ENTRY,
-                TESTING_ENTRY
-        );
-    }
-
-    private void assertReplication(DiscoveryConfig serverConfig, DiscoveryConfig storeConfig, Entry storeEntry, Entry expectedServerEntry)
-            throws InterruptedException
-    {
-        createStore(serverConfig, true, storeConfig);
-        store.put(storeEntry);
+        createStore(true);
+        store.put(TESTING_ENTRY);
         store.put(TESTING_TOMBSTONE);
         Thread.sleep(1000);
 
-        assertThat(serverStore.getAll()).containsExactlyInAnyOrder(expectedServerEntry, TESTING_TOMBSTONE);
+        assertThat(serverStore.getAll()).containsExactlyInAnyOrder(TESTING_ENTRY, TESTING_TOMBSTONE);
     }
 
     @Test
     public void testReplicationToAddedServer()
             throws InterruptedException
     {
-        createStore(new DiscoveryConfig(), false, new DiscoveryConfig());
+        createStore(false);
 
         executor.elapseTimeNanosecondBefore(5, SECONDS);
         store.put(TESTING_ENTRY);
@@ -248,7 +121,7 @@ public class TestHttpRemoteStore
     public void testNoReplicationToRemovedServer()
             throws InterruptedException
     {
-        createStore(new DiscoveryConfig(), true, new DiscoveryConfig());
+        createStore(true);
 
         executor.elapseTimeNanosecondBefore(5, SECONDS);
         server.setServerInSelector(false);
@@ -259,9 +132,9 @@ public class TestHttpRemoteStore
         assertThat(serverStore.getAll()).isEmpty();
     }
 
-    private void createStore(DiscoveryConfig serverConfig, boolean serverInSelector, DiscoveryConfig discoveryConfig)
+    private void createStore(boolean serverInSelector)
     {
-        server = new TestingStoreServer(new StoreConfig(), serverConfig);
+        server = new TestingStoreServer(new StoreConfig());
         serverStore = server.getInMemoryStore();
         server.setServerInSelector(serverInSelector);
         executor = new SerialScheduledExecutorService();
@@ -271,8 +144,7 @@ public class TestHttpRemoteStore
                 new StoreConfig().setRemoteUpdateInterval(new Duration(5, SECONDS)),
                 client,
                 mock(ReportExporter.class),
-                executor,
-                discoveryConfig);
+                executor);
         store.start();
     }
 }
