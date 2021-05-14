@@ -43,7 +43,6 @@ import org.weakref.jmx.testing.TestingMBeanModule;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
@@ -114,7 +113,7 @@ public class TestServiceResource
         blueStorageRepresentation = toServiceRepresentation(blueNodeId, blue, blueStorage);
 
         ServiceResource resource = new ServiceResource(dynamicStore, configStore, proxyStore, new NodeInfo("testing"),
-                initializationTracker, new DiscoveryConfig().setGeneralPoolMapTarget("SNV"));
+                initializationTracker);
 
         Bootstrap app = bootstrapApplication("test-application")
                 .doNotInitializeLogging()
@@ -196,66 +195,6 @@ public class TestServiceResource
 
         Map<String, Object> actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/alpha")).build(),
-                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertThat(actual.keySet()).containsExactly("environment", "services");
-        assertThat(actual.get("environment")).isEqualTo("testing");
-        assertThat((Iterable<Object>) actual.get("services")).containsExactlyInAnyOrder(
-                redStorageRepresentation,
-                greenStorageRepresentation
-        );
-
-        actual = client.execute(
-                prepareGet().setUri(uriFor("/v1/service/storage/beta")).build(),
-                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertThat(actual).isEqualTo(ImmutableMap.of(
-                "environment", "testing",
-                "services", ImmutableList.of(
-                        blueStorageRepresentation
-                )));
-
-        actual = client.execute(
-                prepareGet().setUri(uriFor("/v1/service/storage/unknown")).build(),
-                createJsonResponseHandler(mapCodec, OK.getStatusCode()));
-        assertThat(actual).isEqualTo(ImmutableMap.of(
-                "environment", "testing",
-                "services", ImmutableList.of()));
-
-        verify(proxyStore, times(3)).get(any(String.class), any(String.class));
-        verifyNoMoreInteractions(proxyStore);
-    }
-
-    @Test
-    public void testGetByTypeAndGeneralPool()
-    {
-        Id<Node> redNodeId = Id.random();
-        DynamicServiceAnnouncement redStorage = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "1"));
-        DynamicServiceAnnouncement redWeb = new DynamicServiceAnnouncement(Id.random(), "web", ImmutableMap.of("key", "2"));
-        DynamicAnnouncement red = new DynamicAnnouncement("testing", "SNV", "/a/b/c", ImmutableSet.of(redStorage, redWeb));
-
-        Id<Node> greenNodeId = Id.random();
-        DynamicServiceAnnouncement greenStorage = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "3"));
-        DynamicAnnouncement green = new DynamicAnnouncement("testing", "SNV", "/x/y/z", ImmutableSet.of(greenStorage));
-
-        Id<Node> blueNodeId = Id.random();
-        DynamicServiceAnnouncement blueStorage = new DynamicServiceAnnouncement(Id.random(), "storage", ImmutableMap.of("key", "4"));
-        DynamicAnnouncement blue = new DynamicAnnouncement("testing", "beta", "/a/b/c", ImmutableSet.of(blueStorage));
-
-        when(proxyStore.get(any(String.class), any(String.class))).thenReturn(null);
-
-        dynamicStore.getAll()
-                .map(Service::getNodeId)
-                .collect(Collectors.toList())
-                .forEach(nodeId -> dynamicStore.delete(nodeId));
-        dynamicStore.put(redNodeId, red);
-        dynamicStore.put(greenNodeId, green);
-        dynamicStore.put(blueNodeId, blue);
-
-        redStorageRepresentation = toServiceRepresentation(redNodeId, red, redStorage);
-        greenStorageRepresentation = toServiceRepresentation(greenNodeId, green, greenStorage);
-        blueStorageRepresentation = toServiceRepresentation(blueNodeId, blue, blueStorage);
-
-        Map<String, Object> actual = client.execute(
-                prepareGet().setUri(uriFor("/v1/service/storage/general")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual.keySet()).containsExactly("environment", "services");
         assertThat(actual.get("environment")).isEqualTo("testing");

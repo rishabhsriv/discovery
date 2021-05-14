@@ -37,7 +37,6 @@ public class TestDiscoveryConfig
     {
         ConfigAssertions.assertRecordedDefaults(ConfigAssertions.recordDefaults(DiscoveryConfig.class)
                 .setMaxAge(new Duration(90, TimeUnit.SECONDS))
-                .setGeneralPoolMapTarget("general")
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of())
                 .setProxyEnvironment(null)
                 .setProxyUris(DiscoveryConfig.UriSet.of())
@@ -49,7 +48,6 @@ public class TestDiscoveryConfig
     {
         Map<String, String> properties = ImmutableMap.<String, String>builder()
                 .put("discovery.max-age", "1m")
-                .put("reporting.tag.datacenter", "SNV")
                 .put("discovery.proxy.proxied-types", "foo  ,  bar")
                 .put("discovery.proxy.environment", "pre-release")
                 .put("discovery.proxy.uri", "http://10.20.30.40:4111,http://50.60.70.80:9125")
@@ -58,7 +56,6 @@ public class TestDiscoveryConfig
 
         DiscoveryConfig expected = new DiscoveryConfig()
                 .setMaxAge(new Duration(1, TimeUnit.MINUTES))
-                .setGeneralPoolMapTarget("SNV")
                 .setProxyProxiedTypes(DiscoveryConfig.StringSet.of("foo", "bar"))
                 .setProxyEnvironment("pre-release")
                 .setProxyUris(DiscoveryConfig.UriSet.of(URI.create("http://10.20.30.40:4111"), URI.create("http://50.60.70.80:9125")))

@@ -161,12 +161,6 @@ public class DynamicAnnouncement
             return this;
         }
 
-        public Builder setPool(String pool)
-        {
-            this.pool = pool;
-            return this;
-        }
-
         public Builder setAnnouncer(String announcer)
         {
             this.announcer = announcer;

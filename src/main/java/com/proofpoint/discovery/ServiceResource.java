@@ -38,18 +38,16 @@ public class ServiceResource
     private final ProxyStore proxyStore;
     private final NodeInfo node;
     private final InitializationTracker initializationTracker;
-    private final String generalPoolMapTarget;
 
     @Inject
     public ServiceResource(DynamicStore dynamicStore, ConfigStore configStore, ProxyStore proxyStore, NodeInfo node,
-            InitializationTracker initializationTracker, DiscoveryConfig discoveryConfig)
+            InitializationTracker initializationTracker)
     {
         this.dynamicStore = dynamicStore;
         this.configStore = configStore;
         this.proxyStore = proxyStore;
         this.node = node;
         this.initializationTracker = initializationTracker;
-        generalPoolMapTarget = discoveryConfig.getGeneralPoolMapTarget();
     }
 
     @GET
@@ -58,9 +56,6 @@ public class ServiceResource
     public Services getServices(@PathParam("type") String type, @PathParam("pool") String pool)
     {
         ensureInitialized();
-        if ("general".equals(pool)) {
-            pool = generalPoolMapTarget;
-        }
         return services(node.getEnvironment(), firstNonNull(proxyStore.get(type, pool),
                 Stream.concat(configStore.get(type, pool), dynamicStore.get(type, pool))));
     }
