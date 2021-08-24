@@ -1,6 +1,5 @@
 package com.proofpoint.discovery;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
@@ -12,7 +11,6 @@ import com.proofpoint.discovery.client.ServiceDescriptor;
 import com.proofpoint.discovery.client.ServiceInventoryConfig;
 import com.proofpoint.discovery.client.ServiceSelector;
 import com.proofpoint.discovery.client.ServiceState;
-import com.proofpoint.discovery.store.StoreConfig;
 import com.proofpoint.json.JsonModule;
 import com.proofpoint.testing.SerialScheduledExecutorService;
 import org.testng.annotations.AfterMethod;
@@ -328,7 +326,7 @@ public class TestIpHostnameAuthManager
         @Override
         public List<ServiceDescriptor> selectAllServices()
         {
-            return ImmutableList.copyOf(serviceDescriptors);
+            return List.copyOf(serviceDescriptors);
         }
     }
 }

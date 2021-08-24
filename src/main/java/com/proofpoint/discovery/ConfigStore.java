@@ -17,7 +17,6 @@ package com.proofpoint.discovery;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
@@ -53,7 +52,7 @@ public class ConfigStore
 
         ImmutableTable.Builder<String, String, Collection<Service>> builder = ImmutableTable.builder();
         for (Entry<TypeAndPool, Collection<Service>> entry : multimap.asMap().entrySet()) {
-            builder.put(entry.getKey().getType(), entry.getKey().getPool(), ImmutableList.copyOf(entry.getValue()));
+            builder.put(entry.getKey().getType(), entry.getKey().getPool(), List.copyOf(entry.getValue()));
         }
 
         table = builder.build();
