@@ -24,6 +24,7 @@ import com.google.common.collect.Table;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -72,7 +73,7 @@ public class ConfigStore
 
     public Stream<Service> get(String type, final String pool)
     {
-        return firstNonNull(table.get(type, pool), ImmutableList.<Service>of()).stream();
+        return firstNonNull(table.get(type, pool), List.<Service>of()).stream();
     }
 
     @AutoValue

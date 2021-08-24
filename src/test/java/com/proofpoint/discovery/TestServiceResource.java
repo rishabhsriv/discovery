@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 import org.weakref.jmx.testing.TestingMBeanModule;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -176,7 +177,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of()));
+                "services", List.of()));
 
         verify(proxyStore, times(3)).get(any(String.class));
         verifyNoMoreInteractions(proxyStore);
@@ -212,7 +213,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of()));
+                "services", List.of()));
 
         verify(proxyStore, times(3)).get(any(String.class), any(String.class));
         verifyNoMoreInteractions(proxyStore);
@@ -261,7 +262,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of()));
+                "services", List.of()));
     }
 
     @Test
@@ -285,14 +286,14 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of()));
+                "services", List.of()));
 
         actual = client.execute(
                 prepareGet().setUri(uriFor("/v1/service/storage/unknown")).build(),
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of()));
+                "services", List.of()));
     }
 
     @Test
@@ -378,7 +379,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of()));
+                "services", List.of()));
     }
 
     @Test

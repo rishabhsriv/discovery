@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.proofpoint.discovery.client.ServiceDescriptor;
@@ -127,7 +126,7 @@ class HttpRemoteStore
                 // schedule a task to shut down all processors and wait for it to complete. We rely on the executor
                 // having a *single* thread to guarantee the execution happens after any currently running task
                 // (in case the cancel call above didn't do its magic and the scheduled task is still running)
-                executor.submit(() -> updateProcessors(ImmutableList.of())).get();
+                executor.submit(() -> updateProcessors(List.of())).get();
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -160,7 +159,7 @@ class HttpRemoteStore
 
 
         Predicate<ServiceDescriptor> predicate = ourNodeIdPredicate.negate()
-                .and(nodeId -> !processors.keySet().contains(getHostPortFunction().apply(nodeId)));
+                .and(nodeId -> !processors.containsKey(getHostPortFunction().apply(nodeId)));
         Iterable<ServiceDescriptor> newDescriptors = descriptors.stream().filter(predicate).collect(Collectors.toList());
 
         for (ServiceDescriptor descriptor : newDescriptors) {

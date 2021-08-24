@@ -34,6 +34,7 @@ import com.proofpoint.units.Duration;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,7 +73,7 @@ public class ProxyStore
             ScheduledThreadPoolExecutor poolExecutor = new ScheduledThreadPoolExecutor(5, daemonThreadsNamed("Proxy-Discovery-%s"));
 
             for (String type : proxyTypes) {
-                map.put(type, ImmutableList.of());
+                map.put(type, List.of());
                 new ServiceUpdater(type, lookupClient, poolExecutor).start();
             }
         }

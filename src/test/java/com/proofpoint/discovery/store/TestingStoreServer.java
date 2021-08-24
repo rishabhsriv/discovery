@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
@@ -152,7 +151,7 @@ public class TestingStoreServer
             if (serverInSelector.get()) {
                 return delegate.selectAllServices();
             }
-            return ImmutableList.of();
+            return List.of();
         }
     }
 }
