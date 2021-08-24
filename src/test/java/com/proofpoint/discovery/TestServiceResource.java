@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -168,7 +167,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of(
+                "services", List.of(
                         redWebRepresentation
                 )));
 
@@ -204,7 +203,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of(
+                "services", List.of(
                         blueStorageRepresentation
                 )));
 
@@ -253,7 +252,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of(
+                "services", List.of(
                         toServiceRepresentation(proxyStorageService)
                 )));
 
@@ -277,7 +276,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of(
+                "services", List.of(
                         toServiceRepresentation(proxyStorageService)
                 )));
 
@@ -342,7 +341,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of(
+                "services", List.of(
                         redWebRepresentation
                 )));
     }
@@ -370,7 +369,7 @@ public class TestServiceResource
                 createJsonResponseHandler(mapCodec, OK.getStatusCode()));
         assertThat(actual).isEqualTo(ImmutableMap.of(
                 "environment", "testing",
-                "services", ImmutableList.of(
+                "services", List.of(
                         blueStorageRepresentation
                 )));
 

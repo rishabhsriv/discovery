@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.Node;
@@ -42,7 +41,7 @@ public class TestEntry
     private static final Id<Node> NODE_ID = Id.valueOf("e8e71280-2325-4498-87a7-7f7d7d48defd");
     private static final Id<Service> SERVICE_ID_1 = Id.valueOf("efab997e-14b8-4f5a-b534-b3e70bfb8bd4");
     private static final Id<Service> SERVICE_ID_2 = Id.valueOf("d884bf44-7387-4e11-aabf-a32608776f8e");
-    private static final ImmutableList<Service> SERVICES_LIST = ImmutableList.of(
+    private static final List<Service> SERVICES_LIST = List.of(
             new Service(SERVICE_ID_1, NODE_ID, "testType", "testPool", "testLocation", ImmutableMap.of(
                     "http", "http://invalid.invalid",
                     "https", "https://invalid.invalid"

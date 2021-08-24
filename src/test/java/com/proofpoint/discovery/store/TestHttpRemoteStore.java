@@ -15,7 +15,6 @@
  */
 package com.proofpoint.discovery.store;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.proofpoint.discovery.Id;
 import com.proofpoint.discovery.Node;
@@ -47,7 +46,7 @@ public class TestHttpRemoteStore
     private static final Service TESTING_SERVICE_2 = new Service(Id.random(), NODE_ID, "type2", "test-pool", "/test-location", ImmutableMap.of("https", "https://127.0.0.1"));
     private static final Entry TESTING_ENTRY = entry(
             NODE_ID.getBytes(),
-            ImmutableList.of(TESTING_SERVICE_1, TESTING_SERVICE_2),
+            List.of(TESTING_SERVICE_1, TESTING_SERVICE_2),
             System.currentTimeMillis(),
             2_000_000L,
             "127.0.0.1"
