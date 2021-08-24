@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Injector;
-import com.proofpoint.bootstrap.Bootstrap;
 import com.proofpoint.bootstrap.LifeCycleManager;
 import com.proofpoint.http.client.HttpClient;
 import com.proofpoint.http.client.StatusResponseHandler.StatusResponse;
@@ -45,7 +44,7 @@ import java.net.URI;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static com.proofpoint.bootstrap.Bootstrap.bootstrapApplication;
+import static com.proofpoint.bootstrap.Bootstrap.bootstrapTest;
 import static com.proofpoint.http.client.JsonResponseHandler.createJsonResponseHandler;
 import static com.proofpoint.http.client.Request.Builder.prepareGet;
 import static com.proofpoint.http.client.StatusResponseHandler.createStatusResponseHandler;
@@ -115,8 +114,7 @@ public class TestServiceResource
         ServiceResource resource = new ServiceResource(dynamicStore, configStore, proxyStore, new NodeInfo("testing"),
                 initializationTracker);
 
-        Bootstrap app = bootstrapApplication("test-application")
-                .doNotInitializeLogging()
+        Injector injector = bootstrapTest()
                 .withModules(
                         new TestingNodeModule(),
                         new TestingHttpServerModule(),
@@ -126,9 +124,6 @@ public class TestServiceResource
                         new TestingMBeanModule(),
                         binder -> jaxrsBinder(binder).bindInstance(resource)
                 )
-                .quiet();
-
-        Injector injector = app
                 .initialize();
 
         lifeCycleManager = injector.getInstance(LifeCycleManager.class);
