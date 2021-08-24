@@ -29,8 +29,8 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNullElse;
 
 public class ConfigStore
 {
@@ -73,7 +73,7 @@ public class ConfigStore
 
     public Stream<Service> get(String type, final String pool)
     {
-        return firstNonNull(table.get(type, pool), List.<Service>of()).stream();
+        return requireNonNullElse(table.get(type, pool), List.<Service>of()).stream();
     }
 
     @AutoValue

@@ -27,8 +27,8 @@ import javax.ws.rs.core.MediaType;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.proofpoint.discovery.Services.services;
+import static java.util.Objects.requireNonNullElse;
 
 @Path("/v1/service")
 public class ServiceResource
@@ -56,7 +56,7 @@ public class ServiceResource
     public Services getServices(@PathParam("type") String type, @PathParam("pool") String pool)
     {
         ensureInitialized();
-        return services(node.getEnvironment(), firstNonNull(proxyStore.get(type, pool),
+        return services(node.getEnvironment(), requireNonNullElse(proxyStore.get(type, pool),
                 Stream.concat(configStore.get(type, pool), dynamicStore.get(type, pool))));
     }
 
@@ -66,7 +66,7 @@ public class ServiceResource
     public Services getTypeServices(@PathParam("type") String type)
     {
         ensureInitialized();
-        return services(node.getEnvironment(), firstNonNull(proxyStore.get(type),
+        return services(node.getEnvironment(), requireNonNullElse(proxyStore.get(type),
                 Stream.concat(configStore.get(type), dynamicStore.get(type))));
     }
 
