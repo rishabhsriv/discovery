@@ -1,15 +1,20 @@
 apiVersion: networking.istio.io/v1beta1
 kind: ServiceEntry
 metadata:
-  name: orders-vm
+  name: vm-services
   namespace: default
 spec:
   hosts:
-  - orders.vm.mesh               
+  - orders.vm.local
+  - inventory.vm.local
+  - payment.vm.local
   endpoints:
-  - address: <ip of the vm>           
+  # These IPs would come from discovery service queries
+  - address: 192.168.1.100  # VM running orders service
     ports: { http: 8080 }
-  - address: <ip of the vm>            
+  - address: 192.168.1.101  # VM running inventory service  
+    ports: { http: 8080 }
+  - address: 192.168.1.102  # VM running payment service
     ports: { http: 8080 }
   location: MESH_EXTERNAL
   resolution: STATIC

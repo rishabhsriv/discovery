@@ -1,0 +1,16 @@
+# Allow K8s services to reach VM discovery servers
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: discovery-servers
+  namespace: default
+spec:
+  hosts:
+  - discovery1.prod.com
+  - discovery2.prod.com
+  ports:
+  - number: 8411
+    name: http
+    protocol: HTTP
+  location: MESH_EXTERNAL
+  resolution: DNS

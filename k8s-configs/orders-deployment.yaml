@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+      # Main application
+      - name: orders
+        image: myregistry/orders:1.0.0   
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DISCOVERY_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-config
+              key: discovery-servers
+        - name: ISTIO_GATEWAY_IP
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-config
+              key: istio-gateway-ip
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      
+      # Discovery registration sidecar
+      - name: discovery-registrar
+        image: curlimages/curl:latest
+        env:
+        - name: ISTIO_GATEWAY_IP
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-config
+              key: istio-gateway-ip
+        - name: DISCOVERY_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-config
+              key: discovery-servers
+        command:
+        - /bin/sh
+        - -c
+        - |
+          while true; do
+            for server in $(echo $DISCOVERY_SERVERS | tr ',' ' '); do
+              curl -X PUT "$server/v1/announcement/orders" \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"type\": \"orders\",
+                  \"pool\": \"general\", 
+                  \"location\": \"k8s-cluster\",
+                  \"properties\": {
+                    \"http\": \"http://$ISTIO_GATEWAY_IP\",
+                    \"host\": \"orders.k8s.local\"
+                  }
+                }" || echo "Failed to register with $server"
+            done
+            sleep 30
+          done
+      
+      imagePullSecrets:
+       - name: gcr-json-key
+---
+# Single service for both internal K8s and external VM access via Istio Gateway
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders
+  namespace: default
+spec:
+  selector:
+    app: orders
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP

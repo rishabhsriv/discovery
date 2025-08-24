@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: k8s-services-for-vms
+  namespace: default
+spec:
+  hosts:
+  - orders.k8s.local
+  - inventory.k8s.local
+  - payment.k8s.local
+  endpoints:
+  - address: "<istio gateway ip>"  # Istio Gateway LoadBalancer IP
+    ports: { http: 80 }
+  location: MESH_EXTERNAL
+  resolution: STATIC
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP

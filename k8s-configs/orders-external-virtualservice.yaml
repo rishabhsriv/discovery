@@ -1,0 +1,38 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: k8s-services-external
+  namespace: default
+spec:
+  hosts:
+  - "*.k8s.local"  
+  gateways:
+  - vm-access-gateway
+  http:
+  - match:
+    - headers:
+        host:
+          exact: "orders.k8s.local"
+    route:
+    - destination:
+        host: orders.default.svc.cluster.local
+        port:
+          number: 8080
+  - match:
+    - headers:
+        host:
+          exact: "inventory.k8s.local"
+    route:
+    - destination:
+        host: inventory.default.svc.cluster.local
+        port:
+          number: 8080
+  - match:
+    - headers:
+        host:
+          exact: "payment.k8s.local"
+    route:
+    - destination:
+        host: payment.default.svc.cluster.local
+        port:
+          number: 8080

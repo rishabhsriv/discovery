@@ -1,0 +1,32 @@
+# Job to sync VM services into ServiceEntry
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: discovery-sync
+  namespace: default
+spec:
+  schedule: "*/2 * * * *"  # Every 2 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: sync
+            image: curlimages/curl:latest
+            env:
+            - name: DISCOVERY_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: discovery-config
+                  key: discovery-servers
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # Query discovery servers for VM services
+              for server in $(echo $DISCOVERY_SERVERS | tr ',' ' '); do
+                echo "Querying $server for services..."
+                curl -s "$server/v1/service" || echo "Failed to query $server"
+                # In reality, this would parse the response and update ServiceEntry
+              done
+          restartPolicy: OnFailure

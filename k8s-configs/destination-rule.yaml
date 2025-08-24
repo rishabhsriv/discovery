@@ -1,15 +1,15 @@
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
-  name: orders-vm
+  name: vm-services
   namespace: default
 spec:
-  host: orders.vm.mesh
+  host: "*.vm.local"
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
     outlierDetection:
-      consecutive5xxErrors: 5
-      interval: 10s
+      consecutive5xxErrors: 3
+      interval: 30s
       baseEjectionTime: 30s
       maxEjectionPercent: 50
