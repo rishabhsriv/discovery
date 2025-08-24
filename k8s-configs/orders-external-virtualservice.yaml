@@ -5,7 +5,9 @@ metadata:
   namespace: default
 spec:
   hosts:
-  - "*.k8s.local"  
+  - orders.k8s.local
+  - inventory.k8s.local
+  - payment.k8s.local 
   gateways:
   - vm-access-gateway
   http:

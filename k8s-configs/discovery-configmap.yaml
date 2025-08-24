@@ -4,7 +4,6 @@ metadata:
   name: discovery-config
   namespace: default
 data:
-  # VM-based discovery servers (existing)
   discovery-servers: "http://discovery1.prod.com:8411,http://discovery2.prod.com:8411"
   service-pool: "general"
   service-location: "k8s-cluster"

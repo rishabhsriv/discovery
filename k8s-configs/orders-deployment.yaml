@@ -16,7 +16,6 @@ spec:
         sidecar.istio.io/inject: "true"
     spec:
       containers:
-      # Main application
       - name: orders
         image: myregistry/orders:1.0.0   
         ports:
@@ -83,7 +82,7 @@ spec:
       imagePullSecrets:
        - name: gcr-json-key
 ---
-# Single service for both internal K8s and external VM access via Istio Gateway
+
 apiVersion: v1
 kind: Service
 metadata:
