@@ -7,9 +7,9 @@ spec:
   hosts:
   - orders.vm.mesh               
   endpoints:
-  - address: 10.10.1.5            
+  - address: <ip of the vm>           
     ports: { http: 8080 }
-  - address: 10.10.1.6            
+  - address: <ip of the vm>            
     ports: { http: 8080 }
   location: MESH_EXTERNAL
   resolution: STATIC

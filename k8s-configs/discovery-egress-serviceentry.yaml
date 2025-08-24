@@ -5,7 +5,7 @@ metadata:
   namespace: istio-system
 spec:
   hosts:
-  - discovery.prod.example.com   
+  - discovery.prod.com   
   ports:
   - number: 443
     name: https
