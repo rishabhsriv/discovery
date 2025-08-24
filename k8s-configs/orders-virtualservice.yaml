@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: orders-vs
+  namespace: default
+spec:
+  hosts:
+  - orders.k8s.local
+  gateways:
+  - orders-gateway
+  http:
+  - route:
+    - destination:
+        host: orders.default.svc.cluster.local  
+        port:
+          number: 8080

@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: proofpoint-discovery-egress
+  namespace: istio-system
+spec:
+  hosts:
+  - discovery.prod.example.com   
+  ports:
+  - number: 443
+    name: https
+    protocol: TLS
+  location: MESH_EXTERNAL
+  resolution: DNS
